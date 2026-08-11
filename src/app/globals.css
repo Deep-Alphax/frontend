@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/*
+ * Deep Alpha — design tokens (tema escuro único).
+ * Fonte de verdade: variáveis do Figma (primitivas Gray / Principal / Secundaria).
+ * Só definimos os tons realmente usados + poucos derivados p/ estados de interação
+ * (comentados). Manter enxuto evita cor "inventada" fora do design system.
+ */
+@theme {
+  /* Famílias tipográficas (carregadas via next/font em layout.tsx). */
+  --font-display: var(--font-unbounded);
+  --font-body: var(--font-work-sans);
+
+  /* Neutros */
+  --color-gray-1: #111217; /* fundo da aplicação */
+  --color-gray-2: #18191f; /* superfícies: inputs, botão secundário */
+  --color-gray-3: #21222b; /* painel lateral, hover de superfície */
+  --color-gray-5: #2e303e; /* trilho vazio do medidor de senha */
+  --color-gray-6: #3d3f4a; /* bordas e divisores */
+  --color-gray-11: #c0c2ce; /* texto/ícone secundário, placeholder */
+  --color-gray-12: #fafafd; /* texto/ícone primário */
+
+  /* Principal (amarelo) — CTA */
+  --color-principal-9: #f9d240;
+  --color-principal-10: #f2c521; /* derivado: hover do CTA (~6% mais escuro) */
+
+  /* Secundária (azul) — links, seleção */
+  --color-secundaria-11: #93cdff;
+
+  /*
+   * Semânticas de feedback. Verde vem do Figma (medidor "Senha forte").
+   * Vermelho/âmbar são derivados coerentes para os estados fraca/média, que o
+   * design não especifica. -10 = preenchimento; -11 = texto sobre fundo escuro.
+   */
+  --color-danger-10: #e5484d; /* barra: senha fraca */
+  --color-danger-11: #ff8a8a; /* texto: erro de campo / senha fraca */
+  --color-amber-10: #ffb224; /* barra: senha média */
+  --color-amber-11: #ffca16; /* texto: senha média */
+  --color-green-10: #55b467; /* barra: senha forte / ganho */
+  --color-green-11: #71d083; /* texto: senha forte / ganho */
+
+  /* Categóricas dos gráficos do dashboard (desfecho de trades / concentração). */
+  --color-mint-10: #86ead4; /* stop loss (menta do Figma) */
+  --color-purple-10: #8b7ff5; /* 1x–2x */
+  --color-blue-10: #47a3ff; /* 2x–5x / 2ª fatia da concentração */
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: var(--font-body), "Work Sans", system-ui, sans-serif;
+    background-color: var(--color-gray-1);
+    color: var(--color-gray-12);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+/*
+ * iOS Safari dá zoom ao focar campos com font-size < 16px. Garante ≥16px em todos
+ * os controles de texto no mobile (< md) — trava sistêmica p/ não depender de cada
+ * input. No desktop o zoom não existe, então a regra fica restrita a < 768px.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

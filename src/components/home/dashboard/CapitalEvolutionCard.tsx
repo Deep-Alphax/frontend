@@ -1,0 +1,295 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  type ChartOptions,
+  type ChartDataset,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import type { PortfolioAnalytics } from "@/lib/api/analytics";
+import {
+  formatSignedUsd,
+  formatUsd,
+  formatPct,
+  formatSignedPct,
+  formatShortDate,
+  signOf,
+} from "@/lib/format";
+import { deriveDrawdownWindow } from "@/lib/deriveDrawdown";
+import { InfoHint } from "@/components/ui/InfoHint";
+import { RichInfoHint, type TooltipTone } from "@/components/ui/RichInfoHint";
+import { NoDataBadge, NoDataValue } from "@/components/home/dashboard/ComingSoon";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+
+const GREEN = "#55b467";
+const RED = "#e5484d";
+
+const toneOf = (v: string | number): TooltipTone =>
+  signOf(v) > 0 ? "positive" : signOf(v) < 0 ? "negative" : "default";
+
+function MiniKpi({
+  label,
+  hint,
+  children,
+  footer,
+}: {
+  label: string;
+  hint: React.ReactNode;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2 px-6 py-5">
+      <div className="flex items-center gap-2 text-gray-12">
+        <span className="text-base">{label}</span>
+        {hint}
+      </div>
+      <div className="text-2xl font-semibold text-gray-12">{children}</div>
+      <div className="text-sm text-gray-11">{footer}</div>
+    </div>
+  );
+}
+
+export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
+  const { capital, bankroll, benchmark, realizedPnlUsd, perDay, daily } = data;
+
+  const { chartData, options } = useMemo(() => {
+    const labels = capital.points.map((p) => formatShortDate(p.date));
+    const usd = capital.points.map((p) => Number(p.cumulativePnlUsd));
+
+    const solByDate = new Map(benchmark.points.map((p) => [p.date, Number(p.portfolioInSol)]));
+    const sol = capital.points.map((p) => solByDate.get(p.date) ?? null);
+
+    const datasets: ChartDataset<"line", (number | null)[]>[] = [
+      {
+        label: "Capital em dólar",
+        data: usd,
+        borderColor: GREEN,
+        backgroundColor: "rgba(85, 180, 103, 0.15)",
+        fill: "origin",
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 2,
+        yAxisID: "y",
+      },
+    ];
+    if (benchmark.available) {
+      datasets.push({
+        label: "Medido em SOL",
+        data: sol,
+        borderColor: RED,
+        backgroundColor: "rgba(229, 72, 77, 0.10)",
+        fill: "origin",
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 2,
+        yAxisID: "y1",
+        spanGaps: true,
+      });
+    }
+
+    const options: ChartOptions<"line"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#21222b",
+          borderColor: "#3d3f4a",
+          borderWidth: 1,
+          titleColor: "#fafafd",
+          bodyColor: "#c0c2ce",
+          padding: 12,
+          callbacks: {
+            label: (ctx) =>
+              ctx.dataset.yAxisID === "y1"
+                ? `${(ctx.parsed.y ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} SOL`
+                : formatSignedUsd(ctx.parsed.y ?? 0),
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: "#c0c2ce", maxTicksLimit: 6, font: { size: 12 } },
+        },
+        y: {
+          grid: { color: "#21222b" },
+          border: { display: false },
+          ticks: {
+            color: "#c0c2ce",
+            font: { size: 12 },
+            callback: (value) => formatUsd(Number(value)),
+          },
+        },
+        y1: { display: false, grid: { display: false } },
+      },
+    };
+
+    return { chartData: { labels, datasets }, options };
+  }, [capital.points, benchmark]);
+
+  // ── Tooltips ricos dos mini-KPIs ──
+  const activeDays = Math.max(1, perDay.activeDays);
+  const avgPerDay = Number(realizedPnlUsd) / activeDays;
+
+  const resultTooltip = (
+    <RichInfoHint
+      title="Resultado do período"
+      description="Já liquidado de taxa, gas, tip e slippage"
+      rows={[
+        { label: "PnL acumulado", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
+        { label: "Bankroll de referência", value: formatUsd(bankroll.peakDeployedUsd) },
+        {
+          label: "Variação",
+          value: bankroll.pnlPctOfBankroll != null ? formatSignedPct(bankroll.pnlPctOfBankroll) : "—",
+          tone: bankroll.pnlPctOfBankroll != null ? toneOf(bankroll.pnlPctOfBankroll) : "default",
+        },
+        { label: "Média por dia operado", value: formatSignedUsd(avgPerDay), tone: toneOf(avgPerDay) },
+      ]}
+      footer="É o que sobrou na carteira, não o que passou por ela"
+    />
+  );
+
+  const dw = deriveDrawdownWindow(capital.points);
+  const drawdownTooltip = (
+    <RichInfoHint
+      title="Maior Drawdown"
+      description="Mede quanto o capital recuou do ponto mais alto antes de voltar a subir"
+      rows={[
+        { label: "Topo em", value: dw ? formatShortDate(dw.peakDate) : "—" },
+        { label: "Fundo em", value: dw ? formatShortDate(dw.troughDate) : "—" },
+        { label: "Duração", value: dw ? `${dw.durationDays} dias` : "—" },
+        {
+          label: "Queda",
+          value: bankroll.maxDrawdownPct != null ? formatPct(-bankroll.maxDrawdownPct, 1) : "—",
+          tone: "negative",
+        },
+        { label: "Em dinheiro", value: `−${formatUsd(capital.maxDrawdownUsd)}`, tone: "negative" },
+      ]}
+    />
+  );
+
+  const daysNegative = daily.filter((d) => Number(d.realizedPnlUsd) < 0).length;
+  const daysTooltip = (
+    <RichInfoHint
+      title="Distribuição dos dias"
+      rows={[
+        { label: "Dias positivos", value: String(capital.daysInGreen) },
+        { label: "Dias negativos", value: String(daysNegative) },
+        { label: "Dias sem operar", value: String(capital.inactiveDays) },
+        {
+          label: "Melhor do dia",
+          value: perDay.bestDay ? formatSignedUsd(perDay.bestDay.realizedPnlUsd) : "—",
+          tone: "positive",
+        },
+        {
+          label: "Pior dia",
+          value: perDay.worstDay ? formatSignedUsd(perDay.worstDay.realizedPnlUsd) : "—",
+          tone: "negative",
+        },
+      ]}
+    />
+  );
+
+  const drawdownDisplay =
+    bankroll.maxDrawdownPct != null
+      ? formatPct(-bankroll.maxDrawdownPct, 1)
+      : `−${formatUsd(capital.maxDrawdownUsd)}`;
+
+  const lastSol = benchmark.available
+    ? benchmark.points[benchmark.points.length - 1]?.portfolioInSol
+    : null;
+
+  return (
+    <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
+      <div className="flex items-center justify-between border-b border-gray-6 px-6 py-4">
+        <h3 className="text-base font-semibold text-gray-12">Evolução do capital</h3>
+        <span className="text-sm text-gray-11">
+          em dólar {benchmark.available ? "vs. medido em SOL" : ""}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 divide-x divide-gray-6 border-b border-gray-6 lg:grid-cols-4">
+        <MiniKpi
+          label="Resultado"
+          hint={resultTooltip}
+          footer={
+            bankroll.pnlPctOfBankroll != null
+              ? `${formatSignedPct(bankroll.pnlPctOfBankroll)} sobre o bankroll`
+              : "Acumulado no período"
+          }
+        >
+          <span className="text-green-11">{formatSignedUsd(realizedPnlUsd)}</span>
+        </MiniKpi>
+
+        <MiniKpi
+          label="Contra o benchmark"
+          hint={
+            <InfoHint text="Seu capital acumulado medido em SOL (quantos SOL o resultado representa)." />
+          }
+          footer={benchmark.available ? "Capital medido em SOL" : <NoDataBadge />}
+        >
+          {lastSol != null ? (
+            <span>
+              {Number(lastSol).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}{" "}
+              <span className="text-base text-gray-11">SOL</span>
+            </span>
+          ) : (
+            <NoDataValue />
+          )}
+        </MiniKpi>
+
+        <MiniKpi
+          label="Maior drawdown"
+          hint={drawdownTooltip}
+          footer={`−${formatUsd(capital.maxDrawdownUsd)} no período`}
+        >
+          <span className="text-danger-11">{drawdownDisplay}</span>
+        </MiniKpi>
+
+        <MiniKpi
+          label="Dias no verde"
+          hint={daysTooltip}
+          footer={`${capital.inactiveDays} dias sem operar`}
+        >
+          {capital.daysInGreen}
+        </MiniKpi>
+      </div>
+
+      <div className="p-6">
+        <div className="mb-4 flex items-center gap-4 text-sm text-gray-11">
+          <span className="flex items-center gap-2">
+            <span className="size-3 rounded-sm bg-green-10" /> Capital em dólar
+          </span>
+          {benchmark.available ? (
+            <span className="flex items-center gap-2">
+              <span className="size-3 rounded-sm bg-danger-10" /> Medido em SOL
+            </span>
+          ) : null}
+        </div>
+        <div className="h-[320px] w-full">
+          {capital.points.length > 0 ? (
+            <Line data={chartData} options={options} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-gray-11">
+              Sem operações no período.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
