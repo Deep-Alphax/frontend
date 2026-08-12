@@ -65,8 +65,10 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const wcConnect = walletOn
     ? "https://*.walletconnect.org https://*.walletconnect.com " +
       "wss://relay.walletconnect.org wss://relay.walletconnect.com " +
-      "https://rpc.walletconnect.org https://api.web3modal.org " +
-      "https://api.mainnet-beta.solana.com"
+      "https://rpc.walletconnect.org https://pulse.walletconnect.org " +
+      "https://api.web3modal.org https://api.mainnet-beta.solana.com " +
+      // Conector "Base Account" (Coinbase): telemetria (cca-lite) + RPC/wallet.
+      "https://cca-lite.coinbase.com https://*.coinbase.com"
     : "";
   const wcImg = walletOn
     ? "https://imagedelivery.net https://explorer-api.walletconnect.com"
@@ -74,12 +76,17 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const wcFrame = walletOn
     ? "https://secure.walletconnect.org https://*.walletconnect.org"
     : "";
+  // A modal da Reown/AppKit injeta a fonte via Google Fonts em runtime:
+  // o <link> do CSS vem de fonts.googleapis.com (style-src) e os arquivos
+  // .woff2 de fonts.gstatic.com (font-src). Só liberado com a carteira ligada.
+  const wcStyle = walletOn ? "https://fonts.googleapis.com" : "";
+  const wcFont = walletOn ? "https://fonts.gstatic.com" : "";
 
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} ${turnstile}`,
-    `style-src 'self' 'unsafe-inline'`,
-    `font-src 'self' data:`,
+    `style-src 'self' 'unsafe-inline' ${wcStyle}`,
+    `font-src 'self' data: ${wcFont}`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras.
     `img-src 'self' data: blob: ${api} https://*.googleusercontent.com ${wcImg}`,
     `connect-src 'self' ${api} ${turnstile} ${wcConnect} ${isDev ? "ws: wss:" : ""}`,
@@ -117,6 +124,18 @@ function withSecurityHeaders(response: NextResponse, isDev: boolean): NextRespon
 export function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const { pathname, search } = request.nextUrl;
+
+  // Host canônico: apex (sem `www`). Como o app usa cookies cross-origin
+  // (withCredentials), o backend/OAuth do Google whitelistam UMA origin exata
+  // (https://deepalpha.fun). Se o usuário cair no `www`, o CORS falha no login.
+  // Redireciona `www.*` → apex (308, preserva método/corpo) ANTES de qualquer
+  // request à API, garantindo que o Origin do browser já seja a apex.
+  if (!isDev && request.nextUrl.hostname.startsWith("www.")) {
+    const apex = request.nextUrl.clone();
+    apex.hostname = apex.hostname.slice(4); // remove "www."
+    return NextResponse.redirect(apex, 308);
+  }
+
   const isAuthed = request.cookies.get(SESSION_HINT_COOKIE)?.value === "1";
 
   // Logado tentando abrir login/cadastro → Home.
