@@ -125,16 +125,10 @@ export function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const { pathname, search } = request.nextUrl;
 
-  // Host canônico: apex (sem `www`). Como o app usa cookies cross-origin
-  // (withCredentials), o backend/OAuth do Google whitelistam UMA origin exata
-  // (https://deepalpha.fun). Se o usuário cair no `www`, o CORS falha no login.
-  // Redireciona `www.*` → apex (308, preserva método/corpo) ANTES de qualquer
-  // request à API, garantindo que o Origin do browser já seja a apex.
-  if (!isDev && request.nextUrl.hostname.startsWith("www.")) {
-    const apex = request.nextUrl.clone();
-    apex.hostname = apex.hostname.slice(4); // remove "www."
-    return NextResponse.redirect(apex, 308);
-  }
+  // NOTA: a canonicalização de host (www → apex `deepalpha.fun`) é feita na
+  // camada de DOMÍNIO da Vercel (Settings → Domains: apex como Primary, `www`
+  // com "Redirect to deepalpha.fun"), NÃO aqui. Fazer o redirect também no
+  // middleware criava loop (Vercel apex→www vs. middleware www→apex).
 
   const isAuthed = request.cookies.get(SESSION_HINT_COOKIE)?.value === "1";
 
