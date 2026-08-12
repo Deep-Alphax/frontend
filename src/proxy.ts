@@ -55,8 +55,31 @@ function apiOrigin(): string {
   }
 }
 
+/**
+ * Origens próprias do app (apex + contraparte www⇄apex), p/ o img-src.
+ * A metadata do WalletConnect exige URL ABSOLUTA no ícone (`APP_URL/brand/...`);
+ * se a página é servida no host "irmão" (ex.: www) o `'self'` não cobre a apex e
+ * o ícone é bloqueado. Liberar os dois hosts torna a CSP resiliente ao host.
+ */
+function appOrigins(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  try {
+    const url = new URL(raw);
+    const origins = new Set<string>([url.origin]);
+    const alt = new URL(url.href);
+    alt.hostname = alt.hostname.startsWith("www.")
+      ? alt.hostname.slice(4)
+      : `www.${alt.hostname}`;
+    origins.add(alt.origin);
+    return [...origins].join(" ");
+  } catch {
+    return "http://localhost:3000";
+  }
+}
+
 function buildContentSecurityPolicy(isDev: boolean): string {
   const api = apiOrigin();
+  const app = appOrigins();
   const turnstile = "https://challenges.cloudflare.com";
 
   // Wallet connect (Reown/WalletConnect): só libera os domínios quando há
@@ -88,7 +111,7 @@ function buildContentSecurityPolicy(isDev: boolean): string {
     `style-src 'self' 'unsafe-inline' ${wcStyle}`,
     `font-src 'self' data: ${wcFont}`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras.
-    `img-src 'self' data: blob: ${api} https://*.googleusercontent.com ${wcImg}`,
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${wcImg}`,
     `connect-src 'self' ${api} ${turnstile} ${wcConnect} ${isDev ? "ws: wss:" : ""}`,
     `frame-src ${turnstile} ${wcFrame}`,
     `worker-src 'self' blob:`,
