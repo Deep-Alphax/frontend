@@ -5,9 +5,6 @@ import type { NextConfig } from "next";
  * Aqui ficam só build/runtime tuning.
  */
 const nextConfig: NextConfig = {
-  // Build enxuto p/ imagem Docker (server standalone).
-  output: "standalone",
-
   // O conector "Base Account" (wagmi/AppKit) puxa @coinbase/cdp-sdk, que importa
   // (estática e dinamicamente) pacotes @x402/* (pagamento x402) NÃO instalados e
   // não usados aqui. Aponta todos esses specifiers para um stub vazio p/ o
