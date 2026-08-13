@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPortfolioAnalytics } from "@/lib/api/analytics";
 import { getWallets, type Wallet } from "@/lib/api/wallets";
 import { useSession } from "@/lib/auth/useSession";
+import { useSyncEvents } from "@/lib/realtime/useSyncEvents";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { ConnectWalletEmptyState } from "@/components/home/ConnectWalletEmptyState";
 import { WalletSyncingState } from "@/components/home/WalletSyncingState";
@@ -28,16 +29,6 @@ function DashboardSkeleton() {
   );
 }
 
-/** Intervalo do polling da LISTA de carteiras (leve) enquanto há sync em andamento. */
-const WALLETS_POLL_MS = 20_000;
-
-/**
- * Intervalo do polling das MÉTRICAS enquanto uma carteira sincroniza. Mais curto
- * que o da lista para o dashboard "acender" logo que a ingestão grava os trades,
- * sem esperar o ciclo de 20s. Só roda durante o sync (estado transitório) → não é loop.
- */
-const METRICS_POLL_MS = 8_000;
-
 /** Há carteira com ingestão em andamento. */
 function isSyncing(wallets: Wallet[]): boolean {
   return wallets.some((w) => w.syncStatus === "PENDING" || w.syncStatus === "SYNCING");
@@ -47,9 +38,9 @@ function isSyncing(wallets: Wallet[]): boolean {
  * Conteúdo do perfil. A tela "conecte uma carteira" aparece SOMENTE sem carteira;
  * com carteira, sempre o dashboard (zerado se não houver trades na janela).
  *
- * Polling enxuto: só a LISTA de carteiras (barata) é religada enquanto sincroniza,
- * a cada 20s, para acompanhar o status. As MÉTRICAS (pesadas) são recarregadas
- * UMA vez, quando o sync termina — não ficam em loop.
+ * Atualização em TEMPO REAL (sem polling): o backend empurra `sync:update` via
+ * WebSocket ao terminar a ingestão de uma carteira; `useSyncEvents` invalida a
+ * lista de carteiras e as métricas, e o dashboard sai do "sincronizando" sozinho.
  */
 export function ProfileContent() {
   const { isAuthenticated, isLoading: authLoading } = useSession();
@@ -57,12 +48,27 @@ export function ProfileContent() {
   const select = useWalletSelection((s) => s.select);
   const queryClient = useQueryClient();
 
+  // Carteira recém-conectada cujos DADOS ainda não chegaram. Enquanto setado,
+  // mostramos a animação (não o dashboard zerado) — cobre o sync "instantâneo",
+  // em que o status vira SYNCED antes de o socket entregar as métricas.
+  const [awaitingWalletId, setAwaitingWalletId] = useState<string | null>(null);
+
+  // WebSocket: fim de sync → invalida ["wallets"]/["portfolio-analytics"]. Se a
+  // carteira aguardada terminou SEM trades (ou com erro), encerra a espera (mostra
+  // o dashboard vazio/erro). Com trades, a espera encerra quando os dados chegam.
+  useSyncEvents(isAuthenticated, (payload) => {
+    setAwaitingWalletId((cur) => {
+      if (!cur || payload.walletId !== cur) return cur;
+      const done = payload.status === "ERROR" || (payload.status === "SYNCED" && payload.inserted === 0);
+      return done ? null : cur;
+    });
+  });
+
   const walletsQuery = useQuery({
     queryKey: ["wallets"],
     queryFn: getWallets,
     retry: false,
     enabled: isAuthenticated,
-    refetchInterval: (query) => (isSyncing(query.state.data ?? []) ? WALLETS_POLL_MS : false),
   });
   const wallets = walletsQuery.data ?? [];
   const hasWallet = wallets.length > 0;
@@ -76,22 +82,28 @@ export function ProfileContent() {
     }
   }, [selectedWalletId, walletsQuery.data, walletsQuery.isLoading, select]);
 
-  // Mudou o CONJUNTO de carteiras (conectou/removeu) → recarrega as métricas.
-  // Cobre a conexão de carteira que sincroniza rápido (SYNCED antes do 1º poll):
-  // o WalletVerifier invalida as métricas ANTES da ingestão gravar, então sem este
-  // gatilho o dashboard ficaria preso no snapshot vazio até uma troca manual de carteira.
-  const prevWalletIds = useRef<string | null>(null);
+  // Detecta carteira(s) recém-CONECTADA(s). Ao conectar uma nova, ela vira a
+  // SELECIONADA (o dashboard mostra os dados dela direto e o menu reflete a
+  // seleção — sai do agregado "Todas") e recarrega as métricas. Só reage a IDs
+  // ADICIONADOS; não mexe na seleção em reload/remoção. Guarda o snapshot anterior
+  // dos IDs (null no 1º render → não auto-seleciona carteiras que já existiam).
+  const prevWalletIds = useRef<string[] | null>(null);
   useEffect(() => {
     if (walletsQuery.isLoading) return;
-    const ids = (walletsQuery.data ?? [])
-      .map((w) => w.id)
-      .sort()
-      .join(",");
-    if (prevWalletIds.current !== null && prevWalletIds.current !== ids) {
-      queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
+    const ids = (walletsQuery.data ?? []).map((w) => w.id).sort();
+    const prev = prevWalletIds.current;
+    if (prev !== null) {
+      const prevSet = new Set(prev);
+      const added = ids.filter((id) => !prevSet.has(id));
+      if (added.length > 0) {
+        const newId = added[added.length - 1]; // conectou várias → a última
+        queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
+        select(newId);
+        setAwaitingWalletId(newId); // segura a animação até os dados dela chegarem
+      }
     }
     prevWalletIds.current = ids;
-  }, [walletsQuery.data, walletsQuery.isLoading, queryClient]);
+  }, [walletsQuery.data, walletsQuery.isLoading, queryClient, select]);
 
   const portfolioQuery = useQuery({
     // A seleção entra na chave → troca de carteira refaz a query certa. Janela: 30 dias.
@@ -99,10 +111,18 @@ export function ProfileContent() {
     queryFn: () => getPortfolioAnalytics("D30", selectedWalletId),
     retry: false,
     enabled: isAuthenticated && hasWallet, // só busca métricas quando há carteira
-    // Enquanto sincroniza, repõe as métricas a cada 8s → o dashboard acende assim que
-    // a ingestão grava os trades. Para automaticamente quando o sync termina.
-    refetchInterval: syncing ? METRICS_POLL_MS : false,
+    // Sem polling: o fim do sync chega por WebSocket (useSyncEvents) e invalida esta query.
   });
+  const data = portfolioQuery.data;
+  const dataReady = !!data && data.totalTrades > 0;
+
+  // Rede de segurança: se nem os dados nem o evento de fim chegarem (socket caiu),
+  // não deixa a espera presa para sempre. (setState assíncrono no timeout — ok.)
+  useEffect(() => {
+    if (!awaitingWalletId) return;
+    const t = setTimeout(() => setAwaitingWalletId(null), 120_000);
+    return () => clearTimeout(t);
+  }, [awaitingWalletId]);
 
   if (authLoading) return <DashboardSkeleton />;
   if (!isAuthenticated) return <ConnectWalletEmptyState />;
@@ -110,11 +130,15 @@ export function ProfileContent() {
   if (walletsQuery.isLoading) return <DashboardSkeleton />;
   if (!hasWallet) return <ConnectWalletEmptyState />;
 
-  // Carteira recém-conectada ainda sincronizando e SEM trades → animação de sync +
-  // barra de progresso. O painel abre sozinho: enquanto `syncing`, o portfolioQuery
-  // faz polling (8s) e troca para o dashboard assim que os primeiros trades chegam.
-  const data = portfolioQuery.data;
-  if (syncing && (!data || data.totalTrades === 0)) {
+  // Aguardando os dados da carteira recém-conectada: enquanto ela está selecionada
+  // e ainda SEM dados. Derivado (sem setState) → some sozinho quando os dados chegam.
+  const awaitingData =
+    awaitingWalletId !== null && selectedWalletId === awaitingWalletId && !dataReady;
+
+  // Mostra a animação enquanto: aguardando os dados da recém-conectada (cobre o sync
+  // "instantâneo", em que o status vira SYNCED antes de os dados chegarem) OU há sync
+  // em andamento sem trades. Evita o flash de dashboard ZERADO no intervalo.
+  if (awaitingData || (syncing && (!data || data.totalTrades === 0))) {
     return <WalletSyncingState />;
   }
 

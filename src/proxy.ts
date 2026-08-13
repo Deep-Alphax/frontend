@@ -80,6 +80,10 @@ function appOrigins(): string {
 
 function buildContentSecurityPolicy(isDev: boolean): string {
   const api = apiOrigin();
+  // WebSocket (socket.io de tempo real) fala com a MESMA origin da API, no esquema
+  // ws/wss. connect-src casa por esquema, então o https da API não cobre o wss —
+  // liberamos explicitamente (em dev o `ws: wss:` abaixo já cobre localhost).
+  const apiWs = api.replace(/^http/, "ws");
   const app = appOrigins();
   const turnstile = "https://challenges.cloudflare.com";
 
@@ -121,7 +125,7 @@ function buildContentSecurityPolicy(isDev: boolean): string {
     `font-src 'self' data: ${wcFont}`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras + texturas do Spline.
     `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${wcImg} ${splineImg}`,
-    `connect-src 'self' ${api} ${turnstile} ${wcConnect} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
+    `connect-src 'self' ${api} ${apiWs} ${turnstile} ${wcConnect} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
     `frame-src ${turnstile} ${wcFrame}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,
