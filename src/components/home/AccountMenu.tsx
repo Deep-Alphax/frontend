@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Check, ChevronDown, LayoutGrid, Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, LayoutGrid, Loader2, Plus, Shield, Trash2 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { getWallets, deleteWallet } from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { useSession } from "@/lib/auth/useSession";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { useWalletConnect } from "@/lib/wallet/useWalletConnect";
 import { cn } from "@/lib/cn";
@@ -31,6 +33,8 @@ interface AccountMenuProps {
 export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
   const queryClient = useQueryClient();
   const wallet = useWalletConnect();
+  const { profile } = useSession();
+  const isAdmin = profile?.role === "ADMIN";
   const selectedWalletId = useWalletSelection((s) => s.selectedWalletId);
   const select = useWalletSelection((s) => s.select);
 
@@ -138,6 +142,18 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
             <Plus className="size-4 text-gray-11" />
             <span>Conectar outra carteira</span>
           </DropdownMenu.Item>
+
+          {isAdmin ? (
+            <>
+              <DropdownMenu.Separator className="my-1.5 h-px bg-gray-6" />
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/feed">
+                  <Shield className="size-4 text-gray-11" />
+                  <span>Admin · Feed do Discord</span>
+                </Link>
+              </DropdownMenu.Item>
+            </>
+          ) : null}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

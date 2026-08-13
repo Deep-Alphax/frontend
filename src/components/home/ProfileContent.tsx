@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getPortfolioAnalytics } from "@/lib/api/analytics";
+import { getPortfolioAnalytics, getWalletBalance } from "@/lib/api/analytics";
 import { getWallets, type Wallet } from "@/lib/api/wallets";
 import { useSession } from "@/lib/auth/useSession";
 import { useSyncEvents } from "@/lib/realtime/useSyncEvents";
@@ -114,6 +114,16 @@ export function ProfileContent() {
     // Sem polling: o fim do sync chega por WebSocket (useSyncEvents) e invalida esta query.
   });
   const data = portfolioQuery.data;
+
+  // Saldo ATUAL on-chain (holdings × preço) — busca on-chain via provider; leve e
+  // independente das métricas. Backend cacheia 60s (contém custo/rate-limit Moralis).
+  const balanceQuery = useQuery({
+    queryKey: ["wallet-balance", selectedWalletId],
+    queryFn: () => getWalletBalance(selectedWalletId),
+    retry: false,
+    enabled: isAuthenticated && hasWallet,
+    staleTime: 30_000,
+  });
   const dataReady = !!data && data.totalTrades > 0;
 
   // Rede de segurança: se nem os dados nem o evento de fim chegarem (socket caiu),
@@ -144,5 +154,5 @@ export function ProfileContent() {
 
   // Tem carteira → dashboard (mesmo tudo zerado). Esqueleto só no 1º load.
   if (!data) return <DashboardSkeleton />;
-  return <ProfileDashboard data={data} />;
+  return <ProfileDashboard data={data} balanceUsd={balanceQuery.data?.balanceUsd ?? null} />;
 }

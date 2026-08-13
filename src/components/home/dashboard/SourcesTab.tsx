@@ -93,8 +93,8 @@ function Pagination({
 
 /**
  * Tab "Fontes" — tabela "De onde vieram os trades" com chips de filtro por
- * recomendação e paginação. A origem/fonte ainda não é modelada no backend, então
- * renderiza vazia por ora; passa a listar quando `sources` for populado.
+ * recomendação e paginação. A origem vem do cruzamento dos trades com as calls dos
+ * grupos do Discord (atribuição por servidor); "Triagem própria" = sem call anterior.
  */
 export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
   const [filters, setFilters] = useState<Set<RecommendationKey>>(new Set());
@@ -174,7 +174,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-16 text-center text-sm text-gray-11">
-                  Sem dados de fontes ainda — a origem dos trades será conectada em breve.
+                  Nenhum trade cruzado com calls de grupos ainda.
                 </td>
               </tr>
             ) : (
@@ -186,7 +186,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
 
       <div className="flex items-center justify-between gap-4 border-t border-gray-6 p-6 text-sm text-gray-11">
         <span>
-          {filtered.length} {filtered.length === 1 ? "fonte" : "fontes"}
+          {filtered.length} {filtered.length === 1 ? "trade" : "trades"} sendo mostrado
         </span>
         {totalPages > 1 ? (
           <Pagination page={current} total={totalPages} onPage={setPage} />

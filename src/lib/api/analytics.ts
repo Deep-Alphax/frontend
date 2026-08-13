@@ -135,3 +135,17 @@ export async function getPortfolioAnalytics(
   });
   return data;
 }
+
+/**
+ * GET /api/v1/analytics/wallet-balance — saldo ATUAL em USD (holdings on-chain ×
+ * preço). `walletId` escopa a uma carteira; sem ele, soma as OWN. null = indisponível.
+ */
+export async function getWalletBalance(
+  walletId?: string | null,
+): Promise<{ balanceUsd: string | null }> {
+  const { data } = await api.get<{ balanceUsd: string | null }>(
+    "/api/v1/analytics/wallet-balance",
+    { params: { ...(walletId ? { walletId } : {}) } },
+  );
+  return data;
+}

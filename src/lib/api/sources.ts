@@ -68,3 +68,17 @@ export async function getSourcesAnalytics(
   });
   return data;
 }
+
+/**
+ * GET /api/v1/analytics/discord-sources — "De onde vieram os trades" cruzando os
+ * trades com as calls dos grupos do Discord (atribuição por servidor via CA/ticker).
+ */
+export async function getDiscordSourcesAnalytics(
+  period: MetricPeriod = "D30",
+): Promise<TradeSource[]> {
+  const { data } = await api.get<TradeSource[]>(
+    "/api/v1/analytics/discord-sources",
+    { params: { period } },
+  );
+  return data;
+}

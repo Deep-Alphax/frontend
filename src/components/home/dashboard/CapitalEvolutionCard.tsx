@@ -232,15 +232,25 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
               : "Acumulado no período"
           }
         >
-          <span className="text-green-11">{formatSignedUsd(realizedPnlUsd)}</span>
+          <span
+            className={
+              signOf(realizedPnlUsd) < 0
+                ? "text-danger-11"
+                : signOf(realizedPnlUsd) > 0
+                  ? "text-green-11"
+                  : "text-gray-12"
+            }
+          >
+            {formatSignedUsd(realizedPnlUsd)}
+          </span>
         </MiniKpi>
 
         <MiniKpi
-          label="Contra o benchmark"
+          label="Sol acumulado"
           hint={
-            <InfoHint text="Seu capital acumulado medido em SOL (quantos SOL o resultado representa)." />
+            <InfoHint text="SOL líquido que o trading gerou no período: SOL recebido nas vendas − SOL gasto nas compras. Reflete o SOL que de fato entrou na carteira." />
           }
-          footer={benchmark.available ? "Capital medido em SOL" : <NoDataBadge />}
+          footer={benchmark.available ? "SOL líquido no período" : <NoDataBadge />}
         >
           {lastSol != null ? (
             <span>

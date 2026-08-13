@@ -2,9 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { MetricPeriod } from "@/lib/api/analytics";
-import { getSourcesAnalytics } from "@/lib/api/sources";
+import { getDiscordSourcesAnalytics } from "@/lib/api/sources";
 import { SourcesTab } from "@/components/home/dashboard/SourcesTab";
-import { SourcesManager } from "@/components/home/dashboard/SourcesManager";
 
 /** Esqueleto enquanto o breakdown por fonte carrega. */
 function SourcesSkeleton() {
@@ -23,21 +22,16 @@ function SourcesSkeleton() {
 }
 
 /**
- * Container da tab "Fontes": busca o breakdown por fonte SOB DEMANDA (só monta
- * quando a aba é aberta → não pesa o carregamento do dashboard) e o entrega ao
- * `SourcesTab` (apresentacional). Erro/ausência → lista vazia (empty state da tab).
+ * Container da tab "Fontes": "De onde vieram os trades" cruzando os trades com as
+ * calls dos grupos do Discord (atribuição por servidor). Busca SOB DEMANDA (só
+ * monta ao abrir a aba). Erro/ausência → lista vazia (empty state da tab).
  */
 export function SourcesTabContainer({ period = "D30" }: { period?: MetricPeriod }) {
   const { data, isLoading } = useQuery({
-    queryKey: ["sources-analytics", period],
-    queryFn: () => getSourcesAnalytics(period),
+    queryKey: ["discord-sources-analytics", period],
+    queryFn: () => getDiscordSourcesAnalytics(period),
     retry: false,
   });
 
-  return (
-    <div className="flex flex-col gap-8">
-      <SourcesManager />
-      {isLoading ? <SourcesSkeleton /> : <SourcesTab sources={data ?? []} />}
-    </div>
-  );
+  return isLoading ? <SourcesSkeleton /> : <SourcesTab sources={data ?? []} />;
 }

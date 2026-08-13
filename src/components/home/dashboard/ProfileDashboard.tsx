@@ -10,7 +10,7 @@ import {
   Target,
 } from "lucide-react";
 import type { PortfolioAnalytics } from "@/lib/api/analytics";
-import { formatSignedUsd, formatPct, signOf } from "@/lib/format";
+import { formatPct, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { KpiItem } from "@/components/home/dashboard/KpiItem";
 import { NoDataValue } from "@/components/home/dashboard/ComingSoon";
@@ -24,12 +24,15 @@ import { WhenWhereTab } from "@/components/home/dashboard/WhenWhereTab";
 const TABS = ["Como os trades terminaram", "Fontes", "Quando e onde"] as const;
 type Tab = (typeof TABS)[number];
 
-export function ProfileDashboard({ data }: { data: PortfolioAnalytics }) {
+export function ProfileDashboard({
+  data,
+  balanceUsd,
+}: {
+  data: PortfolioAnalytics;
+  /** Saldo ATUAL on-chain (USD) da carteira/portfólio. null = indisponível. */
+  balanceUsd?: string | null;
+}) {
   const [tab, setTab] = useState<Tab>(TABS[0]);
-
-  const netSign = signOf(data.netPnlUsd);
-  const netColor =
-    netSign > 0 ? "text-green-11" : netSign < 0 ? "text-danger-11" : "text-gray-12";
 
   return (
     <div className="flex flex-col gap-10">
@@ -38,11 +41,10 @@ export function ProfileDashboard({ data }: { data: PortfolioAnalytics }) {
         <div className="md:pr-8">
           <KpiItem
             icon={CircleDollarSign}
-            label="Resultado líquido"
-            info="Seu PnL de trading líquido de taxas, gas, tip e slippage."
-            hint="Líquido de taxa, gas, tip e slippage"
-            value={formatSignedUsd(data.netPnlUsd)}
-            valueClassName={netColor}
+            label="Saldo atual"
+            info="Valor atual dos ativos na carteira (SOL/tokens × preço de mercado)."
+            hint="Holdings on-chain a preço de agora"
+            value={balanceUsd != null ? formatUsd(balanceUsd) : <NoDataValue />}
           />
         </div>
         <div className="md:px-8">
