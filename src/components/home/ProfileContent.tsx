@@ -7,6 +7,7 @@ import { getWallets, type Wallet } from "@/lib/api/wallets";
 import { useSession } from "@/lib/auth/useSession";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { ConnectWalletEmptyState } from "@/components/home/ConnectWalletEmptyState";
+import { WalletSyncingState } from "@/components/home/WalletSyncingState";
 import { ProfileDashboard } from "@/components/home/dashboard/ProfileDashboard";
 
 /** Esqueleto enquanto as métricas carregam. */
@@ -29,6 +30,13 @@ function DashboardSkeleton() {
 
 /** Intervalo do polling da LISTA de carteiras (leve) enquanto há sync em andamento. */
 const WALLETS_POLL_MS = 20_000;
+
+/**
+ * Intervalo do polling das MÉTRICAS enquanto uma carteira sincroniza. Mais curto
+ * que o da lista para o dashboard "acender" logo que a ingestão grava os trades,
+ * sem esperar o ciclo de 20s. Só roda durante o sync (estado transitório) → não é loop.
+ */
+const METRICS_POLL_MS = 8_000;
 
 /** Há carteira com ingestão em andamento. */
 function isSyncing(wallets: Wallet[]): boolean {
@@ -68,14 +76,22 @@ export function ProfileContent() {
     }
   }, [selectedWalletId, walletsQuery.data, walletsQuery.isLoading, select]);
 
-  // Quando o sync TERMINA (syncing: true → false), recarrega as métricas UMA vez.
-  const wasSyncing = useRef(false);
+  // Mudou o CONJUNTO de carteiras (conectou/removeu) → recarrega as métricas.
+  // Cobre a conexão de carteira que sincroniza rápido (SYNCED antes do 1º poll):
+  // o WalletVerifier invalida as métricas ANTES da ingestão gravar, então sem este
+  // gatilho o dashboard ficaria preso no snapshot vazio até uma troca manual de carteira.
+  const prevWalletIds = useRef<string | null>(null);
   useEffect(() => {
-    if (wasSyncing.current && !syncing) {
+    if (walletsQuery.isLoading) return;
+    const ids = (walletsQuery.data ?? [])
+      .map((w) => w.id)
+      .sort()
+      .join(",");
+    if (prevWalletIds.current !== null && prevWalletIds.current !== ids) {
       queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
     }
-    wasSyncing.current = syncing;
-  }, [syncing, queryClient]);
+    prevWalletIds.current = ids;
+  }, [walletsQuery.data, walletsQuery.isLoading, queryClient]);
 
   const portfolioQuery = useQuery({
     // A seleção entra na chave → troca de carteira refaz a query certa. Janela: 30 dias.
@@ -83,6 +99,9 @@ export function ProfileContent() {
     queryFn: () => getPortfolioAnalytics("D30", selectedWalletId),
     retry: false,
     enabled: isAuthenticated && hasWallet, // só busca métricas quando há carteira
+    // Enquanto sincroniza, repõe as métricas a cada 8s → o dashboard acende assim que
+    // a ingestão grava os trades. Para automaticamente quando o sync termina.
+    refetchInterval: syncing ? METRICS_POLL_MS : false,
   });
 
   if (authLoading) return <DashboardSkeleton />;
@@ -91,8 +110,15 @@ export function ProfileContent() {
   if (walletsQuery.isLoading) return <DashboardSkeleton />;
   if (!hasWallet) return <ConnectWalletEmptyState />;
 
-  // Tem carteira → sempre o dashboard (mesmo tudo zerado). Esqueleto só no 1º load.
+  // Carteira recém-conectada ainda sincronizando e SEM trades → animação de sync +
+  // barra de progresso. O painel abre sozinho: enquanto `syncing`, o portfolioQuery
+  // faz polling (8s) e troca para o dashboard assim que os primeiros trades chegam.
   const data = portfolioQuery.data;
+  if (syncing && (!data || data.totalTrades === 0)) {
+    return <WalletSyncingState />;
+  }
+
+  // Tem carteira → dashboard (mesmo tudo zerado). Esqueleto só no 1º load.
   if (!data) return <DashboardSkeleton />;
   return <ProfileDashboard data={data} />;
 }

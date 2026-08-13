@@ -28,6 +28,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/forgot-password")) return true;
   if (pathname.startsWith("/reset-password")) return true;
   if (pathname.startsWith("/auth/")) return true;
+  if (pathname.startsWith("/spline-test")) return true; // DEBUG temporário — remover
   return false;
 }
 
@@ -82,6 +83,14 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const app = appOrigins();
   const turnstile = "https://challenges.cloudflare.com";
 
+  // Spline (animação de "sincronizando"): runtime empacotado localmente (script-src
+  // fica 'self'); liberamos os hosts da CENA (.splinecode + texturas) + unpkg (o
+  // runtime baixa sob demanda os .wasm de física/navmesh/boolean/ui de unpkg) +
+  // 'wasm-unsafe-eval' p/ instanciar esses WASM ('wasm-unsafe-eval' NÃO permite
+  // eval de JS — bem mais restrito que 'unsafe-eval').
+  const splineConnect = "https://*.spline.design https://unpkg.com";
+  const splineImg = "https://*.spline.design";
+
   // Wallet connect (Reown/WalletConnect): só libera os domínios quando há
   // projectId configurado — mantém a CSP mínima quando a carteira está desligada.
   const walletOn = (process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "").length > 0;
@@ -107,12 +116,12 @@ function buildContentSecurityPolicy(isDev: boolean): string {
 
   const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} ${turnstile}`,
+    `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile}`,
     `style-src 'self' 'unsafe-inline' ${wcStyle}`,
     `font-src 'self' data: ${wcFont}`,
-    // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras.
-    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${wcImg}`,
-    `connect-src 'self' ${api} ${turnstile} ${wcConnect} ${isDev ? "ws: wss:" : ""}`,
+    // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras + texturas do Spline.
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${wcImg} ${splineImg}`,
+    `connect-src 'self' ${api} ${turnstile} ${wcConnect} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
     `frame-src ${turnstile} ${wcFrame}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,

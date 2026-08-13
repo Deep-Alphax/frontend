@@ -43,6 +43,25 @@
   --color-mint-10: #86ead4; /* stop loss (menta do Figma) */
   --color-purple-10: #8b7ff5; /* 1x–2x */
   --color-blue-10: #47a3ff; /* 2x–5x / 2ª fatia da concentração */
+
+  /* Barra de progresso INDETERMINADA (sync de carteira sem % real do provider). */
+  --animate-indeterminate: indeterminate 1.4s ease-in-out infinite;
+}
+
+/* Segmento que desliza pelo trilho — usado por `animate-indeterminate`. */
+@keyframes indeterminate {
+  0% {
+    left: -45%;
+    right: 100%;
+  }
+  60% {
+    left: 25%;
+    right: 15%;
+  }
+  100% {
+    left: 100%;
+    right: -45%;
+  }
 }
 
 @layer base {
