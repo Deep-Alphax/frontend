@@ -104,6 +104,14 @@ export interface PortfolioAnalytics {
     available: boolean;
     points: BenchmarkPoint[];
   };
+  // PnL não-realizado: valor atual das posições ainda em carteira − base de custo.
+  // Opcional: backend antigo (pré-restart) pode não devolver este campo.
+  unrealized?: {
+    available: boolean;
+    unrealizedPnlUsd: string | null;
+    openPositions: number;
+    pricedPositions: number;
+  };
 }
 
 export interface PerTradePeak {

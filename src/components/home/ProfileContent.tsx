@@ -34,6 +34,24 @@ function isSyncing(wallets: Wallet[]): boolean {
   return wallets.some((w) => w.syncStatus === "PENDING" || w.syncStatus === "SYNCING");
 }
 
+/** Erro ao carregar as métricas (ex.: backend fora do ar). Retry manual, sem loop. */
+function DashboardError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-lg border border-gray-6 bg-gray-2 px-6 py-16 text-center">
+      <p className="text-base text-gray-11">
+        Não foi possível carregar as métricas agora. Verifique sua conexão e tente de novo.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-lg bg-principal-9 px-6 py-2.5 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+      >
+        Tentar de novo
+      </button>
+    </div>
+  );
+}
+
 /**
  * Conteúdo do perfil. A tela "conecte uma carteira" aparece SOMENTE sem carteira;
  * com carteira, sempre o dashboard (zerado se não houver trades na janela).
@@ -74,12 +92,14 @@ export function ProfileContent() {
   const hasWallet = wallets.length > 0;
   const syncing = isSyncing(wallets);
 
-  // Se a carteira selecionada sumiu (removida em outra aba, etc.) → volta ao agregado.
+  // Sem agregado "todas": garante SEMPRE uma carteira selecionada quando há carteiras.
+  // Seleciona a 1ª quando nada está selecionado (load) OU a selecionada sumiu (removida).
   useEffect(() => {
+    if (walletsQuery.isLoading) return;
     const list = walletsQuery.data ?? [];
-    if (selectedWalletId && !walletsQuery.isLoading && !list.some((w) => w.id === selectedWalletId)) {
-      select(null);
-    }
+    if (list.length === 0) return;
+    const stillThere = selectedWalletId && list.some((w) => w.id === selectedWalletId);
+    if (!stillThere) select(list[0].id);
   }, [selectedWalletId, walletsQuery.data, walletsQuery.isLoading, select]);
 
   // Detecta carteira(s) recém-CONECTADA(s). Ao conectar uma nova, ela vira a
@@ -110,7 +130,8 @@ export function ProfileContent() {
     queryKey: ["portfolio-analytics", "D30", selectedWalletId],
     queryFn: () => getPortfolioAnalytics("D30", selectedWalletId),
     retry: false,
-    enabled: isAuthenticated && hasWallet, // só busca métricas quando há carteira
+    // Só busca quando há carteira E uma selecionada (evita chamada solta com null).
+    enabled: isAuthenticated && hasWallet && !!selectedWalletId,
     // Sem polling: o fim do sync chega por WebSocket (useSyncEvents) e invalida esta query.
   });
   const data = portfolioQuery.data;
@@ -121,7 +142,7 @@ export function ProfileContent() {
     queryKey: ["wallet-balance", selectedWalletId],
     queryFn: () => getWalletBalance(selectedWalletId),
     retry: false,
-    enabled: isAuthenticated && hasWallet,
+    enabled: isAuthenticated && hasWallet && !!selectedWalletId,
     staleTime: 30_000,
   });
   const dataReady = !!data && data.totalTrades > 0;
@@ -150,6 +171,12 @@ export function ProfileContent() {
   // em andamento sem trades. Evita o flash de dashboard ZERADO no intervalo.
   if (awaitingData || (syncing && (!data || data.totalTrades === 0))) {
     return <WalletSyncingState />;
+  }
+
+  // Erro ao buscar métricas (backend fora do ar, rede) → estado de erro com retry.
+  // Evita o esqueleto pulsando pra sempre (o "piscando") e não re-tenta em loop.
+  if (portfolioQuery.isError && !data) {
+    return <DashboardError onRetry={() => void portfolioQuery.refetch()} />;
   }
 
   // Tem carteira → dashboard (mesmo tudo zerado). Esqueleto só no 1º load.

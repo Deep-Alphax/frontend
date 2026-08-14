@@ -1,17 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Check, ChevronDown, LayoutGrid, Loader2, Plus, Shield, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Shield, Trash2 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { getWallets, deleteWallet } from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/useSession";
 import { useWalletSelection } from "@/lib/store/walletSelection";
-import { useWalletConnect } from "@/lib/wallet/useWalletConnect";
+import { AddWalletModal } from "@/components/home/AddWalletModal";
 import { cn } from "@/lib/cn";
 
 /** Encurta um endereço on-chain (0x1234…abcd). */
@@ -32,7 +33,7 @@ interface AccountMenuProps {
  */
 export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
   const queryClient = useQueryClient();
-  const wallet = useWalletConnect();
+  const [addOpen, setAddOpen] = useState(false);
   const { profile } = useSession();
   const isAdmin = profile?.role === "ADMIN";
   const selectedWalletId = useWalletSelection((s) => s.selectedWalletId);
@@ -50,7 +51,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
     if (!window.confirm(`Remover a carteira ${label}? Os dados dela saem do painel.`)) return;
     try {
       await deleteWallet(id);
-      if (selectedWalletId === id) select(null); // caiu a selecionada → volta ao agregado
+      if (selectedWalletId === id) select(null); // caiu a selecionada → ProfileContent escolhe outra
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
       toast.success("Carteira removida.");
@@ -63,6 +64,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
     "flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-gray-12 outline-none transition-colors data-[highlighted]:bg-gray-3";
 
   return (
+    <>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
@@ -85,14 +87,9 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
             Carteiras
           </div>
 
-          {/* Agregado (todas) */}
-          <DropdownMenu.Item className={itemClass} onSelect={() => select(null)}>
-            <LayoutGrid className="size-4 text-gray-11" />
-            <span className="flex-1">Portfólio (todas)</span>
-            {selectedWalletId === null ? <Check className="size-4 text-principal-9" /> : null}
-          </DropdownMenu.Item>
-
-          {wallets.length > 0 ? <DropdownMenu.Separator className="my-1.5 h-px bg-gray-6" /> : null}
+          {wallets.length === 0 ? (
+            <div className="px-2 py-2 text-sm text-gray-11">Nenhuma carteira ainda.</div>
+          ) : null}
 
           {/* Uma carteira por linha (selecionar + remover) */}
           {wallets.map((w) => {
@@ -138,9 +135,9 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
 
           <DropdownMenu.Separator className="my-1.5 h-px bg-gray-6" />
 
-          <DropdownMenu.Item className={itemClass} onSelect={() => wallet.open()}>
+          <DropdownMenu.Item className={itemClass} onSelect={() => setAddOpen(true)}>
             <Plus className="size-4 text-gray-11" />
-            <span>Conectar outra carteira</span>
+            <span>Adicionar carteira</span>
           </DropdownMenu.Item>
 
           {isAdmin ? (
@@ -157,5 +154,8 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+
+    <AddWalletModal open={addOpen} onOpenChange={setAddOpen} />
+    </>
   );
 }

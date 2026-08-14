@@ -1,22 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/lib/auth/useSession";
-import { useWalletConnect } from "@/lib/wallet/useWalletConnect";
+import { AddWalletModal } from "@/components/home/AddWalletModal";
 
 /**
- * Estado vazio exibido na Home quando não há carteira conectada (node Figma
+ * Estado vazio exibido na Home quando não há carteira catalogada (node Figma
  * 215:2964). Card com fundo decorativo (glows + textura pontilhada mascarada, em
  * mix-blend color-dodge), ícone 3D de carteira, texto e CTA.
  *
- * O CTA "Acessar plataforma" é sensível à sessão:
+ * O CTA é sensível à sessão:
  *   - deslogado → leva ao /login;
- *   - logado → abre o modal de conexão de carteira (EVM + Solana).
+ *   - logado → abre o modal de busca de carteira (cataloga por endereço, sem assinatura).
  */
 export function ConnectWalletEmptyState() {
   const { isAuthenticated } = useSession();
-  const wallet = useWalletConnect();
+  const [addOpen, setAddOpen] = useState(false);
 
   return (
     <div className="relative flex min-h-[442px] w-full items-center justify-center overflow-hidden rounded-lg border border-gray-6 bg-gray-2 px-6 py-16">
@@ -76,23 +77,25 @@ export function ConnectWalletEmptyState() {
 
           <div className="flex flex-col items-center gap-4 text-center">
             <h2 className="text-2xl font-semibold leading-[1.1] text-gray-12">
-              Conecte uma carteira
+              Adicione uma carteira
             </h2>
             <p className="text-base text-gray-11">
-              Para visualizar as informações do seu perfil, precisamos ler o
-              histórico de um endereço.
+              Para visualizar as informações do perfil, cole o endereço de uma
+              carteira e a gente lê o histórico dela.
             </p>
           </div>
         </div>
 
         {isAuthenticated ? (
-          <Button onClick={wallet.open}>Acessar plataforma</Button>
+          <Button onClick={() => setAddOpen(true)}>Buscar carteira</Button>
         ) : (
           <Button asChild>
             <Link href="/login">Acessar plataforma</Link>
           </Button>
         )}
       </div>
+
+      <AddWalletModal open={addOpen} onOpenChange={setAddOpen} />
     </div>
   );
 }

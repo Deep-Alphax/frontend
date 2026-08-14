@@ -25,7 +25,6 @@ import {
 import { deriveDrawdownWindow } from "@/lib/deriveDrawdown";
 import { InfoHint } from "@/components/ui/InfoHint";
 import { RichInfoHint, type TooltipTone } from "@/components/ui/RichInfoHint";
-import { NoDataBadge, NoDataValue } from "@/components/home/dashboard/ComingSoon";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
@@ -60,6 +59,21 @@ function MiniKpi({
 
 export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   const { capital, bankroll, benchmark, realizedPnlUsd, perDay, daily } = data;
+
+  // Defensivo: backend antigo (ainda não reiniciado) não devolve `unrealized`.
+  const unrealized = data.unrealized ?? {
+    available: false,
+    unrealizedPnlUsd: null,
+    openPositions: 0,
+    pricedPositions: 0,
+  };
+
+  // PnL Total = realizado (fechado) + não-realizado (posições em carteira a preço atual).
+  const unrealizedUsd =
+    unrealized.available && unrealized.unrealizedPnlUsd != null
+      ? Number(unrealized.unrealizedPnlUsd)
+      : 0;
+  const totalPnlUsd = Number(realizedPnlUsd) + unrealizedUsd;
 
   const { chartData, options } = useMemo(() => {
     const labels = capital.points.map((p) => formatShortDate(p.date));
@@ -142,24 +156,25 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   }, [capital.points, benchmark]);
 
   // ── Tooltips ricos dos mini-KPIs ──
-  const activeDays = Math.max(1, perDay.activeDays);
-  const avgPerDay = Number(realizedPnlUsd) / activeDays;
-
   const resultTooltip = (
     <RichInfoHint
-      title="Resultado do período"
-      description="Já liquidado de taxa, gas, tip e slippage"
+      title="PNL Total"
+      description="Realizado (fechado) + não-realizado (em carteira)"
       rows={[
-        { label: "PnL acumulado", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
-        { label: "Bankroll de referência", value: formatUsd(bankroll.peakDeployedUsd) },
+        { label: "Realizado", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
+        {
+          label: "Não-realizado",
+          value: unrealized.available ? formatSignedUsd(unrealizedUsd) : "—",
+          tone: unrealized.available ? toneOf(unrealizedUsd) : "default",
+        },
+        { label: "Total", value: formatSignedUsd(totalPnlUsd), tone: toneOf(totalPnlUsd) },
         {
           label: "Variação",
           value: bankroll.pnlPctOfBankroll != null ? formatSignedPct(bankroll.pnlPctOfBankroll) : "—",
           tone: bankroll.pnlPctOfBankroll != null ? toneOf(bankroll.pnlPctOfBankroll) : "default",
         },
-        { label: "Média por dia operado", value: formatSignedUsd(avgPerDay), tone: toneOf(avgPerDay) },
       ]}
-      footer="É o que sobrou na carteira, não o que passou por ela"
+      footer="Realizado já líquido de taxa/gas/tip; não-realizado a preço atual"
     />
   );
 
@@ -209,10 +224,6 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
       ? formatPct(-bankroll.maxDrawdownPct, 1)
       : `−${formatUsd(capital.maxDrawdownUsd)}`;
 
-  const lastSol = benchmark.available
-    ? benchmark.points[benchmark.points.length - 1]?.portfolioInSol
-    : null;
-
   return (
     <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
       <div className="flex items-center justify-between border-b border-gray-6 px-6 py-4">
@@ -224,42 +235,51 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
 
       <div className="grid grid-cols-2 divide-x divide-gray-6 border-b border-gray-6 lg:grid-cols-4">
         <MiniKpi
-          label="Resultado"
+          label="PNL Total"
           hint={resultTooltip}
           footer={
             bankroll.pnlPctOfBankroll != null
               ? `${formatSignedPct(bankroll.pnlPctOfBankroll)} sobre o bankroll`
-              : "Acumulado no período"
+              : "Realizado + não-realizado"
           }
         >
           <span
             className={
-              signOf(realizedPnlUsd) < 0
+              signOf(totalPnlUsd) < 0
                 ? "text-danger-11"
-                : signOf(realizedPnlUsd) > 0
+                : signOf(totalPnlUsd) > 0
                   ? "text-green-11"
                   : "text-gray-12"
             }
           >
-            {formatSignedUsd(realizedPnlUsd)}
+            {formatSignedUsd(totalPnlUsd)}
           </span>
         </MiniKpi>
 
         <MiniKpi
-          label="Sol acumulado"
+          label="PNL não-realizado"
           hint={
-            <InfoHint text="SOL líquido que o trading gerou no período: SOL recebido nas vendas − SOL gasto nas compras. Reflete o SOL que de fato entrou na carteira." />
+            <InfoHint text="Lucro/prejuízo em aberto das posições que você ainda segura: valor atual (preço de mercado × quantidade) menos a base de custo. Token sem preço de mercado (rugado) conta como perda total." />
           }
-          footer={benchmark.available ? "SOL líquido no período" : <NoDataBadge />}
+          footer={
+            unrealized.available
+              ? `${unrealized.openPositions} ${unrealized.openPositions === 1 ? "posição" : "posições"} em carteira`
+              : "Nada em carteira"
+          }
         >
-          {lastSol != null ? (
-            <span>
-              {Number(lastSol).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}{" "}
-              <span className="text-base text-gray-11">SOL</span>
-            </span>
-          ) : (
-            <NoDataValue />
-          )}
+          <span
+            className={
+              !unrealized.available
+                ? "text-gray-12"
+                : signOf(unrealizedUsd) < 0
+                  ? "text-danger-11"
+                  : signOf(unrealizedUsd) > 0
+                    ? "text-green-11"
+                    : "text-gray-12"
+            }
+          >
+            {unrealized.available ? formatSignedUsd(unrealizedUsd) : formatUsd(0)}
+          </span>
         </MiniKpi>
 
         <MiniKpi

@@ -10,11 +10,13 @@ export type BackendChain =
   | "POLYGON"
   | "OPTIMISM";
 
-export interface CreateWalletInput {
+/** Papel da carteira no catálogo do usuário. */
+export type CatalogRole = "TRACKED" | "SOURCE";
+
+export interface CatalogWalletInput {
   chain: BackendChain;
   address: string;
-  /** Assinatura da mensagem de verificação (prova de posse). Hex no EVM; base64 no Solana. */
-  signature: string;
+  role?: CatalogRole;
   label?: string;
 }
 
@@ -23,38 +25,28 @@ export interface Wallet {
   chain: BackendChain;
   address: string;
   label: string | null;
+  role: CatalogRole;
   syncStatus: "PENDING" | "SYNCING" | "SYNCED" | "ERROR";
 }
 
 /**
- * POST /api/v1/wallets/verify/nonce — passo 1: pede a mensagem a assinar para
- * provar posse do endereço (o backend controla a mensagem, anti-tamper).
+ * POST /api/v1/wallets — busca/cataloga um endereço público na conta (SEM assinatura).
+ * Os dados on-chain são compartilhados (carteira canônica por chain+endereço); catalogar
+ * é só um bookmark. Se a carteira for nova ou estiver desatualizada, dispara a ingestão.
+ * 400 = endereço inválido ou limite atingido.
  */
-export async function requestWalletNonce(input: {
-  chain: BackendChain;
-  address: string;
-}): Promise<{ message: string }> {
-  const { data } = await api.post<{ message: string }>("/api/v1/wallets/verify/nonce", input);
-  return data;
-}
-
-/**
- * POST /api/v1/wallets — passo 2: cadastra a carteira validando a assinatura
- * (prova de posse) e dispara a ingestão. 401 = assinatura inválida; 400 =
- * verificação expirada; 409 = endereço já cadastrado como fonte.
- */
-export async function createWallet(input: CreateWalletInput): Promise<Wallet> {
+export async function catalogWallet(input: CatalogWalletInput): Promise<Wallet> {
   const { data } = await api.post<Wallet>("/api/v1/wallets", input);
   return data;
 }
 
-/** GET /api/v1/wallets — carteiras OWN do usuário (para saber se há carteira conectada). */
+/** GET /api/v1/wallets — carteiras catalogadas pelo usuário. */
 export async function getWallets(): Promise<Wallet[]> {
   const { data } = await api.get<Wallet[]>("/api/v1/wallets");
   return data;
 }
 
-/** DELETE /api/v1/wallets/:id — remove a carteira (e seus trades/métricas, via cascade). */
+/** DELETE /api/v1/wallets/:id — remove a carteira do catálogo (os dados compartilhados ficam). */
 export async function deleteWallet(id: string): Promise<void> {
   await api.delete(`/api/v1/wallets/${id}`);
 }
