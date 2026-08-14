@@ -62,9 +62,10 @@ export async function removeSourceWallet(sourceId: string, walletId: string): Pr
  */
 export async function getSourcesAnalytics(
   period: MetricPeriod = "D30",
+  walletId?: string | null,
 ): Promise<TradeSource[]> {
   const { data } = await api.get<TradeSource[]>("/api/v1/analytics/sources", {
-    params: { period },
+    params: { period, ...(walletId ? { walletId } : {}) },
   });
   return data;
 }
@@ -72,13 +73,15 @@ export async function getSourcesAnalytics(
 /**
  * GET /api/v1/analytics/discord-sources — "De onde vieram os trades" cruzando os
  * trades com as calls dos grupos do Discord (atribuição por servidor via CA/ticker).
+ * `walletId` escopa à carteira selecionada (como as outras tabs); sem ele = agregado.
  */
 export async function getDiscordSourcesAnalytics(
   period: MetricPeriod = "D30",
+  walletId?: string | null,
 ): Promise<TradeSource[]> {
   const { data } = await api.get<TradeSource[]>(
     "/api/v1/analytics/discord-sources",
-    { params: { period } },
+    { params: { period, ...(walletId ? { walletId } : {}) } },
   );
   return data;
 }

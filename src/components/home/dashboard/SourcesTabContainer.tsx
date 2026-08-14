@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MetricPeriod } from "@/lib/api/analytics";
 import { getDiscordSourcesAnalytics } from "@/lib/api/sources";
+import { useWalletSelection } from "@/lib/store/walletSelection";
 import { SourcesTab } from "@/components/home/dashboard/SourcesTab";
 
 /** Esqueleto enquanto o breakdown por fonte carrega. */
@@ -27,9 +28,11 @@ function SourcesSkeleton() {
  * monta ao abrir a aba). Erro/ausência → lista vazia (empty state da tab).
  */
 export function SourcesTabContainer({ period = "D30" }: { period?: MetricPeriod }) {
+  // Escopa à carteira selecionada (igual às outras tabs) — não agrega todas.
+  const selectedWalletId = useWalletSelection((s) => s.selectedWalletId);
   const { data, isLoading } = useQuery({
-    queryKey: ["discord-sources-analytics", period],
-    queryFn: () => getDiscordSourcesAnalytics(period),
+    queryKey: ["discord-sources-analytics", period, selectedWalletId],
+    queryFn: () => getDiscordSourcesAnalytics(period, selectedWalletId),
     retry: false,
   });
 
