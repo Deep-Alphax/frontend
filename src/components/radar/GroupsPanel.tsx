@@ -84,7 +84,7 @@ export function GroupsPanel({ groups, loaded, selectedKey, onSelect }: GroupsPan
   return (
     <aside className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
       {/* Título */}
-      <div className="border-b border-gray-6 px-3 py-4">
+      <div className="border-b border-gray-6 px-3 py-3">
         <h2 className="text-base font-semibold leading-tight text-gray-12">Grupos</h2>
       </div>
 
