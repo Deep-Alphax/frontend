@@ -1,48 +1,240 @@
 @import "tailwindcss";
 
 /*
- * Deep Alpha — design tokens (tema escuro único).
- * Fonte de verdade: variáveis do Figma (primitivas Gray / Principal / Secundaria).
- * Só definimos os tons realmente usados + poucos derivados p/ estados de interação
- * (comentados). Manter enxuto evita cor "inventada" fora do design system.
+ * Deep Alpha — design tokens (tema escuro).
+ * Fonte de verdade: Design System oficial (deep-alpha-design-system.vercel.app).
+ * Escalas primitivas completas (1–12) das 9 famílias, motion e tipografia
+ * espelham o DS. Espaçamento e raio já coincidem com a escala padrão do
+ * Tailwind v4 (base 4px), então não são redefinidos aqui.
  */
 @theme {
-  /* Famílias tipográficas (carregadas via next/font em layout.tsx). */
+  /* ─────────────── Tipografia (fontes carregadas via next/font em layout.tsx) ── */
   --font-display: var(--font-unbounded);
   --font-body: var(--font-work-sans);
 
-  /* Neutros */
-  --color-gray-1: #111217; /* fundo da aplicação */
-  --color-gray-2: #18191f; /* superfícies: inputs, botão secundário */
-  --color-gray-3: #21222b; /* painel lateral, hover de superfície */
-  --color-gray-5: #2e303e; /* trilho vazio do medidor de senha */
-  --color-gray-6: #3d3f4a; /* bordas e divisores */
-  --color-gray-11: #c0c2ce; /* texto/ícone secundário, placeholder */
-  --color-gray-12: #fafafd; /* texto/ícone primário */
+  /* ─────────────── Cores — primitivas do DS (valores do tema escuro) ────────── */
 
-  /* Principal (amarelo) — CTA */
+  /* gray — neutro azulado */
+  --color-gray-1: #111217;
+  --color-gray-2: #18191f;
+  --color-gray-3: #21222b;
+  --color-gray-4: #272935;
+  --color-gray-5: #2e303e;
+  --color-gray-6: #3d3f4a;
+  --color-gray-7: #50525b;
+  --color-gray-8: #696b7b;
+  --color-gray-9: #7a7d8b;
+  --color-gray-10: #848799;
+  --color-gray-11: #c0c2ce;
+  --color-gray-12: #fafafd;
+
+  /* principal — marca primária (amarelo) / CTA */
+  --color-principal-1: #15120c;
+  --color-principal-2: #1e1b11;
+  --color-principal-3: #30280b;
+  --color-principal-4: #3e3102;
+  --color-principal-5: #4b3c02;
+  --color-principal-6: #5a4a0a;
+  --color-principal-7: #6f5d1e;
+  --color-principal-8: #8a7427;
   --color-principal-9: #f9d240;
-  --color-principal-10: #f2c521; /* derivado: hover do CTA (~6% mais escuro) */
+  --color-principal-10: #ffdc4f;
+  --color-principal-11: #f1c600;
+  --color-principal-12: #f8eab2;
 
-  /* Secundária (azul) — links, seleção */
+  /* secundaria — marca secundária (azul) / links, seleção */
+  --color-secundaria-1: #0c151d;
+  --color-secundaria-2: #101c27;
+  --color-secundaria-3: #102c43;
+  --color-secundaria-4: #1d4364;
+  --color-secundaria-5: #255076;
+  --color-secundaria-6: #2e5d86;
+  --color-secundaria-7: #386c9a;
+  --color-secundaria-8: #417fb5;
+  --color-secundaria-9: #3c92dd;
+  --color-secundaria-10: #50a0e8;
   --color-secundaria-11: #93cdff;
+  --color-secundaria-12: #cce5fd;
+
+  /* vermelho — erro/destrutivo */
+  --color-vermelho-1: #191111;
+  --color-vermelho-2: #201314;
+  --color-vermelho-3: #3b1219;
+  --color-vermelho-4: #500f1c;
+  --color-vermelho-5: #611623;
+  --color-vermelho-6: #72232d;
+  --color-vermelho-7: #8c333a;
+  --color-vermelho-8: #b54548;
+  --color-vermelho-9: #e5484d;
+  --color-vermelho-10: #ec5d5e;
+  --color-vermelho-11: #ff9592;
+  --color-vermelho-12: #ffd1d9;
+
+  /* green — sucesso */
+  --color-green-1: #0e1511;
+  --color-green-2: #141a15;
+  --color-green-3: #1b2a1e;
+  --color-green-4: #1d3a24;
+  --color-green-5: #25482d;
+  --color-green-6: #2d5736;
+  --color-green-7: #366740;
+  --color-green-8: #3e7949;
+  --color-green-9: #46a758;
+  --color-green-10: #53b365;
+  --color-green-11: #71d083;
+  --color-green-12: #c2f0c2;
+
+  /* azul — informação (ciano) */
+  --color-azul-1: #0b161a;
+  --color-azul-2: #101b20;
+  --color-azul-3: #082c36;
+  --color-azul-4: #003848;
+  --color-azul-5: #004558;
+  --color-azul-6: #045468;
+  --color-azul-7: #12677e;
+  --color-azul-8: #11809c;
+  --color-azul-9: #00a2c7;
+  --color-azul-10: #23afd0;
+  --color-azul-11: #4ccce6;
+  --color-azul-12: #b6ecf7;
+
+  /* laranja — atenção/aviso */
+  --color-laranja-1: #181111;
+  --color-laranja-2: #1f1513;
+  --color-laranja-3: #391714;
+  --color-laranja-4: #4e1511;
+  --color-laranja-5: #5e1c16;
+  --color-laranja-6: #6e2920;
+  --color-laranja-7: #853a2d;
+  --color-laranja-8: #ac4d39;
+  --color-laranja-9: #e54d2e;
+  --color-laranja-10: #ec6142;
+  --color-laranja-11: #ff977d;
+  --color-laranja-12: #fbd3cb;
+
+  /* violeta — categórica */
+  --color-violeta-1: #14121f;
+  --color-violeta-2: #1b1525;
+  --color-violeta-3: #291f43;
+  --color-violeta-4: #33255b;
+  --color-violeta-5: #3c2e69;
+  --color-violeta-6: #473876;
+  --color-violeta-7: #56468b;
+  --color-violeta-8: #6958ad;
+  --color-violeta-9: #6e56cf;
+  --color-violeta-10: #7d66d9;
+  --color-violeta-11: #baa7ff;
+  --color-violeta-12: #e2ddfe;
+
+  /* menta — categórica */
+  --color-menta-1: #0e1515;
+  --color-menta-2: #0f1b1b;
+  --color-menta-3: #092c2b;
+  --color-menta-4: #003a38;
+  --color-menta-5: #004744;
+  --color-menta-6: #105650;
+  --color-menta-7: #1e685f;
+  --color-menta-8: #277f70;
+  --color-menta-9: #86ead4;
+  --color-menta-10: #a8f5e5;
+  --color-menta-11: #58d5ba;
+  --color-menta-12: #c4f5e1;
 
   /*
-   * Semânticas de feedback. Verde vem do Figma (medidor "Senha forte").
-   * Vermelho/âmbar são derivados coerentes para os estados fraca/média, que o
-   * design não especifica. -10 = preenchimento; -11 = texto sobre fundo escuro.
+   * Aliases de compatibilidade — nomes já usados no código, mapeados às
+   * primitivas canônicas do DS. `amber` não tem equivalente no DS (é o único
+   * amarelo-âmbar de estado "senha média"); `purple`/`blue` são categóricos de
+   * gráfico mantidos até migrarem para violeta/secundaria.
    */
-  --color-danger-10: #e5484d; /* barra: senha fraca */
-  --color-danger-11: #ff8a8a; /* texto: erro de campo / senha fraca */
-  --color-amber-10: #ffb224; /* barra: senha média */
-  --color-amber-11: #ffca16; /* texto: senha média */
-  --color-green-10: #55b467; /* barra: senha forte / ganho */
-  --color-green-11: #71d083; /* texto: senha forte / ganho */
+  --color-danger-10: var(--color-vermelho-9);
+  --color-danger-11: var(--color-vermelho-11);
+  --color-mint-10: var(--color-menta-9);
+  --color-amber-10: #ffb224;
+  --color-amber-11: #ffca16;
+  --color-purple-10: #8b7ff5;
+  --color-blue-10: #47a3ff;
 
-  /* Categóricas dos gráficos do dashboard (desfecho de trades / concentração). */
-  --color-mint-10: #86ead4; /* stop loss (menta do Figma) */
-  --color-purple-10: #8b7ff5; /* 1x–2x */
-  --color-blue-10: #47a3ff; /* 2x–5x / 2ª fatia da concentração */
+  /* ─────────────── Motion — durações, curvas e cascata (DS) ─────────────────── */
+  /* Curvas: `ease-standard` (novo) + override de `ease-out`/`ease-in` para o DS. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* Durações (referência p/ CSS e para o espelho em src/lib/motion.ts). */
+  --duration-instant: 80ms;
+  --duration-quick: 140ms;
+  --duration-base: 200ms;
+  --duration-emphasis: 320ms;
+  --duration-entrance: 420ms;
+  --duration-ambient: 1200ms;
+
+  /* Atrasos de cascata (stagger). */
+  --stagger-tight: 25ms;
+  --stagger-base: 40ms;
+  --stagger-loose: 60ms;
+
+  /* ─────────────── Tipografia — escala Display (Unbounded 700) ──────────────── */
+  /* Cada estilo carrega tamanho + line-height + letter-spacing + peso do DS. */
+  --text-display-16: 1rem;
+  --text-display-16--line-height: 1.25;
+  --text-display-16--letter-spacing: -0.01em;
+  --text-display-16--font-weight: 700;
+  --text-display-18: 1.125rem;
+  --text-display-18--line-height: 1.25;
+  --text-display-18--letter-spacing: -0.01em;
+  --text-display-18--font-weight: 700;
+  --text-display-20: 1.25rem;
+  --text-display-20--line-height: 1.25;
+  --text-display-20--letter-spacing: -0.01em;
+  --text-display-20--font-weight: 700;
+  --text-display-24: 1.5rem;
+  --text-display-24--line-height: 1.25;
+  --text-display-24--letter-spacing: -0.01em;
+  --text-display-24--font-weight: 700;
+  --text-display-28: 1.75rem;
+  --text-display-28--line-height: 1.15;
+  --text-display-28--letter-spacing: -0.02em;
+  --text-display-28--font-weight: 700;
+  --text-display-32: 2rem;
+  --text-display-32--line-height: 1.15;
+  --text-display-32--letter-spacing: -0.02em;
+  --text-display-32--font-weight: 700;
+  --text-display-36: 2.25rem;
+  --text-display-36--line-height: 1.15;
+  --text-display-36--letter-spacing: -0.02em;
+  --text-display-36--font-weight: 700;
+  --text-display-40: 2.5rem;
+  --text-display-40--line-height: 1.15;
+  --text-display-40--letter-spacing: -0.02em;
+  --text-display-40--font-weight: 700;
+  --text-display-44: 2.75rem;
+  --text-display-44--line-height: 1.08;
+  --text-display-44--letter-spacing: -0.03em;
+  --text-display-44--font-weight: 700;
+  --text-display-48: 3rem;
+  --text-display-48--line-height: 1.08;
+  --text-display-48--letter-spacing: -0.03em;
+  --text-display-48--font-weight: 700;
+  --text-display-52: 3.25rem;
+  --text-display-52--line-height: 1.08;
+  --text-display-52--letter-spacing: -0.03em;
+  --text-display-52--font-weight: 700;
+  --text-display-56: 3.5rem;
+  --text-display-56--line-height: 1.08;
+  --text-display-56--letter-spacing: -0.03em;
+  --text-display-56--font-weight: 700;
+  --text-display-60: 3.75rem;
+  --text-display-60--line-height: 1.02;
+  --text-display-60--letter-spacing: -0.035em;
+  --text-display-60--font-weight: 700;
+  --text-display-64: 4rem;
+  --text-display-64--line-height: 1.02;
+  --text-display-64--letter-spacing: -0.035em;
+  --text-display-64--font-weight: 700;
+  --text-display-72: 4.5rem;
+  --text-display-72--line-height: 1.02;
+  --text-display-72--letter-spacing: -0.035em;
+  --text-display-72--font-weight: 700;
 
   /* Barra de progresso INDETERMINADA (sync de carteira sem % real do provider). */
   --animate-indeterminate: indeterminate 1.4s ease-in-out infinite;

@@ -40,7 +40,7 @@ export function RegisterSuccess() {
           />
 
           <div className="flex flex-col items-center gap-5 text-center text-gray-12">
-            <h1 className="font-display text-2xl font-extrabold leading-[1.1] tracking-[1px]">
+            <h1 className="font-display text-display-24">
               Cadastro concluído!
             </h1>
             <p className="text-base">

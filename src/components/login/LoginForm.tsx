@@ -73,7 +73,7 @@ export function LoginForm() {
       {/* Cabeçalho + campos */}
       <div className="flex w-full flex-col gap-7">
         <div className="flex flex-col items-center gap-4 text-gray-12">
-          <h1 className="font-display text-2xl font-extrabold leading-[1.1] tracking-[1px]">
+          <h1 className="font-display text-display-24">
             Entrar
           </h1>
           <p className="text-lg">Continue de onde parou</p>

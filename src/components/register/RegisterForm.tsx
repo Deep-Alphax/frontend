@@ -69,7 +69,7 @@ export function RegisterForm() {
       <div className="flex w-full flex-col gap-8">
         {/* Título */}
         <div className="flex w-full flex-col gap-5 text-gray-12">
-          <h1 className="font-display text-2xl font-extrabold leading-[1.1] tracking-[1px]">
+          <h1 className="font-display text-display-24">
             Criar conta
           </h1>
           <p className="text-base">

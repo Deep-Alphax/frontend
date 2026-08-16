@@ -38,6 +38,8 @@ export interface CapturedMessage {
   channelId: string;
   channelName: string | null;
   authorTag: string | null;
+  /** ID do autor no Discord (snowflake) — identidade estável p/ perfil/favoritos. */
+  authorId: string | null;
   matchedPattern: string | null;
   discordMessageId: string | null;
   text: string;
@@ -153,8 +155,73 @@ export async function getFeedMessages(params: {
   limit?: number;
   channelId?: string;
   monitorId?: string;
+  /** Snowflake do autor — feed do perfil de um usuário. */
+  authorId?: string;
   search?: string;
 }): Promise<FeedPage> {
   const { data } = await api.get<FeedPage>("/api/v1/feed/messages", { params });
+  return data;
+}
+
+// ─────────────────────────── Stats de autor (perfil) ─────────────────────────
+
+/** Estatísticas do perfil de um autor. */
+export interface AuthorStats {
+  authorId: string;
+  messages: number;
+  tokens: number;
+  /** ISO da primeira captura (idade "no radar"); null se desconhecido. */
+  firstSeenAt: string | null;
+}
+
+/** GET /api/v1/feed/authors/:authorId/stats. */
+export async function getAuthorStats(authorId: string): Promise<AuthorStats> {
+  const { data } = await api.get<AuthorStats>(
+    `/api/v1/feed/authors/${encodeURIComponent(authorId)}/stats`,
+  );
+  return data;
+}
+
+// ─────────────────────────── Favoritos (autores seguidos, JWT) ───────────────
+
+/** Autor do Discord seguido pela conta. */
+export interface FavoriteAuthor {
+  id: string;
+  authorId: string;
+  authorTag: string | null;
+  createdAt: string;
+}
+
+/** GET /api/v1/feed/favorites — autores seguidos. */
+export async function getFavorites(): Promise<FavoriteAuthor[]> {
+  const { data } = await api.get<FavoriteAuthor[]>("/api/v1/feed/favorites");
+  return data;
+}
+
+/** POST /api/v1/feed/favorites — segue (idempotente). */
+export async function addFavorite(input: {
+  authorId: string;
+  authorTag?: string | null;
+}): Promise<FavoriteAuthor> {
+  const { data } = await api.post<FavoriteAuthor>("/api/v1/feed/favorites", input);
+  return data;
+}
+
+/** DELETE /api/v1/feed/favorites/:authorId — deixa de seguir. */
+export async function removeFavorite(authorId: string): Promise<{ authorId: string }> {
+  const { data } = await api.delete<{ authorId: string }>(
+    `/api/v1/feed/favorites/${encodeURIComponent(authorId)}`,
+  );
+  return data;
+}
+
+/** GET /api/v1/feed/favorites/messages — feed paginado dos autores seguidos. */
+export async function getFavoriteMessages(params: {
+  page?: number;
+  limit?: number;
+}): Promise<FeedPage> {
+  const { data } = await api.get<FeedPage>("/api/v1/feed/favorites/messages", {
+    params,
+  });
   return data;
 }

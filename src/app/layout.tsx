@@ -11,14 +11,14 @@ import { Providers } from "@/components/Providers";
  */
 const unbounded = Unbounded({
   subsets: ["latin"],
-  weight: ["600", "800"],
+  weight: ["700"], // DS: Display usa apenas o peso 700.
   variable: "--font-unbounded",
   display: "swap",
 });
 
 const workSans = Work_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"], // DS: Body/Heading Regular→Bold.
   variable: "--font-work-sans",
   display: "swap",
 });

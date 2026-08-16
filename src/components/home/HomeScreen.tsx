@@ -12,10 +12,10 @@ export function HomeScreen() {
       <Topbar />
 
       <main className="flex w-full flex-col px-6 pb-[92px] pt-8 md:px-12 lg:px-20">
-        <div className="flex w-full flex-col gap-10">
+        <div className="flex w-full flex-col gap-10 max-w-7xl mx-auto">
           {/* Cabeçalho da seção */}
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <h1 className="font-display text-2xl font-extrabold leading-[1.1] tracking-[1px] text-gray-12">
+            <h1 className="font-display text-display-24 text-gray-12">
               Meu perfil
             </h1>
             <p className="text-base text-gray-11 md:text-right">
