@@ -58,14 +58,24 @@ interface RadarMessageCardProps {
   isNew?: boolean;
   /** Variante compacta dos painéis laterais (perfil/favoritos). */
   compact?: boolean;
-  /** Seleciona o autor (abre o perfil). Recebe o snowflake + nome de exibição. */
-  onSelectAuthor?: (authorId: string, authorName: string) => void;
+  /** Variante destacada (node 491:7505) — cards do perfil em análise. */
+  highlighted?: boolean;
+  /**
+   * Habilita o refluxo animado (`layout`) do framer. Só no feed central (a página
+   * rola). Em listas virtualizadas NÃO deve ligar — conflita com o `translateY`
+   * da virtualização e desalinha o card.
+   */
+  animateLayout?: boolean;
+  /** Seleciona o autor (abre o perfil). Recebe a tag (identidade) + exibição. */
+  onSelectAuthor?: (authorTag: string, authorName: string) => void;
 }
 
 function RadarMessageCardBase({
   m,
   isNew = false,
   compact = false,
+  highlighted = false,
+  animateLayout = false,
   onSelectAuthor,
 }: RadarMessageCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -85,10 +95,10 @@ function RadarMessageCardBase({
   const hiddenCount = links.length - visibleChips.length;
   const hasChips = links.length > 0;
 
-  // Só selecionável quando há snowflake (identidade estável p/ perfil/favoritos).
-  const selectable = Boolean(onSelectAuthor && m.authorId);
+  // Identidade = authorTag (presente em 100% das capturas → todo card clicável).
+  const selectable = Boolean(onSelectAuthor && m.authorTag);
   const select = () => {
-    if (m.authorId) onSelectAuthor?.(m.authorId, author);
+    if (m.authorTag) onSelectAuthor?.(m.authorTag, author);
   };
   // Clique no card abre o perfil — exceto quando o alvo é um controle (link,
   // botão, "Ler mais", chips, "+N"), que mantêm seu próprio comportamento.
@@ -103,16 +113,16 @@ function RadarMessageCardBase({
 
   return (
     <motion.article
-      // `layout` só no feed central (página rola). Em painéis laterais (compact),
-      // o container tem overflow-y-auto e a projeção do framer-motion desalinha
-      // o card durante o scroll ("corte ao meio") — por isso desligamos.
-      layout={reduce || compact ? false : "position"}
+      // `layout` só quando explicitamente habilitado (feed central). Em listas
+      // virtualizadas/scroll interno ele desalinha o card — mantido desligado.
+      layout={animateLayout && !reduce ? "position" : false}
       initial={animateIn ? { opacity: 0 } : false}
       animate={{ opacity: 1 }}
       transition={{ duration: DURATION.emphasis, ease: EASE.out }}
       onClick={onCardClick}
       className={cn(
-        "relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2",
+        "relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg border",
+        highlighted ? "border-gray-7 bg-gray-3" : "border-gray-6 bg-gray-2",
         selectable && "cursor-pointer transition-colors hover:border-gray-8",
       )}
     >

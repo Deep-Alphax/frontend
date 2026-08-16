@@ -155,8 +155,10 @@ export async function getFeedMessages(params: {
   limit?: number;
   channelId?: string;
   monitorId?: string;
-  /** Snowflake do autor — feed do perfil de um usuário. */
+  /** Snowflake do autor (identidade estável, parcial no histórico). */
   authorId?: string;
+  /** Tag do autor (identidade presente em 100% das capturas) — feed do perfil. */
+  authorTag?: string;
   search?: string;
 }): Promise<FeedPage> {
   const { data } = await api.get<FeedPage>("/api/v1/feed/messages", { params });
@@ -167,18 +169,18 @@ export async function getFeedMessages(params: {
 
 /** Estatísticas do perfil de um autor. */
 export interface AuthorStats {
-  authorId: string;
+  authorTag: string;
   messages: number;
   tokens: number;
   /** ISO da primeira captura (idade "no radar"); null se desconhecido. */
   firstSeenAt: string | null;
 }
 
-/** GET /api/v1/feed/authors/:authorId/stats. */
-export async function getAuthorStats(authorId: string): Promise<AuthorStats> {
-  const { data } = await api.get<AuthorStats>(
-    `/api/v1/feed/authors/${encodeURIComponent(authorId)}/stats`,
-  );
+/** GET /api/v1/feed/author-stats?authorTag= */
+export async function getAuthorStats(authorTag: string): Promise<AuthorStats> {
+  const { data } = await api.get<AuthorStats>("/api/v1/feed/author-stats", {
+    params: { authorTag },
+  });
   return data;
 }
 

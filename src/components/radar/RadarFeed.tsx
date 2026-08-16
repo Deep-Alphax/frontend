@@ -108,7 +108,12 @@ export function RadarFeed({
       {rows.map(({ m, label, showDivider }) => (
         <Fragment key={m.id}>
           {showDivider && <DayDivider label={label} />}
-          <RadarMessageCard m={m} isNew={newIds.has(m.id)} onSelectAuthor={onSelectAuthor} />
+          <RadarMessageCard
+            m={m}
+            isNew={newIds.has(m.id)}
+            animateLayout
+            onSelectAuthor={onSelectAuthor}
+          />
         </Fragment>
       ))}
 

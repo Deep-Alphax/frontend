@@ -37,7 +37,7 @@ interface GroupsPanelProps {
   groups: RadarGroup[];
   /** Total de mensagens carregadas (badge de "Todos os grupos"). */
   loaded: number;
-  /** `null` = "Todos os grupos" selecionado. */
+  /** `null` = "Todos os grupos" selecionado (default). */
   selectedKey: string | null;
   onSelect: (key: string | null) => void;
 }
@@ -141,7 +141,7 @@ export function GroupsPanel({ groups, loaded, selectedKey, onSelect }: GroupsPan
               </span>
             </span>
           </span>
-          <CountBadge active>{fmtCount(loaded)}</CountBadge>
+          <CountBadge active={allActive}>{fmtCount(loaded)}</CountBadge>
         </button>
 
         {filtered.length === 0 ? (

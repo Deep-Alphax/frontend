@@ -12,6 +12,10 @@ interface VirtualMessageListProps {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  /** Layout compacto (favoritos). Default true. */
+  compact?: boolean;
+  /** Variante destacada (perfil em análise). */
+  highlighted?: boolean;
 }
 
 /**
@@ -26,6 +30,8 @@ export function VirtualMessageList({
   isFetchingNextPage,
   fetchNextPage,
   onSelectAuthor,
+  compact = true,
+  highlighted = false,
 }: VirtualMessageListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +81,8 @@ export function VirtualMessageList({
               ) : (
                 <RadarMessageCard
                   m={items[vi.index]}
-                  compact
+                  compact={compact}
+                  highlighted={highlighted}
                   onSelectAuthor={onSelectAuthor}
                 />
               )}

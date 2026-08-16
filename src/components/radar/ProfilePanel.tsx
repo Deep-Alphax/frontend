@@ -15,9 +15,9 @@ import { useFavorites } from "@/components/radar/useFavorites";
 import { VirtualMessageList } from "@/components/radar/VirtualMessageList";
 
 interface ProfilePanelProps {
-  /** Snowflake do autor selecionado. */
-  authorId: string;
-  /** Nome de exibição (última tag vista). */
+  /** Tag do autor selecionado (identidade de perfil/favorito). */
+  author: string;
+  /** Nome de exibição. */
   authorName: string;
   /** Volta para o painel de favoritos. */
   onBack: () => void;
@@ -65,14 +65,14 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
  * clicar numa mensagem. Cabeçalho + stats + seguir + posts do autor (buscados
  * por `authorId`, paginados e virtualizados).
  */
-export function ProfilePanel({ authorId, authorName, onBack }: ProfilePanelProps) {
+export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) {
   const { isFavorite, toggle, isMutating } = useFavorites();
-  const following = isFavorite(authorId);
+  const following = isFavorite(author);
 
   const query = useInfiniteQuery({
-    queryKey: ["feed-author", authorId],
+    queryKey: ["feed-author", author],
     queryFn: ({ pageParam }) =>
-      getFeedMessages({ authorId, page: pageParam, limit: 20 }),
+      getFeedMessages({ authorTag: author, page: pageParam, limit: 20 }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
   });
@@ -82,8 +82,8 @@ export function ProfilePanel({ authorId, authorName, onBack }: ProfilePanelProps
 
   // Stats exatos do backend (mensagens, tokens distintos, primeira captura).
   const statsQuery = useQuery({
-    queryKey: ["author-stats", authorId],
-    queryFn: () => getAuthorStats(authorId),
+    queryKey: ["author-stats", author],
+    queryFn: () => getAuthorStats(author),
   });
 
   const stats = {
@@ -126,7 +126,7 @@ export function ProfilePanel({ authorId, authorName, onBack }: ProfilePanelProps
         <div className="p-3">
           <button
             type="button"
-            onClick={() => toggle(authorId, authorName)}
+            onClick={() => toggle(author, authorName)}
             disabled={isMutating}
             aria-pressed={following}
             className={cn(
@@ -167,6 +167,8 @@ export function ProfilePanel({ authorId, authorName, onBack }: ProfilePanelProps
           hasNextPage={query.hasNextPage}
           isFetchingNextPage={query.isFetchingNextPage}
           fetchNextPage={query.fetchNextPage}
+          compact={false}
+          highlighted
         />
       )}
     </aside>

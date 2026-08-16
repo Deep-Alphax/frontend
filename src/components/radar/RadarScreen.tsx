@@ -19,6 +19,7 @@ import { useRadarFeed } from "@/components/radar/useRadarFeed";
  */
 export function RadarScreen() {
   const feed = useRadarFeed();
+  // `null` = "Todos os grupos" (default ativo); string = grupo específico.
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
@@ -27,12 +28,13 @@ export function RadarScreen() {
   } | null>(null);
 
   const visible = useMemo(() => {
-    if (selectedKey === null) return feed.messages;
+    // null/undefined → sem filtro (todos os grupos).
+    if (selectedKey == null) return feed.messages;
     return feed.messages.filter((m) => (m.guildName ?? null) === selectedKey);
   }, [feed.messages, selectedKey]);
 
   const selectedName =
-    selectedKey === null
+    selectedKey == null
       ? null
       : (feed.groups.find((g) => g.key === selectedKey)?.name ?? selectedKey);
 
@@ -85,7 +87,7 @@ export function RadarScreen() {
           <div className="lg:sticky lg:top-8 lg:self-start">
             {selectedAuthor ? (
               <ProfilePanel
-                authorId={selectedAuthor.id}
+                author={selectedAuthor.id}
                 authorName={selectedAuthor.name}
                 onBack={() => setSelectedAuthor(null)}
               />
