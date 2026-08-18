@@ -10,6 +10,7 @@ import { TextField } from "@/components/ui/TextField";
 import { catalogWallet, type BackendChain } from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useWalletSelection } from "@/lib/store/walletSelection";
+import { extractWalletAddress } from "@/lib/extractWalletAddress";
 
 /** Chains oferecidas na busca (valor = enum `Chain` do backend). */
 const CHAINS: { value: BackendChain; label: string }[] = [
@@ -57,11 +58,13 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = address.trim();
+    // Aceita URL colada (GMGN/Solscan/Birdeye/Axiom…) — extrai o endereço.
+    const trimmed = extractWalletAddress(address);
     if (!trimmed) {
       setError("Informe o endereço da carteira.");
       return;
     }
+    if (trimmed !== address.trim()) setAddress(trimmed); // mostra o que foi usado
     setSubmitting(true);
     setError(null);
     try {
