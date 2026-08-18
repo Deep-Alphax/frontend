@@ -126,7 +126,7 @@ export function RadarFeed({
   });
 
   return (
-    <div className="mx-auto flex max-w-153.5 flex-col gap-3">
+    <div className="mx-auto flex max-w-153.5 w-full flex-col gap-3">
       {/* Busca — acima do divisor de data */}
       <FeedSearch value={search} onChange={onSearchChange} />
 
