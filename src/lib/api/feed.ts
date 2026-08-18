@@ -165,6 +165,31 @@ export async function getFeedMessages(params: {
   return data;
 }
 
+// ─────────────────────────── Grupos + subgrupos (árvore) ─────────────────────
+
+/** Subgrupo (canal) com contagem total real (agregada no backend). */
+export interface FeedChannel {
+  channelId: string;
+  channelName: string | null;
+  count: number;
+}
+
+/** Grupo (servidor) com seus canais e contagens totais reais. */
+export interface FeedGroup {
+  guildName: string | null;
+  count: number;
+  channels: FeedChannel[];
+}
+
+/**
+ * GET /api/v1/feed/groups — árvore grupos→canais com contagens totais,
+ * independente do que já foi rolado no feed (agregação no banco).
+ */
+export async function getFeedGroups(): Promise<FeedGroup[]> {
+  const { data } = await api.get<FeedGroup[]>("/api/v1/feed/groups");
+  return data;
+}
+
 // ─────────────────────────── Stats de autor (perfil) ─────────────────────────
 
 /** Estatísticas do perfil de um autor. */
@@ -191,7 +216,19 @@ export interface FavoriteAuthor {
   id: string;
   authorId: string;
   authorTag: string | null;
+  /** Apelido dado pelo usuário (sobrepõe o nome exibido). */
+  nickname: string | null;
+  /** Chave de cor do avatar (allowlist); null = cor por hash. */
+  color: string | null;
+  /** URL absoluta da foto re-hospedada; null quando não há foto. */
+  photoUrl: string | null;
   createdAt: string;
+}
+
+/** Personalização enviada ao backend (campos ausentes não mudam). */
+export interface UpdateFavoriteInput {
+  nickname?: string | null;
+  color?: string | null;
 }
 
 /** GET /api/v1/feed/favorites — autores seguidos. */
@@ -213,6 +250,35 @@ export async function addFavorite(input: {
 export async function removeFavorite(authorId: string): Promise<{ authorId: string }> {
   const { data } = await api.delete<{ authorId: string }>(
     `/api/v1/feed/favorites/${encodeURIComponent(authorId)}`,
+  );
+  return data;
+}
+
+/** PATCH /api/v1/feed/favorites/:authorId — personaliza (apelido + cor). */
+export async function updateFavorite(
+  authorId: string,
+  input: UpdateFavoriteInput,
+): Promise<FavoriteAuthor> {
+  const { data } = await api.patch<FavoriteAuthor>(
+    `/api/v1/feed/favorites/${encodeURIComponent(authorId)}`,
+    input,
+  );
+  return data;
+}
+
+/** POST /api/v1/feed/favorites/:authorId/photo — envia a foto do avatar. */
+export async function uploadFavoritePhoto(
+  authorId: string,
+  file: File,
+): Promise<FavoriteAuthor> {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await api.post<FavoriteAuthor>(
+    `/api/v1/feed/favorites/${encodeURIComponent(authorId)}/photo`,
+    form,
+    // Remove o default `application/json` da instância: assim o browser define
+    // `multipart/form-data` com o boundary correto (senão o multer não lê o arquivo).
+    { headers: { "Content-Type": undefined } },
   );
   return data;
 }

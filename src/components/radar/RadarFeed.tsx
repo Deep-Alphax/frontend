@@ -104,7 +104,7 @@ export function RadarFeed({
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 max-w-153.5 mx-auto">
       {rows.map(({ m, label, showDivider }) => (
         <Fragment key={m.id}>
           {showDivider && <DayDivider label={label} />}

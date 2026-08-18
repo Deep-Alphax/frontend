@@ -7,7 +7,8 @@ import { GroupsPanel } from "@/components/radar/GroupsPanel";
 import { RadarFeed } from "@/components/radar/RadarFeed";
 import { FavoritesPanel } from "@/components/radar/FavoritesPanel";
 import { ProfilePanel } from "@/components/radar/ProfilePanel";
-import { useRadarFeed } from "@/components/radar/useRadarFeed";
+import { useRadarFeed, type RadarSelection } from "@/components/radar/useRadarFeed";
+import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
 
 /**
  * Tela de Radar (node Figma 492:9713): feed de capturas ao centro, grupos
@@ -18,9 +19,11 @@ import { useRadarFeed } from "@/components/radar/useRadarFeed";
  * o mesmo pool, mantendo grupos e contagens coerentes.
  */
 export function RadarScreen() {
-  const feed = useRadarFeed();
-  // `null` = "Todos os grupos" (default ativo); string = grupo específico.
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // `null` = "Todos os grupos" (default ativo); grupo (guild) ou canal específico.
+  const [selection, setSelection] = useState<RadarSelection>(null);
+  // Canal selecionado → o feed central é buscado já filtrado no backend.
+  const activeChannelId = selection?.type === "channel" ? selection.channelId : null;
+  const feed = useRadarFeed(activeChannelId);
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
     id: string;
@@ -28,15 +31,27 @@ export function RadarScreen() {
   } | null>(null);
 
   const visible = useMemo(() => {
-    // null/undefined → sem filtro (todos os grupos).
-    if (selectedKey == null) return feed.messages;
-    return feed.messages.filter((m) => (m.guildName ?? null) === selectedKey);
-  }, [feed.messages, selectedKey]);
+    if (selection == null) return feed.messages; // sem filtro (todos os grupos)
+    if (selection.type === "group")
+      return feed.messages.filter((m) => (m.guildName ?? null) === selection.guild);
+    return feed.messages; // canal: o feed já vem filtrado por channelId do backend
+  }, [feed.messages, selection]);
 
-  const selectedName =
-    selectedKey == null
-      ? null
-      : (feed.groups.find((g) => g.key === selectedKey)?.name ?? selectedKey);
+  const selectedName = useMemo(() => {
+    if (selection == null) return null;
+    if (selection.type === "group")
+      return (
+        feed.groups.find((g) => g.key === selection.guild)?.name ??
+        selection.guild ??
+        "Sem grupo"
+      );
+    // Canal: procura o subgrupo correspondente para exibir o rótulo (#canal).
+    for (const g of feed.groups) {
+      const sub = g.subgroups.find((s) => s.channelId === selection.channelId);
+      if (sub) return sub.name;
+    }
+    return null;
+  }, [selection, feed.groups]);
 
   // Identidade estável p/ o memo do card não re-renderizar a cada render.
   const onSelectAuthor = useCallback(
@@ -45,6 +60,7 @@ export function RadarScreen() {
   );
 
   return (
+    <FavoritesLookupProvider>
     <div className="flex min-h-dvh flex-col bg-gray-1">
       <Topbar />
 
@@ -63,13 +79,13 @@ export function RadarScreen() {
         </div>
 
         {/* 3 colunas em desktop; empilha em telas menores. */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)_minmax(0,300px)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,264px)_minmax(0,1fr)_minmax(0,354px)]">
           <div className="lg:sticky lg:top-8 lg:self-start">
             <GroupsPanel
               groups={feed.groups}
-              loaded={feed.loaded}
-              selectedKey={selectedKey}
-              onSelect={setSelectedKey}
+              total={feed.total}
+              selection={selection}
+              onSelect={setSelection}
             />
           </div>
 
@@ -98,5 +114,6 @@ export function RadarScreen() {
         </div>
       </main>
     </div>
+    </FavoritesLookupProvider>
   );
 }

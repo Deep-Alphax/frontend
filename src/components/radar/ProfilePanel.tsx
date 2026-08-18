@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Check, Star } from "lucide-react";
+import { ArrowLeft, Pencil, Star } from "lucide-react";
 
 import {
   getAuthorStats,
@@ -10,8 +10,9 @@ import {
   type CapturedMessage,
 } from "@/lib/api/feed";
 import { Avatar } from "@/components/ui/Avatar";
-import { cn } from "@/lib/cn";
 import { useFavorites } from "@/components/radar/useFavorites";
+import { starFor, toneFor } from "@/components/radar/favoriteColors";
+import { UserCustomizeModal } from "@/components/radar/UserCustomizeModal";
 import { VirtualMessageList } from "@/components/radar/VirtualMessageList";
 
 interface ProfilePanelProps {
@@ -66,8 +67,12 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
  * por `authorId`, paginados e virtualizados).
  */
 export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) {
-  const { isFavorite, toggle, isMutating } = useFavorites();
+  const { isFavorite, toggle, isMutating, getFavorite, customize, uploadPhoto, isSaving } =
+    useFavorites();
   const following = isFavorite(author);
+  const favorite = getFavorite(author);
+  const displayName = favorite?.nickname?.trim() || authorName;
+  const [customizing, setCustomizing] = useState(false);
 
   const query = useInfiniteQuery({
     queryKey: ["feed-author", author],
@@ -110,9 +115,21 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
       {/* Bloco do usuário */}
       <div className="flex shrink-0 flex-col border-b border-gray-6">
         <div className="flex items-center gap-2 p-3">
-          <Avatar name={authorName} className="size-7" />
+          <div className="relative shrink-0">
+            <Avatar
+              src={favorite?.photoUrl}
+              name={displayName}
+              className="size-7"
+              fallbackClassName={toneFor(favorite?.color)}
+            />
+            {following && (
+              <span className="absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-gray-2">
+                <Star className={`size-2.5 fill-current ${starFor(favorite?.color)}`} strokeWidth={0} />
+              </span>
+            )}
+          </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-12">{authorName}</p>
+            <p className="truncate text-sm font-semibold text-gray-12">{displayName}</p>
             {group && <p className="truncate text-sm text-gray-11">{group}</p>}
           </div>
         </div>
@@ -124,30 +141,40 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
         </div>
 
         <div className="p-3">
-          <button
-            type="button"
-            onClick={() => toggle(author, authorName)}
-            disabled={isMutating}
-            aria-pressed={following}
-            className={cn(
-              "flex h-9 w-full items-center justify-center gap-2 rounded-lg px-8 text-sm font-semibold transition-colors disabled:opacity-60",
-              following
-                ? "border border-gray-6 bg-gray-2 text-gray-12 hover:bg-gray-3"
-                : "bg-principal-9 text-gray-1 hover:bg-principal-10",
-            )}
-          >
-            {following ? (
-              <>
-                <Check className="size-4" strokeWidth={2.5} />
-                Seguindo
-              </>
-            ) : (
-              <>
-                <Star className="size-4" strokeWidth={2} />
-                Seguir
-              </>
-            )}
-          </button>
+          {following ? (
+            // Estado "seguindo" (node 536:6469): Personalizar + Deixar de seguir.
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCustomizing(true)}
+                className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-6 bg-gray-3 px-2 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
+              >
+                <Pencil className="size-4 shrink-0" strokeWidth={2} />
+                Personalizar
+              </button>
+              <button
+                type="button"
+                onClick={() => toggle(author, authorName)}
+                disabled={isMutating}
+                aria-pressed
+                className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-6 bg-gray-3 px-2 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:opacity-60"
+              >
+                <Star className="size-4 shrink-0 fill-principal-9 text-principal-9" strokeWidth={2} />
+                Deixar de seguir
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => toggle(author, authorName)}
+              disabled={isMutating}
+              aria-pressed={false}
+              className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-principal-9 px-8 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:opacity-60"
+            >
+              <Star className="size-4" strokeWidth={2} />
+              Seguir
+            </button>
+          )}
         </div>
       </div>
 
@@ -167,10 +194,21 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
           hasNextPage={query.hasNextPage}
           isFetchingNextPage={query.isFetchingNextPage}
           fetchNextPage={query.fetchNextPage}
-          compact={false}
+          compact={true}
           highlighted
         />
       )}
+
+      <UserCustomizeModal
+        open={customizing}
+        authorName={authorName}
+        group={group}
+        favorite={favorite}
+        onClose={() => setCustomizing(false)}
+        onSave={(input) => customize(author, input)}
+        onUploadPhoto={(file) => uploadPhoto(author, file)}
+        isSaving={isSaving}
+      />
     </aside>
   );
 }

@@ -118,13 +118,21 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const wcStyle = walletOn ? "https://fonts.googleapis.com" : "";
   const wcFont = walletOn ? "https://fonts.gstatic.com" : "";
 
+  // Mídia dos embeds do Discord (GIF/imagem/vídeo). Usamos SEMPRE a `proxyURL`
+  // do Discord — ele reencaminha QUALQUER provedor (klipy/tenor/giphy/…) por
+  // estes hosts, então liberamos só o proxy dele (não cada provedor externo).
+  const discordMedia =
+    "https://*.discordapp.net https://cdn.discordapp.com https://media.discordapp.net";
+
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile}`,
     `style-src 'self' 'unsafe-inline' ${wcStyle}`,
     `font-src 'self' data: ${wcFont}`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras + texturas do Spline.
-    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${wcImg} ${splineImg}`,
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${wcImg} ${splineImg}`,
+    // Vídeo/GIF (gifv) dos embeds do Discord — sem media-src cairia no default-src.
+    `media-src 'self' data: blob: ${discordMedia}`,
     `connect-src 'self' ${api} ${apiWs} ${turnstile} ${wcConnect} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
     `frame-src ${turnstile} ${wcFrame}`,
     `worker-src 'self' blob:`,

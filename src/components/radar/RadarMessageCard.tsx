@@ -2,13 +2,28 @@
 
 import { memo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Star } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
+import {
+  cardBgFor,
+  cardBorderFor,
+  starFor,
+  toneFor,
+} from "@/components/radar/favoriteColors";
+import { DiscordText } from "@/components/radar/DiscordText";
 import { MoreChip, TokenChip } from "@/components/radar/TokenChip";
 import { LinksModal } from "@/components/radar/LinksModal";
+import {
+  getEmbedMedia,
+  isEmbedOnlyText,
+  type EmbedMediaItem,
+} from "@/components/radar/embedMedia";
+import { MediaModal } from "@/components/radar/MediaModal";
+import { useFavoriteFor } from "@/components/radar/favoritesLookup";
 
 /** Máximo de chips exibidos antes do overflow "+N" (espelha o Figma: 4 + "+N"). */
 const MAX_VISIBLE_CHIPS = 4;
@@ -80,15 +95,28 @@ function RadarMessageCardBase({
 }: RadarMessageCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
+  const [lightbox, setLightbox] = useState<EmbedMediaItem | null>(null);
   const reduce = useReducedMotion();
 
   // Só anima capturas que chegaram em tempo real (socket). Load inicial e
   // paginação renderizam sem animação — evita "tempestade" de entrada.
   const animateIn = isNew && !reduce;
 
+  // Personalização do autor seguido (apelido/cor/foto) — reflete no card.
+  const fav = useFavoriteFor(m.authorTag);
+  const following = Boolean(fav);
   const author = m.authorTag || "Desconhecido";
+  const displayName = fav?.nickname?.trim() || author;
+  // Cor escolhida → borda + gradiente sutil no card (node 492:8120).
+  const colorBorder = cardBorderFor(fav?.color);
+  const colorBg = cardBgFor(fav?.color);
   const text = m.text ?? "";
   const isLong = text.length > CLAMP_THRESHOLD || text.split("\n").length > 6;
+
+  // Mídia dos embeds (GIF/imagem/vídeo). Se o texto é só o link/título do embed,
+  // renderizamos só a mídia (o GIF no lugar do texto), como o Discord.
+  const media = getEmbedMedia(m.embed);
+  const showText = text.length > 0 && !(media.length > 0 && isEmbedOnlyText(text, m.embed));
 
   const links = m.links ?? [];
   const visibleChips = links.slice(0, MAX_VISIBLE_CHIPS);
@@ -98,7 +126,7 @@ function RadarMessageCardBase({
   // Identidade = authorTag (presente em 100% das capturas → todo card clicável).
   const selectable = Boolean(onSelectAuthor && m.authorTag);
   const select = () => {
-    if (m.authorTag) onSelectAuthor?.(m.authorTag, author);
+    if (m.authorTag) onSelectAuthor?.(m.authorTag, displayName);
   };
   // Clique no card abre o perfil — exceto quando o alvo é um controle (link,
   // botão, "Ler mais", chips, "+N"), que mantêm seu próprio comportamento.
@@ -122,8 +150,13 @@ function RadarMessageCardBase({
       onClick={onCardClick}
       className={cn(
         "relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg border",
-        highlighted ? "border-gray-7 bg-gray-3" : "border-gray-6 bg-gray-2",
-        selectable && "cursor-pointer transition-colors hover:border-gray-8",
+        colorBorder
+          ? cn(colorBorder, colorBg)
+          : highlighted
+            ? "border-gray-7 bg-gray-3"
+            : "border-gray-6 bg-gray-2",
+        selectable && "cursor-pointer transition-colors",
+        selectable && !colorBorder && "hover:border-gray-8",
       )}
     >
       {/* Cabeçalho: avatar + autor/grupo (+ data no wide) */}
@@ -134,7 +167,19 @@ function RadarMessageCardBase({
         )}
       >
         <div className="flex min-w-0 items-center gap-2">
-          <Avatar name={author} className={compact ? "size-7" : "size-8"} />
+          <div className="relative shrink-0">
+            <Avatar
+              src={fav?.photoUrl}
+              name={displayName}
+              className={compact ? "size-7" : "size-8"}
+              fallbackClassName={toneFor(fav?.color)}
+            />
+            {following && (
+              <span className="absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-gray-2">
+                <Star className={cn("size-2.5 fill-current", starFor(fav?.color))} strokeWidth={0} />
+              </span>
+            )}
+          </div>
           <div className="min-w-0">
             <p
               className={cn(
@@ -142,7 +187,7 @@ function RadarMessageCardBase({
                 compact ? "text-sm" : "text-base",
               )}
             >
-              {author}
+              {displayName}
             </p>
             <p
               className={cn(
@@ -157,19 +202,19 @@ function RadarMessageCardBase({
         {!compact && <DateInfo iso={m.createdAt} />}
       </header>
 
-      {/* Corpo: texto (medium 14) + "Ler mais" */}
-      {text && (
-        <div className={cn("flex w-full min-w-0 flex-col items-start gap-1 pt-1", padX, hasChips || compact ? "pb-2" : "pb-4")}>
+      {/* Corpo: texto renderizado como o Discord (links inline) + "Ler mais" */}
+      {showText && (
+        <div className={cn("flex w-full min-w-0 flex-col items-start gap-1 pt-1", padX, hasChips || media.length > 0 || compact ? "pb-2" : "pb-4")}>
           <p
             className={cn(
               // `overflow-wrap:anywhere` quebra strings longas sem espaço
               // (contratos/URLs) para não estourar a largura do card.
-              "w-full min-w-0 whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
+              "w-full min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]",
               "text-sm font-medium leading-snug text-gray-12",
               !expanded && isLong && "line-clamp-5",
             )}
           >
-            {text}
+            <DiscordText text={text} />
           </p>
           {isLong && (
             <button
@@ -183,9 +228,47 @@ function RadarMessageCardBase({
         </div>
       )}
 
-      {/* Chips de token/link */}
+      {/* Mídia dos embeds (GIF/imagem/vídeo) — clique abre em tela (lightbox) */}
+      {media.length > 0 && (
+        <div className={cn("flex flex-col items-start gap-2 pt-1 pb-2", padX)}>
+          {media.map((mi, i) => (
+            <button
+              key={mi.src + i}
+              type="button"
+              onClick={() => setLightbox(mi)}
+              aria-label="Abrir mídia"
+              className="block overflow-hidden rounded-lg border border-gray-6 bg-gray-1 transition-opacity hover:opacity-90"
+            >
+              {mi.kind === "video" ? (
+                <video
+                  src={mi.src}
+                  poster={mi.poster}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  width={mi.width}
+                  height={mi.height}
+                  // pointer-events-none: o clique é do botão (abre o lightbox).
+                  className="pointer-events-none max-h-48 w-auto max-w-[220px]"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={mi.src}
+                  alt=""
+                  loading="lazy"
+                  className="pointer-events-none max-h-48 w-auto max-w-[220px] object-contain"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Chips de token/link (botões) — complementam o texto formatado */}
       {hasChips && (
-        <div className={cn("flex w-full min-w-0 flex-wrap content-start items-start gap-2 pt-2 pb-2", padX)}>
+        <div className={cn("flex w-full min-w-0 flex-wrap content-start items-start gap-2 pt-2 pb-4", padX)}>
           {visibleChips.map((l) => (
             <TokenChip key={l} link={l} compact={compact} />
           ))}
@@ -203,6 +286,7 @@ function RadarMessageCardBase({
       )}
 
       <LinksModal open={linksOpen} links={links} onClose={() => setLinksOpen(false)} />
+      <MediaModal item={lightbox} onClose={() => setLightbox(null)} />
     </motion.article>
   );
 }

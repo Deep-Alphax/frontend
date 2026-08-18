@@ -6,6 +6,8 @@ interface AvatarProps {
   /** Nome usado para iniciais e alt. */
   name: string;
   className?: string;
+  /** Superfície do fallback de iniciais (fundo + cor); default neutro. */
+  fallbackClassName?: string;
 }
 
 /** Deriva 1–2 iniciais a partir do nome (fallback quando não há foto). */
@@ -21,7 +23,7 @@ function initialsFromName(name: string): string {
  * mostra as iniciais sobre uma superfície neutra — o rosto é dado dinâmico do
  * usuário, não um asset do design.
  */
-export function Avatar({ src, name, className }: AvatarProps) {
+export function Avatar({ src, name, className, fallbackClassName }: AvatarProps) {
   const base = cn("size-8 shrink-0 overflow-hidden rounded-full", className);
 
   if (src) {
@@ -44,7 +46,8 @@ export function Avatar({ src, name, className }: AvatarProps) {
       aria-label={name}
       className={cn(
         base,
-        "flex items-center justify-center bg-gray-6 text-xs font-semibold text-gray-12",
+        "flex items-center justify-center text-xs font-semibold",
+        fallbackClassName ?? "bg-gray-6 text-gray-12",
       )}
     >
       {initialsFromName(name)}
