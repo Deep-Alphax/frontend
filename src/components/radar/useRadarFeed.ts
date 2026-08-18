@@ -22,8 +22,9 @@ import {
 } from "@/components/radar/useFavorites";
 
 const PAGE_LIMIT = 20;
-/** Chave do feed central por canal ativo (`null` = todos). */
-const feedKey = (channelId: string | null) => ["radar-feed", channelId] as const;
+/** Chave do feed central por canal ativo + termo de busca (`null`/"" = todos). */
+const feedKey = (channelId: string | null, search: string) =>
+  ["radar-feed", channelId, search] as const;
 const GROUPS_KEY = ["radar-groups"] as const;
 
 /** Subgrupo (canal do Discord) dentro de um grupo/servidor. */
@@ -90,19 +91,23 @@ const GROUP_FALLBACK = "Sem grupo";
  * query de grupos leve (agregação no banco), ambas sem polling — o realtime
  * chega por WebSocket.
  */
-export function useRadarFeed(activeChannelId: string | null = null): RadarFeed {
+export function useRadarFeed(
+  activeChannelId: string | null = null,
+  search = "",
+): RadarFeed {
   const queryClient = useQueryClient();
   // IDs chegados em tempo real (para animar a entrada). Estado imutável: cada
   // captura gera um novo Set — barato (teto MAX_NEW_IDS) e re-renderiza a lista.
   const [newIds, setNewIds] = useState<Set<string>>(() => new Set());
 
   const query = useInfiniteQuery({
-    queryKey: feedKey(activeChannelId),
+    queryKey: feedKey(activeChannelId, search),
     queryFn: ({ pageParam }) =>
       getFeedMessages({
         page: pageParam,
         limit: PAGE_LIMIT,
         channelId: activeChannelId ?? undefined,
+        search: search.trim() || undefined,
       }),
     initialPageParam: 1,
     getNextPageParam: (last) =>
@@ -144,8 +149,9 @@ export function useRadarFeed(activeChannelId: string | null = null): RadarFeed {
 
     const onNew = (msg: CapturedMessage) => {
       // Feed central "todos" + feed do canal correspondente (o que estiver em cache).
-      const prependedAll = prependInfinite(feedKey(null), msg);
-      const prependedChannel = prependInfinite(feedKey(msg.channelId), msg);
+      // Só nos feeds SEM busca ("" ); feeds de busca são snapshots do termo.
+      const prependedAll = prependInfinite(feedKey(null, ""), msg);
+      const prependedChannel = prependInfinite(feedKey(msg.channelId, ""), msg);
       if (prependedAll || prependedChannel) {
         // Marca como "novo" p/ a animação de entrada; poda o conjunto se crescer.
         setNewIds((prev) => {

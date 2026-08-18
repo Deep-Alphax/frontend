@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Topbar } from "@/components/home/Topbar";
 import { GroupsPanel } from "@/components/radar/GroupsPanel";
@@ -21,9 +21,17 @@ import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
 export function RadarScreen() {
   // `null` = "Todos os grupos" (default ativo); grupo (guild) ou canal específico.
   const [selection, setSelection] = useState<RadarSelection>(null);
+  // Busca no feed (mensagens/usuários) — debounced p/ não requisitar por tecla.
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   // Canal selecionado → o feed central é buscado já filtrado no backend.
   const activeChannelId = selection?.type === "channel" ? selection.channelId : null;
-  const feed = useRadarFeed(activeChannelId);
+  const feed = useRadarFeed(activeChannelId, search);
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
     id: string;
@@ -98,6 +106,8 @@ export function RadarScreen() {
             selectedName={selectedName}
             newIds={feed.newIds}
             onSelectAuthor={onSelectAuthor}
+            search={searchInput}
+            onSearchChange={setSearchInput}
           />
 
           <div className="lg:sticky lg:top-8 lg:self-start">
