@@ -81,6 +81,11 @@ export async function getProfile(): Promise<AuthUser> {
   return data.data;
 }
 
+/** POST /api/v1/auth/logout — encerra a sessão (o backend limpa os cookies httpOnly). */
+export async function logout(): Promise<void> {
+  await api.post("/api/v1/auth/logout");
+}
+
 /**
  * URL de início do OAuth Google (navegação top-level, não XHR — o backend
  * redireciona para o consent). `redirect_to` é o caminho relativo pós-login.

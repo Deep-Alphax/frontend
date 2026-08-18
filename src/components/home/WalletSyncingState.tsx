@@ -50,7 +50,18 @@ class SceneErrorBoundary extends Component<{ fallback: ReactNode; children: Reac
  * Se a cena do Spline falhar, degrada para um spinner — a barra e o texto seguem
  * informando o sync.
  */
-export function WalletSyncingState({ label }: { label?: string }) {
+export function WalletSyncingState({
+  label,
+  trades,
+  batches,
+}: {
+  label?: string;
+  /** Trades importados até agora no backfill (progresso real). */
+  trades?: number;
+  /** Lotes (ticks do cron) já processados. */
+  batches?: number;
+}) {
+  const hasProgress = typeof trades === "number" && (trades > 0 || (batches ?? 0) > 0);
   return (
     <section
       className="relative flex min-h-[442px] w-full flex-col items-center justify-center gap-8 overflow-hidden rounded-lg border border-gray-6 bg-gray-2 px-6 py-12"
@@ -77,17 +88,21 @@ export function WalletSyncingState({ label }: { label?: string }) {
           ) : (
             "Estamos lendo o histórico on-chain dessa carteira. "
           )}
-          Leva alguns instantes — o painel abre sozinho assim que os dados chegam.
+          Leva alguns instantes — o painel abre sozinho quando terminar de importar
+          todo o histórico.
         </p>
       </div>
 
-      {/* Barra indeterminada: comunica progresso sem % (o sync não reporta fração). */}
-      <div
-        className="relative h-1.5 w-full max-w-[400px] overflow-hidden rounded-full bg-gray-5"
-        role="progressbar"
-        aria-label="Sincronizando dados da carteira"
-      >
-        <span className="animate-indeterminate absolute inset-y-0 rounded-full bg-principal-9" />
+      {/* Barra indeterminada + leitura de progresso REAL (trades importados por lote). */}
+      <div className="flex w-full max-w-[400px] flex-col items-center gap-2">
+        <div
+          className="relative h-1.5 w-full overflow-hidden rounded-full bg-gray-5"
+          role="progressbar"
+          aria-label="Sincronizando dados da carteira"
+        >
+          <span className="animate-indeterminate absolute inset-y-0 rounded-full bg-principal-9" />
+        </div>
+        
       </div>
     </section>
   );

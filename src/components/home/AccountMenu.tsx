@@ -5,11 +5,14 @@ import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Check, ChevronDown, Loader2, Plus, Shield, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, ChevronDown, Loader2, LogOut, Plus, Shield, Trash2 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { getWallets, deleteWallet } from "@/lib/api/wallets";
+import { logout } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { SESSION_HINT_COOKIE } from "@/lib/auth/sessionHint";
 import { useSession } from "@/lib/auth/useSession";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { AddWalletModal } from "@/components/home/AddWalletModal";
@@ -33,6 +36,7 @@ interface AccountMenuProps {
  */
 export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const { profile } = useSession();
   const isAdmin = profile?.role === "ADMIN";
@@ -58,6 +62,18 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Não foi possível remover a carteira."));
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // backend limpa os cookies httpOnly de sessão
+    } catch {
+      // Mesmo se o request falhar, encerramos no cliente (evita ficar "preso").
+    }
+    // Limpa o cookie-dica → useSession vira deslogado; zera o cache e vai p/ login.
+    document.cookie = `${SESSION_HINT_COOKIE}=; Max-Age=0; path=/`;
+    queryClient.clear();
+    router.replace("/login");
   };
 
   const itemClass =
@@ -151,6 +167,15 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
               </DropdownMenu.Item>
             </>
           ) : null}
+
+          <DropdownMenu.Separator className="my-1.5 h-px bg-gray-6" />
+          <DropdownMenu.Item
+            className={cn(itemClass, "text-danger-11 data-[highlighted]:bg-vermelho-3")}
+            onSelect={handleLogout}
+          >
+            <LogOut className="size-4" />
+            <span>Sair</span>
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

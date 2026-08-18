@@ -9,6 +9,7 @@ import { FavoritesPanel } from "@/components/radar/FavoritesPanel";
 import { ProfilePanel } from "@/components/radar/ProfilePanel";
 import { useRadarFeed, type RadarSelection } from "@/components/radar/useRadarFeed";
 import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
+import { Footer } from "@/components/home/Footer";
 
 /**
  * Tela de Radar (node Figma 492:9713): feed de capturas ao centro, grupos
@@ -123,6 +124,8 @@ export function RadarScreen() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
     </FavoritesLookupProvider>
   );

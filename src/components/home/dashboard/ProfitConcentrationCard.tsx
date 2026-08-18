@@ -25,20 +25,20 @@ export function ProfitConcentrationCard({
   const legend = [
     {
       dot: "bg-green-10",
-      title: "Melhores 3 trades",
-      sub: `${top3.count} de ${closedTrades} operações`,
+      title: "Melhores 3 tokens",
+      sub: `${top3.count} de ${closedTrades} tokens`,
       usd: top3.pnlUsd,
     },
     {
       dot: "bg-blue-10",
-      title: "Trades 4 a 10",
-      sub: `${next7.count} ${next7.count === 1 ? "operação" : "operações"}`,
+      title: "Tokens 4 a 10",
+      sub: `${next7.count} ${next7.count === 1 ? "token" : "tokens"}`,
       usd: next7.pnlUsd,
     },
     {
       dot: "bg-gray-6",
       title: "Todo o resto",
-      sub: `${rest.count} ${rest.count === 1 ? "operação" : "operações"}`,
+      sub: `${rest.count} ${rest.count === 1 ? "token" : "tokens"}`,
       usd: rest.pnlUsd,
     },
   ];

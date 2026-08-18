@@ -1,5 +1,6 @@
 import { Topbar } from "@/components/home/Topbar";
 import { ProfileContent } from "@/components/home/ProfileContent";
+import { Footer } from "@/components/home/Footer";
 
 /**
  * Home autenticada ("Meu perfil"). O conteúdo é dirigido por dados reais
@@ -27,6 +28,8 @@ export function HomeScreen() {
           <ProfileContent />
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -49,7 +49,7 @@ export function LoginScreen() {
       {/* Painel de destaque (imagem/ilustração — placeholder por ora) */}
       <aside
         aria-hidden
-        className="hidden flex-1 rounded-xl bg-gray-3 lg:block"
+        className="hidden flex-1 min-w-[50%] rounded-xl bg-[url('/brand/login-bg.png')] bg-cover lg:block"
       />
     </main>
   );

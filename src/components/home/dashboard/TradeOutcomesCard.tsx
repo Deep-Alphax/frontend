@@ -14,17 +14,18 @@ const ORDER: OutcomeKey[] = ["rugpull", "stop_loss", "x1_2", "x2_5", "x5_plus"];
 
 interface TradeOutcomesCardProps {
   outcomes: OutcomeBucket[];
-  totalClosed: number;
 }
 
 /**
  * "Como seus trades terminaram" (Figma 51:2272) — lista de ponta a ponta com
  * divisórias: por desfecho, rótulo + % das posições, barra de progresso e a
- * contagem. Largura da barra ∝ contagem do bucket (dados reais).
+ * contagem. Largura da barra ∝ contagem do bucket (dados reais). Contagem POR
+ * TOKEN (um token conta 1×, como na Axiom) — o total é a soma dos buckets.
  */
-export function TradeOutcomesCard({ outcomes, totalClosed }: TradeOutcomesCardProps) {
+export function TradeOutcomesCard({ outcomes }: TradeOutcomesCardProps) {
   const byKey = new Map(outcomes.map((o) => [o.bucket, o]));
   const maxCount = Math.max(1, ...outcomes.map((o) => o.count));
+  const totalClosed = outcomes.reduce((n, o) => n + o.count, 0);
 
   return (
     <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">

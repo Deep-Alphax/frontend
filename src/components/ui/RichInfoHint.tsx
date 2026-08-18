@@ -14,6 +14,8 @@ interface RichInfoHintProps {
   description?: string;
   rows: TooltipRow[];
   footer?: string;
+  /** Lado de ancoragem do tooltip. "right" abre p/ a ESQUERDA (colunas na borda direita). */
+  align?: "left" | "right";
 }
 
 const TONE_CLASS: Record<TooltipTone, string> = {
@@ -27,7 +29,13 @@ const TONE_CLASS: Record<TooltipTone, string> = {
  * rótulo→valor e rodapé opcional (nós de KPI do dashboard). CSS-only (group),
  * sem biblioteca de tooltip.
  */
-export function RichInfoHint({ title, description, rows, footer }: RichInfoHintProps) {
+export function RichInfoHint({
+  title,
+  description,
+  rows,
+  footer,
+  align = "left",
+}: RichInfoHintProps) {
   return (
     <span className="group relative inline-flex">
       <button
@@ -40,7 +48,10 @@ export function RichInfoHint({ title, description, rows, footer }: RichInfoHintP
 
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-[280px] rounded-xl border border-gray-6 bg-gray-3 p-4 text-left opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        className={cn(
+          "pointer-events-none absolute top-full z-40 mt-2 w-[280px] rounded-xl border border-gray-6 bg-gray-3 p-4 text-left opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100",
+          align === "right" ? "right-0" : "left-0",
+        )}
       >
         <span className="block text-[15px] font-semibold text-gray-12">{title}</span>
         {description ? (

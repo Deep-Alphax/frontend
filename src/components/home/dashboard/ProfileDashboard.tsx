@@ -42,8 +42,8 @@ export function ProfileDashboard({
           <KpiItem
             icon={CircleDollarSign}
             label="Saldo atual"
-            info="Valor atual dos ativos na carteira (SOL/tokens × preço de mercado)."
-            hint="Holdings on-chain a preço de agora"
+            info="Saldo de SOL da carteira × preço do SOL agora. Considera só o SOL (ativo líquido)"
+            hint="SOL nativo a preço de agora"
             value={balanceUsd != null ? formatUsd(balanceUsd) : <NoDataValue />}
           />
         </div>
@@ -137,10 +137,7 @@ export function ProfileDashboard({
           <CapitalEvolutionCard data={data} />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <TradeOutcomesCard
-              outcomes={data.outcomes}
-              totalClosed={data.winRate.closed}
-            />
+            <TradeOutcomesCard outcomes={data.outcomes} />
             <ProfitConcentrationCard concentration={data.profitConcentration} />
           </div>
 

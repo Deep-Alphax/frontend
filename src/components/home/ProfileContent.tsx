@@ -29,9 +29,14 @@ function DashboardSkeleton() {
   );
 }
 
-/** Há carteira com ingestão em andamento. */
-function isSyncing(wallets: Wallet[]): boolean {
-  return wallets.some((w) => w.syncStatus === "PENDING" || w.syncStatus === "SYNCING");
+/** Carteira em ingestão (ainda sem histórico completo). */
+function isWalletSyncing(w: Wallet | undefined): boolean {
+  return w?.syncStatus === "PENDING" || w?.syncStatus === "SYNCING";
+}
+
+/** Rótulo curto da carteira: label da conta ou endereço encurtado. */
+function walletLabel(w: Wallet): string {
+  return w.label || `${w.address.slice(0, 6)}…${w.address.slice(-4)}`;
 }
 
 /** Erro ao carregar as métricas (ex.: backend fora do ar). Retry manual, sem loop. */
@@ -71,10 +76,29 @@ export function ProfileContent() {
   // em que o status vira SYNCED antes de o socket entregar as métricas.
   const [awaitingWalletId, setAwaitingWalletId] = useState<string | null>(null);
 
+  // Progresso do backfill (por lote/tick do cron) da carteira em sync — cada
+  // `sync:update` traz `inserted` (trades novos naquele lote). Acumula p/ mostrar
+  // progresso REAL em vez de barra indeterminada. Keyed por walletId (troca zera).
+  const [syncProgress, setSyncProgress] = useState<{
+    walletId: string;
+    trades: number;
+    batches: number;
+  } | null>(null);
+
   // WebSocket: fim de sync → invalida ["wallets"]/["portfolio-analytics"]. Se a
   // carteira aguardada terminou SEM trades (ou com erro), encerra a espera (mostra
   // o dashboard vazio/erro). Com trades, a espera encerra quando os dados chegam.
   useSyncEvents(isAuthenticated, (payload) => {
+    // Acumula o progresso do lote (evento é assíncrono → setState aqui é ok).
+    setSyncProgress((cur) =>
+      cur && cur.walletId === payload.walletId
+        ? {
+            walletId: payload.walletId,
+            trades: cur.trades + payload.inserted,
+            batches: cur.batches + 1,
+          }
+        : { walletId: payload.walletId, trades: payload.inserted, batches: 1 },
+    );
     setAwaitingWalletId((cur) => {
       if (!cur || payload.walletId !== cur) return cur;
       const done = payload.status === "ERROR" || (payload.status === "SYNCED" && payload.inserted === 0);
@@ -90,7 +114,10 @@ export function ProfileContent() {
   });
   const wallets = walletsQuery.data ?? [];
   const hasWallet = wallets.length > 0;
-  const syncing = isSyncing(wallets);
+  const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
+  // A tela de sincronização é gateada pela carteira SELECIONADA — enquanto ela
+  // estiver PENDING/SYNCING não mostramos o dashboard, mesmo com dados parciais.
+  const selectedSyncing = isWalletSyncing(selectedWallet);
 
   // Sem agregado "todas": garante SEMPRE uma carteira selecionada quando há carteiras.
   // Seleciona a 1ª quando nada está selecionado (load) OU a selecionada sumiu (removida).
@@ -166,11 +193,21 @@ export function ProfileContent() {
   const awaitingData =
     awaitingWalletId !== null && selectedWalletId === awaitingWalletId && !dataReady;
 
-  // Mostra a animação enquanto: aguardando os dados da recém-conectada (cobre o sync
-  // "instantâneo", em que o status vira SYNCED antes de os dados chegarem) OU há sync
-  // em andamento sem trades. Evita o flash de dashboard ZERADO no intervalo.
-  if (awaitingData || (syncing && (!data || data.totalTrades === 0))) {
-    return <WalletSyncingState />;
+  // Mostra a animação enquanto: a carteira SELECIONADA está sincronizando (não
+  // exibe o dashboard com dados PARCIAIS durante a ingestão) OU aguardando os
+  // dados da recém-conectada (cobre o sync "instantâneo", em que o status vira
+  // SYNCED antes de os dados chegarem). Evita o flash de dashboard zerado/parcial.
+  if (selectedSyncing || awaitingData) {
+    // Progresso só da carteira em sync atual (evita mostrar contagem de outra).
+    const progress =
+      syncProgress && syncProgress.walletId === selectedWalletId ? syncProgress : null;
+    return (
+      <WalletSyncingState
+        label={selectedWallet ? walletLabel(selectedWallet) : undefined}
+        trades={progress?.trades}
+        batches={progress?.batches}
+      />
+    );
   }
 
   // Erro ao buscar métricas (backend fora do ar, rede) → estado de erro com retry.

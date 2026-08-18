@@ -140,6 +140,9 @@ export async function getPortfolioAnalytics(
 ): Promise<PortfolioAnalytics> {
   const { data } = await api.get<PortfolioAnalytics>("/api/v1/analytics/portfolio", {
     params: { period, ...(walletId ? { walletId } : {}) },
+    // O 1º cálculo pode buscar candles de dezenas de tokens no provider (throttle
+    // do free tier) — dá alguns segundos; depois fica em cache. Timeout folgado.
+    timeout: 90_000,
   });
   return data;
 }
