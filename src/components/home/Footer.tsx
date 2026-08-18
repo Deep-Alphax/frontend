@@ -72,11 +72,11 @@ export function Footer() {
             </Link>
 
             <nav className="flex flex-wrap items-center justify-center">
-              <FooterLink href="#">Aprender</FooterLink>
-              <FooterLink href="#">Mentoria</FooterLink>
+             {/*  <FooterLink href="#">Aprender</FooterLink>
+              <FooterLink href="#">Mentoria</FooterLink> */}
               <FooterLink href="/radar">Radar</FooterLink>
               <FooterLink href="/">Meu perfil</FooterLink>
-              <FooterLink href="#">Copiloto</FooterLink>
+             {/*  <FooterLink href="#">Copiloto</FooterLink> */}
             </nav>
           </div>
 
@@ -113,10 +113,10 @@ export function Footer() {
                   <XIcon className="size-5" />
                 </SocialButton>
               </div>
-              <nav className="flex flex-wrap items-center justify-center">
+              {/* <nav className="flex flex-wrap items-center justify-center">
                 <FooterLink href="#">Política de privacidade</FooterLink>
                 <FooterLink href="#">Termos e condições</FooterLink>
-              </nav>
+              </nav> */}
             </div>
           </div>
         </div>

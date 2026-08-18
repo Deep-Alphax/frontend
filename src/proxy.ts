@@ -193,6 +193,9 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclui assets estáticos E as rotas de metadata (opengraph-image/twitter-image):
+    // crawlers batem nelas DESLOGADOS — sem excluir, o guard de auth as redirecionava
+    // pro /login e o preview de link (OG) quebrava. `icon.svg` já cai na regra `.svg$`.
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

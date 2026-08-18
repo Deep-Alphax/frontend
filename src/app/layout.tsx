@@ -23,13 +23,35 @@ const workSans = Work_Sans({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const SITE_DESCRIPTION =
+  "PnL real, topo × saída e feed de alpha para carteiras Solana.";
+
 export const metadata: Metadata = {
+  // Base para resolver URLs absolutas (og:image, canônicas). Vem do ambiente:
+  // localhost em dev, domínio real na VPS (NEXT_PUBLIC_APP_URL).
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Deep Alpha",
     template: "%s · Deep Alpha",
   },
-  description: "Deep Alpha — Wallet Analytics.",
+  description: SITE_DESCRIPTION,
   robots: "index, follow",
+  // `icon.svg` e `opengraph-image.tsx`/`twitter-image.tsx` (convenções de arquivo do
+  // App Router) preenchem o favicon e as imagens de preview automaticamente.
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Deep Alpha",
+    url: "/",
+    title: "Deep Alpha — Wallet Analytics",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Deep Alpha — Wallet Analytics",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {

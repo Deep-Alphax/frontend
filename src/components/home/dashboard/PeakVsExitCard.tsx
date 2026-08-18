@@ -129,9 +129,10 @@ export function PeakVsExitCard({ peaks }: PeakVsExitCardProps) {
         )}
       </div>
 
-      {/* Body */}
+      {/* Body — pt maior que pb: o rótulo do topo do eixo ("20x") é centrado na borda
+          superior e sobe metade da altura; sem folga extra ele encostava no header. */}
       {peaks.available && withData.length > 0 ? (
-        <div className="flex gap-3 px-4 py-7">
+        <div className="flex gap-3 px-4 pb-4 pt-12">
           {/* Eixo Y (múltiplos, log) */}
           <div className="relative h-[186px] w-8 shrink-0 text-base text-gray-11">
             {REF_MULTIPLES.map((m) => (
