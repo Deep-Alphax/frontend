@@ -1,0 +1,2512 @@
+[
+  {
+    "trackedWalletAddress": "CAPn1yH4oSywsxGU456jfgTrSSUidf9jgeAnHceNUJdw",
+    "name": "CAP",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2dsHJfXJgXqDGp4EB2GQuGy9RNqwBhTzaiZ8YDBeQ8tb",
+    "name": "NBS",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DyaEj1nZS9qtkW4b3TkyuQii68wKBZmZ3p94AEJcHXkr",
+    "name": "SVR27;123",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HTYho9ioTJcS4Dymi57HB65RBFu549gjyQ7kncfkknti",
+    "name": "BrazilZZ",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "83wrBMKvnyyhJ1bA6hYWmqFbAtBJZqTAVuokj8q6vE6b",
+    "name": "Lair",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "3EEdEhxmzgYJsAbJmayBswqRt9a9cht9sYnwngDowFEn",
+    "name": "Bogdan?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8ZrYTsduLaVGiZC1bL2h7CCfNdTnEWq543CTZwsx1Ubj",
+    "name": "WuzieSide1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "27awcxw3p2BThKriCecRDa2ejjLaYRsE4QC6DBGuAvwT",
+    "name": "M",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4XMPyWFsYdNcCN4FG8geyytyTeUNacn4QundBzMqbGGT",
+    "name": "STXTICCSS",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8rvAsDKeAcEjEkiZMug9k8v1y8mW6gQQiMobd89Uy7qR",
+    "name": "CASINO",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GMYCvoAU8RaLrHhFFeySsvTHVfEwDFn9Pu6nRFv6BPUF",
+    "name": "Lexa1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9n2HDt2kJK6mX9HgnWmp5PWUaF56xs8vQcTgJfpBfgc8",
+    "name": "Scott",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "zEnAfwvosX4JomNmAhDzMyVvAXJJSq9Ub4Nf89G9M1n",
+    "name": "Zhynx",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6oLmg35SEGCjtakRhnEmSyrsZGvhbopLucAjMt8HUmQT",
+    "name": "Assassin2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5nJ6YgJexi6idQfy7cjka4PZrsgcuJSACGn7ZiMjfoUp",
+    "name": "LexaInsider",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CjFMcHuKQBa31ZTtwM9JshbTZdBEzbSdj5FFZs9ySWC",
+    "name": "NTR",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4oKm7USuD3TBfKA1ksLfPysFZZk3U9KbhoVJABUAYoCA",
+    "name": "Sami",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9yYya3F5EJoLnBNKW6z4bZvyQytMXzDcpU5D6yYr4jqL",
+    "name": "Loop",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BTeqNydtKyDaSxQNRm8ByaUDPK3cpQ1FsXMtaF1Hfaom",
+    "name": "Finn",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7azv99nzG6KYzkAP3uTN7trfUFtEqzXw1Pxy8MsR8R6P",
+    "name": "Bapped",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J7nPtanP8JD14Up3Prs3BS7U4HEcZqDg9HLD1m83c5Uj",
+    "name": "64.2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "D3Z7weHeLGWA7eg1qwVB66NCs8YLxiDTBVE6Eb1tTmwg",
+    "name": "Tate",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8deJ9xeUvXSJwicYptA9mHsU2rN2pDx37KWzkDkEXhU6",
+    "name": "CookerFlips",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DpNVrtA3ERfKzX4F8Pi2CVykdJJjoNxyY5QgoytAwD26",
+    "name": "Gorilla",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FbRs3RgEDP43hq5C9etGbTAvMm2GYvr7DaSqRnHdAmsS",
+    "name": "ThreadGuy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CBaM2xaPdDdhaopd8dD93LJAvextJoPngdKFz8QFP7JD",
+    "name": "MaybeMoonpie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5XVKfruE4Zzeoz3aqBQfFMb5aSscY5nSyc6VwtQwNiid",
+    "name": "Ily",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6b92pLw5Sw9QH6wmgrMAgKX1whEb8CvNJdTjpYUiPoS6",
+    "name": "Shah2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5DeXgBoHWWem6y3KVbN12io4STME6DL2vgtDTZbT7FPx",
+    "name": "AAlpha Insider",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J3ByxYh1E71iSCoSXVVfuuvZ9Y8BxsJabnhUf3MgLPxs",
+    "name": "Ravenouz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EuKB2sw5iQx3BFSsHCQFMzUp4K8A77P67JdcMUgoYWqr",
+    "name": "Romano",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GFG9huCStk6Ve6BDSdFTAYujnjaWUKMqimVPAbGhVT99",
+    "name": "Sleuths",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Aro9v6WAgJzjNiSX24HDDkghLFXaYZbK5sNu27f3CTnm",
+    "name": "Bishop",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4E2UNZbgaUJz1Mp4oNcTt1CHCLgoFkzZiwiQ9rLSisfC",
+    "name": "Bishop4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HgZNWdRD3EEt1KUTi7UhGCofo9qv6gxPXzM5mcBScUZN",
+    "name": "Bishop5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2o6dvaUAHT9wAPQFrRBpecAGNwv9pxoE4gnVL5qm44kH",
+    "name": "Nekoo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9aGZ4Q6VdcS1HAJTdTMSWVffZAJP5e1EMysDEbnnm7ws",
+    "name": "ScholarChris4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2fg5QD1eD7rzNNCsvnhmXFm5hqNgwTTG8p7kQ6f3rx6f",
+    "name": "Cupsey",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J1KdspDT1exnBkeJp8RCiWiFshLVeAyhvSnt2DYNMvCY",
+    "name": "Augusto Backes",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "94q7arCjvF5vM7tQrCr1SUbkuNASYZwygqQvczcTy6Ni",
+    "name": "ntr4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "44444LAZaLPd6eh83LxAkgc2wYJuJcwsk4jPEYC9jiFQ",
+    "name": "SVR4444",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3CdkobTfKSuFK5SxLAiPhjTbPSSvjzMHoKb66HPjZu4D",
+    "name": "BOnkbot",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FJCdVE2r9g3wemoSAhrebKAnqWpgrfoanc2CopT8iBrP",
+    "name": "Ihzan",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4H7QcXnQdo2w39yKJUPnQyGLB7d5goLFfXLnWamRgjXa",
+    "name": "WinstonWolf",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BAr5csYtpWoNpwhUjixX7ZPHXkUciFZzjBp9uNxZXJPh",
+    "name": "Jack Duval",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "22kFm8b2Vb7itdz51dNGd1tn9hkKgF82sc2jNEQkGafp",
+    "name": "SY2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9Ad1AJZW5Faju16YbKDwUvySmyzDLXgZUYYfEWoFE38S",
+    "name": "XetNEW",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9HcHm7FjkUmjckhDe7a8yYyVjxQ3hJZ5ZYb31nvqDszB",
+    "name": "Milerius Secret",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A4SXdqcCUmGT4GRSf4r7PehJu9Ki2jeGeC2bJ8VjkPSg",
+    "name": "DoopsProb",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AWhWYLVi2bUEweeAGZ3RmmCD7e7GRJEZfrAwFs7sBBV4",
+    "name": "Brazilzz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Ay9wnuZCRTceZJuRpGZnuwYZuWdsviM4cMiCwFoSQiPH",
+    "name": "Hexics",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Aygyjh7MMGVHqxD2UYrxFa1CUvhbEesXLAeMi9GUSvLa",
+    "name": "Wuzie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BLhQ4fWgkNAJ4MWXSdXaTnxwZxwHh7QTnMQb6i3Z2QYy",
+    "name": "Insiderwhale",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "C3Pe9nruaMZTenA9qwSaXecgDmDFG7XCidqAyP4gT6ha",
+    "name": "Wes",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "C9h8dHGrrpY2KXvgvcuFGgfnsW7syLUrK6Q2EvtQZKLv",
+    "name": "ErikStevens",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CkxN7qY2QSFkVN4o1KqbkHZ4gTorDEWHCVkMf7pNjo52",
+    "name": "Mcabal2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CNFJCSsixLfs7vKKBgtZTzwR6R5ovXeLXrxi8eZoeEqD",
+    "name": "Xetxbt",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Cns9CQ8nD1uMbvpyRaUGDYSTthYHgtuQRpffawQPm8wE",
+    "name": "Lexapro2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "cockLp6nwEkqudMehDgnqASax1gj1HwUhEKnzSicFM7",
+    "name": "Jason",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HP3QqRGCoGD1nJm1vNoE5FiXPLiAchHDpqjt1YbKaNTN",
+    "name": "Marcel Insider",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HwRnKq7RPtKHvX9wyHsc1zvfHtGjPQa5tyZtGtbvfXE",
+    "name": "Poe",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "rpcV4bAw7BAR6xzwLrmAbSJ17q7A5i4fAZdMg94auLk",
+    "name": "EurisAlt2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ZKFzVyhw2giGLCgeqvkWdNcdmVXTSyCmEruyK5xPpf6",
+    "name": "ProbChrisAlt",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FQ9U9qFU3bWd47EPHb8YRXSXR8TnbddDU8rmAw1ehUGg",
+    "name": "Doops??",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DWxgnxNbs3cVhZTqhpNQRnBzkLcFsWeyJRTj6YRDQAkk",
+    "name": "Lair??",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GkAXfqYbTjiuSEe2NN7CALMnEufVGoj9PymDico5En8R",
+    "name": "SVR67",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "H754zNaEX28KnatuGGeb6oAoX6iqxATgiBf4KLQLpump",
+    "name": "Xet11",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2qCVgtkDEKsSbp1SHn1DoMZjQUkDBQaJhAVo3BMvSVJU",
+    "name": "Bizz?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HUNjoeZJKUWKdw1ynufabwjKcJnzCTxjhD5eL7dJHinj",
+    "name": "Aeon",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ATFRUwvyMh61w2Ab6AZxUyxsAfiiuG1RqL6iv3Vi9q2B",
+    "name": "MarcelOG",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4M5wSoZyfRsLMHJ2UGuUHYHQ2a5Q72Q7FnGKAS54fCC1",
+    "name": "Reljoo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J2e7nDo7bq4J2K4xLWoaSEphP1nDxsW7jCfV1Yaop51a",
+    "name": "Leia4.1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GJyhzLoZAxZHZGPvF3V1wsyGUnoGSQ55n6hN6nHv7W8B",
+    "name": "LilmoonLambo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9ai8XPzeZ8B91b25JedteAuNfoqYpyyBX3E9yLBfNbC3",
+    "name": "SVRnew4(2)",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8ErYvJ7VSXHAb2xCF4BBoUJy6oaW7AAk2cr2wxtrz1Sc",
+    "name": "MaybeBulb2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3kebnKw7cPdSkLRfiMEALyZJGZ4wdiSRvmoN4rD1yPzV",
+    "name": "Bastille",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "E8FzSTJBZdK1C4bwcEBceCEE1BrbqGsi2ApzUh6ZUwUX",
+    "name": "KitchenAlpha",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CyaE1VxvBrahnPWkqm5VsdCvyS2QmNht2UFrKJHga54o",
+    "name": "Cented7",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "D6g1DocW9PPa9uWCwughfGPfu6cVKzAeGk5L9f16JU5e",
+    "name": "LittleMustacho",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BYM5xqPnH9cWTAzxD9xx6B3TWBzRa5TbzHvWjSyziq1j",
+    "name": "Sambo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "JDgG5nTVe4dfXF3cDLC1qE7zYh3Rx8iWemB3m4zyjaf6",
+    "name": "ScholarChris2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3LoX4ombyj9WELyMpH3RfuXJ2o8vuaLKjjGwQhCrBGKr",
+    "name": "Bogdan",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2aTEzrvGp3bwzngBjyAWo5McLXtwTvkgK8e7bK6Rtw2A",
+    "name": "Sadcat",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FwpBBSmJBxNRv43KorZagjvKJf9REVPcDNMuzraLDeuf",
+    "name": "Unipcs",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CmPieT6MUHULj47AXoLkpbVp4dLZnj2213WofsxJWUmQ",
+    "name": "Titan",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "BuhkHhM3j4viF71pMTd23ywxPhF35LUnc2QCLAvUxCdW",
+    "name": "degensaif",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Dk4na3gi8HYrrnFDcRgVfET23Ltm7AxbzvPpGyHaXwQJ",
+    "name": "Uber",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BBqJAr4JVCyg9tsb4pQhXY4VWQzYgSH2SqT1zHFDrgT",
+    "name": "DavidEisenhauer",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "E4Ruedde4i3tAfXu3sSojAanaHW1b6epsfdXRLbadv5S",
+    "name": "Nikita",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "cumV7jbJLfwuzknZHNKJFULdBVWsXj1MMgXm4SkpdQr",
+    "name": "Suppress",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "u5KJqXAAb6BDwhKYfpCMdNk9emYUcvyLL1RUV8v5EZg",
+    "name": "JacksonInu2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2Ssev68vrzvexAF2huqthAABV9uAaC3rNvzARJEo8HrG",
+    "name": "JacksonInu3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FgNJvgEdzxhE2CMxRHZWUtfSbsiiVeabeE2PPt9c1Dyt",
+    "name": "JacksonInu",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AwT8zUqSjzzmRf1ZwzR7eZxNDtXGG3ZZNSDsG2h6E9uZ",
+    "name": "Lick",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "63A99xoxxUVBm8VUguBcJZbYWDLi9AjYvYtB16xWqCzw",
+    "name": "WRLD2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FEEJCDM968D7is3AMa9yUUrnPSN5UivAPzpys7qEeiCi",
+    "name": "DOJI",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CUHBzSPSaNS3tArEtM3maSV6pNdJhHJFYZpurPPK9P7H",
+    "name": "SAMSREP",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AW5tCLbh7kLkn7s6ZDViwqpP1JGi44caT8uHGGaYZfmR",
+    "name": "Ravenouz5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7n2s75r3a7tzpivfaQiWqKVbxSWAhm1GwTiaVELfUvgs",
+    "name": "Files3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7eNRALuXYUJkUWTvRj5tcB7tcT43kmT5SNdkfy9fKTto",
+    "name": "POWFomo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9tBVfGoprxwd4cdHgvzi4QcSU6XjYNEAyAfM3jq6i3D3",
+    "name": "Profits",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GkozvneYsq25qYMSLctZMCJP9k7ScqJ8r61uXnhKtX8Z",
+    "name": "TraderPOW",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9RYjAuuGhkvzfCnZs5p9wRJUfqKk6mLNtnz2jLtdzK8r",
+    "name": "Neko2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5uWiSJevQw39bX4xryoTxC8uqjaBmviwhtKEhFtcHHLb",
+    "name": "MartinDevTomato",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9w6vz1QVKhJAAvw2Li6tkDq6H1YfABdJqS4BX4yw929B",
+    "name": "Blazing",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EVijxeAhDrLWg5BKenE7Hamx1QSCSXCosb1cVk7x5xoD",
+    "name": "Zagy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5DVsXQbtPT7bUc6VTSXfdNP3rbqzyi5yfCmMEqDpfShv",
+    "name": "Missor",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "XDNyLB5cJF1DYp9BK3j2HfGjDpsQ3NrTcdMDtiihXpP",
+    "name": "Smokes?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2C3M7dQd8iDnUWrU3RYm9s4wnyiGopdHhYhSNbVvvx6j",
+    "name": "WuzieSide2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7SEpLDSLRcGD9Wkb1xkyZJ6zQxobZvZkGdhQuXXEXgSB",
+    "name": "Acid3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BQVz7fQ1WsQmSTMY3umdPEPPTm1sdcBcX9sP7o6kPRmB",
+    "name": "Limfork",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A88uMtYGRx5CF4TT8L4L7KxjbPeW1o21mKMwfNcmH1db",
+    "name": "PsyOpDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GJA1HEbxGnqBhBifH9uQauzXSB53to5rhDrzmKxhSU65",
+    "name": "Latuche",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DuQabFqdC9eeBULVa7TTdZYxe8vK8ct5DZr4Xcf7docy",
+    "name": "Orangie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "potATmnzzDozwPJQqCHRJE3wgw5d4CXow2WuewzS6oW",
+    "name": "Potato",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A4DCAjDwkq5jYhNoZ5Xn2NbkTLimARkerVv81w2dhXgL",
+    "name": "Coyote",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4ZjYSCH3Sib9iMSM3QN2sL2kwxNcXG2P4XCemSC2hsyb",
+    "name": "NomBonk",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5M8ACGKEXG1ojKDTMH3sMqhTihTgHYMSsZc6W8i7QW3Y",
+    "name": "Bonkguy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5rkPDK4JnVAumgzeV2Zu8vjggMTtHdDtrsd5o9dhGZHD",
+    "name": "Dave Portnoy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6CPneeH25k7FZpQjAyGHJfKb9DZhqjYR8KWH3tSmeSW8",
+    "name": "Yezen",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6o3HntbzA1bQLB8Yp9GAi2pxSYRzFuNtwWw4wVgR4iKq",
+    "name": "Juls",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8cAb93o9zCB13T97dU83i6pV13p4aMxKFEiysQUKY9vs",
+    "name": "Euris Alt",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ApRnQN2HkbCn7W2WWiT2FEKvuKJp9LugRyAE1a9Hdz1",
+    "name": "Solcrow",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4CYjPBcx5D8Q8KEFNBKW8qSuDmLZA8PNLLPqMH2rg5KE",
+    "name": "Hank",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8RfH3LUSed9xM5bh7txdWKZFNbYGB8AeLCaeZjC9kN1o",
+    "name": "MARCEL AXIOM",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8zFZHuSRuDpuAR7J6FzwyF3vKNx4CVW3DFHJerQhc7Zd",
+    "name": "Traderpow",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4wkqcn1nraYLHsiRnMHBsxJqywjFkExa6SV8wangdbGx",
+    "name": "SUPERDUPERALPHA",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gsmxjn22j1JSE7Ueke3XpYcA2UYP8KLcUHWZSR4MKmFf",
+    "name": "Smokey",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "As7HjL7dzzvbRbaD3WCun47robib2kmAKRXMvjHkSMB5",
+    "name": "OTTA",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3ZEogTrz4JLw3DZDau44hL8QdQqZXyHC1aK7Qq6S6BFx",
+    "name": "Ostekake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ZzZZzPoJxWKern9EMk88aik3P8KwKgptANPdrhERrwr",
+    "name": "TechGod",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "D37KwuoeLJJqVkD9EPaLD4zfwAZdp7WnH6BoJ5BPJ8rb",
+    "name": "GakeSidee",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "qP3Q8d4WWsGbqkTfyA9Dr6cAD7DQoBuxPJMFTK48rWU",
+    "name": "Kitty",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HdxkiXqeN6qpK2YbG51W23QSWj3Yygc1eEk2zwmKJExp",
+    "name": "IT4I",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "zhYnXqK3MNSmwS3yxSvPmY5kUa1n2WUaCJgYUDrAHkL",
+    "name": "Zhynx",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BoGCsyGazH6zsmUXKV1tAe5AWu4Jdku8nsq3AkABvxLD",
+    "name": "Ostekake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CNwjmySuHEbz2h6r5vMPuUFNrZ27xxCGSGQVf3gV8eKi",
+    "name": "Maurits",
+    "groups": ["Main", "Maurits"]
+  },
+  {
+    "trackedWalletAddress": "FYwQabWAdqQdvcU5bX8oni9ze4VffGVnjc8Mcdk777v9",
+    "name": "Orangie3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9iyDyFA1qd64u6PTV71HuQo7ERRkTw1PSWpaJ2bgy2kU",
+    "name": "ZhynxSide",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2WokXHTjY6wyXNFLGGXjpFnXxbGKtJ5is5f8QhEDHJ8v",
+    "name": "Maurits",
+    "groups": ["Main", "Maurits"]
+  },
+  {
+    "trackedWalletAddress": "2KcgPBBK6cpRVNHVqboEacQxACnCKmoMTaUSNRFNt3su",
+    "name": "ScholarChris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BuVHhBCPCXfKaihEbMEYQiDPRBVqNjz5meP4MUSTNbH7",
+    "name": "Zhynx2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gs5nPgmqYBpKvtermbsLfKbhyRv7k64Gz9iSZQizU8ux",
+    "name": "Memecoin2M",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9gFoZVrVhcHDwjc3zfP8GZqDitAU7PnmRqHXPN54zqDe",
+    "name": "Rachel",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BQvY5pBEm7hz58pXPM27nr1j51FPuV5tNYXgnUq6JdKD",
+    "name": "Hank",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9hD5wsPWy7xzU8aVxToZsgiAVvjhHgf4A6AmA1Cjn49o",
+    "name": "Sapphire",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CRqoi48n5th6pysryrdCudPRRguKejb7pzyb2mLfzmhi",
+    "name": "Neko",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6GPrU542nrTu947M8g77mbgQg7eo6aUXwK1FXzQL7XgJ",
+    "name": "Nekoz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BEkUVe83Kfcjw2DABzvbwYE9XD9GMvn9zB17dMd4yGji",
+    "name": "Ray",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6pj9cgWbvJPDLhUPrZ1ePTyCSomtHAVnsNxNuNs2sSbZ",
+    "name": "SVR2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gz8VQCZ4ZYrJ6EMAnxmc5UAUTBwZaoKfmMDZ31UcAAux",
+    "name": "SVR2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "eW5SgvF5KCPZif4rsyigkKN1M9wSdxNdgDNmEdCzFp8",
+    "name": "Nightcore",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3h65MmPZksoKKyEpEjnWU2Yk2iYT5oZDNitGy5cTaxoE",
+    "name": "JAYDEN",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GpMbnUvTuufoSz1hYqZoGYQ4P6CEBJzGbnyL2tiyeUhr",
+    "name": "Jarrad",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "26kZ9rg8Y5pd4j1tdT4cbT8BQRu5uDbXkaVs3L5QasHy",
+    "name": "Orangie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HBsyMh3wUoHsJiP5gFh7sxEu5W3DJoVrNvzFY4jv55SA",
+    "name": "Ravenouz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gfnaxv3BLqyqJngu5JA5D3rE3QEizGAiXbNw1wjtiaxt",
+    "name": "BroxAXIOM",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6kkyS28bQzoQquz9vDxVFhw93eLvqEQV5TFHBCs21DYU",
+    "name": "ChrisKitchen",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "831yhv67QpKqLBJjbmw2xoDUeeFHGUx8RnuRj9imeoEs",
+    "name": "King Trey",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7VBTpiiEjkwRbRGHJFUz6o5fWuhPFtAmy8JGhNqwHNnn",
+    "name": "Brox",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8yJFWmVTQq69p6VJxGwpzW7ii7c5J9GRAtHCNMMQPydj",
+    "name": "Lexapro",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8T9mnATndr2aUw9r28uTtxKSh2JfqJwrctW6XaWPHTgy",
+    "name": "Liv",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8zJrMEHhzt9jbcSLPFBR9vAhcNivCVJn1Rgqj3DDcMZX",
+    "name": "Sonder",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "96sErVjEN7LNJ6Uvj63bdRWZxNuBngj56fnT9biHLKBf",
+    "name": "Orange",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4rXiu7Vw9rdpHHKFLBGzzTWTWpgHVmUq2jJEKCt6FPGY",
+    "name": "Ninety",
+    "groups": ["Main", "Ninety"]
+  },
+  {
+    "trackedWalletAddress": "B3wagQZiZU2hKa5pUCj6rrdhWsX3Q6WfTTnki9PjwzMh",
+    "name": "Xander",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CkVUN3EYuCTnF6XcppPX9GUTYAZqLpMX5aQMK6t9gBEs",
+    "name": "BonkDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "pYw9YX1Zkmak9inMR1PKCpY5Qpjt2ycsXugH5A9pump",
+    "name": "Mitch",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EwTNPYTuwxMzrvL19nzBsSLXdAoEmVBKkisN87csKgtt",
+    "name": "gakevec",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4Hq9UkSXjEwDZDBMAo9Lnri7VnbQCoomRAdrT6NGMh1c",
+    "name": "GakeAlt",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "C8oK5bCPfko4ZC9R7tkCCp7YvDwJyqvW51koXpNyqcUu",
+    "name": "Chris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "KANYEsXAntLxYUE6GtPJ5CahFGpEbaSbd5xhNFYbvq3",
+    "name": "Kanye",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FrQ59KmKUhu8G3KnDz5sDQzhnqPGBn41WSM3EN634J3S",
+    "name": "MarcelMain",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5CP6zv8a17mz91v6rMruVH6ziC5qAL8GFaJzwrX9Fvup",
+    "name": "Naseem",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9X5n5i1mugTjgGPhqf1KJDt8r4kD8TF3s62ttbxKzFHa",
+    "name": "Dingaling",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3Rc8aY4atKdUK1zPkUqqcxBkVswMPCxzZLk6aqjZnPEV",
+    "name": "LeiaMain",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GrR6A54eVcvdp2JxEaDv3pwNhXcMa4jH1fi6p8nor4Qx",
+    "name": "Ravenouz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3JoVBiQEA2QKsq7TzW5ez5jVRtbbYgTNijoZzp5qgkr2",
+    "name": "Frankdegods",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2sRpmza3AZi9jkrz3nXT7zpcrGDhYj1vVubVJSWV6VdU",
+    "name": "Casino2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "D2wBctC1K2mEtA17i8ZfdEubkiksiAH2j8F7ri3ec71V",
+    "name": "Dior100x",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A94ZBgKWq3iph21jhR33veZDBx9dGm4BpXo33rA6qUVM",
+    "name": "Shah",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "215nhcAHjQQGgwpQSJQ7zR26etbjjtVdW74NLzwEgQjP",
+    "name": "OGAntD",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9uphYiTJQXtekzHrJykoxfiMmjG3p2wPjbb7vypcM5fg",
+    "name": "RickLair",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Bvgac6ty9dqHj9YogSNBkEgFYJ3tm9sL8MBLJvnF9kA8",
+    "name": "Ostekake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "H36ZUjiAkan1vegUJA5K2oETuWvL2ZgUTmvk6ZPVMWWZ",
+    "name": "Luigi2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DuGezKLZp8UL2aQMHthoUibEC7WSbpNiKFJLTtK1QHjx",
+    "name": "Eddy2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J6TDXvarvpBdPXTaTU8eJbtso1PUCYKGkVtMKUUY8iEa",
+    "name": "Pain",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5d3jQcuUvsuHyZkhdp78FFqc7WogrzZpTtec1X9VNkuE",
+    "name": "TechnoViking",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FzZJqX5m88cHqumKzyhGP85xUY7DpR4t8JiWy4BL6bkF",
+    "name": "Orange2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CursefsPRLjEku812NUCEQ19xpVFcqCG1nRg5pUPijzf",
+    "name": "Napoleon",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "36KgzCrqPxq4qswcGwRDTHgxjLXVsfzW5Rt5wmJCSuDr",
+    "name": "Moonpie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CCUcjek5p6DLoH2YNtjizxYhAnStXAQAGVxhp1cYJF7w",
+    "name": "El Charto",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AnsazR3Rf7LK2P6dKmwdyr6bzknaw8WyaVKzh5s8LXqM",
+    "name": "Paingelz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HLv6yCEpgjQV9PcKsvJpem8ESyULTyh9HjHn9CtqSek1",
+    "name": "Lyxe",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EzXG2v113StPyAFAirmVoaMTyhVa4FZY4XedvQcvokZL",
+    "name": "64",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5gv4JR8qipA6AnqXAwTCCVugmPHeaRhT4dLCDoRsAkLm",
+    "name": "Houdini",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Cxe1d5zFifK4a4UZoHQaCK7sfqd84XjcKy1qtjnz3bge",
+    "name": "Dj.en",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4nvNc7dDEqKKLM4Sr9Kgk3t1of6f8G66kT64VoC95LYh",
+    "name": "MAMBA",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3rzai4SPgJzTjegjonSv5UuhDwYXxZJtAbcjaquicgkx",
+    "name": "Luigi",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J898BLdjUWFPsvqwraj1rjg33rE9B6zJY6HvWFKx71fo",
+    "name": "Casino Alt",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2kv8X2a9bxnBM8NKLc6BBTX2z13GFNRL4oRotMUJRva9",
+    "name": "Ghost Potion",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6LChaYRYtEYjLEHhzo4HdEmgNwu2aia8CM8VhR9wn6n7",
+    "name": "Assassin",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5t9xBNuDdGTGpjaPTx6hKd7sdRJbvtKS8Mhq6qVbo8Qz",
+    "name": "SmokezXBT",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DtKj3fFs4SPQMGi3k3wnK5VfuYy8FH1wZNXoobGAQTXD",
+    "name": "BrazilZZ",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CNudZYFgpbT26fidsiNrWfHeGTBMMeVWqruZXsEkcUPc",
+    "name": "GakeSIDE",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AfQR4oyGDPb1CfUnfE69MHuqsVAWMA7W1NvNfcXJjcaU",
+    "name": "Chris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HGxWqbW6rozaJztfuevLcQACivGVeLuVALGL7k5ftoA6",
+    "name": "CryptoNews",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9Q4CwjmSfTpz6K8eFTjhzSzgV6hX4qnPMUsE2qCsSTKB",
+    "name": "Chris2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6DtEedWf9Wk5hA7Xth82Eq441yf5DA4aGLqaQAVfDokm",
+    "name": "Alon",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3EAAftccoF4zEeYviKXkNvRqqvzaCNtqQKvRxAkRvuXZ",
+    "name": "Orangie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BFTCyf9BfP8WWuheCBoRfBWKz54JQ2aSQoGz1MGwwMNT",
+    "name": "PortnoyDEV",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ACHhRQMbTxuWqU3bmbBbgUNGsPsYnvB8KLcPkkXCY1C7",
+    "name": "MarcelDoxed",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GSusGbXPnpVXHtphMFqL7j6D2g7BCSni2LmPHqJQTiZv",
+    "name": "CryptoMiau",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Hq7pctkq5xVRfX3APzMT4Yo8pYdGAHufPZt2j2mQEAsw",
+    "name": "Tom New",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4xcy1j1ZAEKwq8on8wgAA8vsQ1Cmr86VcbfDx7GLTjmw",
+    "name": "letterbomb",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EEx9rjSNWMSdCpfeNKB3jCMkYe3cHvF6YZkCudNNLzXd",
+    "name": "MarcelRachel",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "39KTKRTmg5YVS5b3nkGhzRVuEGhMcZcEGSPjENaHwePq",
+    "name": "TheEye",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5DydWDXZsCr6mfNxaPv3c5H7NT1p8JCXvPKVK1d3m3qs",
+    "name": "DevAI20x",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BCXzbLHwtHseoAYgBC3RseMwtDEwmUz6vYooGP3vcXH1",
+    "name": "Ostekake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FTg1gqW7vPm4kdU1LPM7JJnizbgPdRDy2PitKw6mY27j",
+    "name": "SoloXBT",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9hpfds6jWpituEKZDEsUxTDj7yd5fLhN3c8YrHkXCkTt",
+    "name": "AndrewCandle",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4dmGbc2tAbr3mDDszU94ybPKFz9Y1YggFV8MCWS2cziT",
+    "name": "Eddy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B69hjmBJsCQMM42RHMdoZwDR53JjuGCtLPiNaxUpEtbg",
+    "name": "Eddy3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DNK2NTirdbdtBcpYdB71V6FmgqQnATNauAuSWecvFP7u",
+    "name": "Andrew",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6fm83LbV26HB4hkmzTzZJhsLv2b6f9tuLWkoMYoHerFy",
+    "name": "xetb1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4QEzfVYvKpuwFQQgd66WL44eAv36pedeBnmjnQBHFYF5",
+    "name": "Xet4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5B52w1ZW9tuwUduueP5J7HXz5AcGfruGoX6YoAudvyxG",
+    "name": "YENNI",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EiREfdYc6uBKdYbqBRHquM6inDz3xTMvxUj4tmdkMnq3",
+    "name": "Sleuths",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "e4HrQs6SKJAHxCMkELaDGpvaWNCqWPzTf2PR5KatJGF",
+    "name": "Bitlord",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9VKYME2xdBfK9GVpR4zDjCrAFbDKVgrbJTh1Kjthch33",
+    "name": "Dyor100x2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2X4H5Y9C4Fy6Pf3wpq8Q4gMvLcWvfrrwDv2bdR8AAwQv",
+    "name": "Orange",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HAN61KQbgzjDBC4RpZJ1ET8v32S4zdKAjoD7EApJ96q6",
+    "name": "Pain2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6GxT2FpgJ14Vm8NtgD3d9UMVPJEKVHorsrYN1VB4MsqH",
+    "name": "Orange2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6kiD2FuYrXJwB7AX19Ng3ogfEaRAUho4PbPxUwP4TLQk",
+    "name": "Orange3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3KJgenPukecVmUAatdVFUKTwCSiDRY2ifku3ELqGj7ru",
+    "name": "CaioVicentino",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7bqZMF2Dc5LspsQQeQgBdPKuy8oUm5uztQj9jVTcYXZv",
+    "name": "AlexBecker",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4njFHEZncNm8iCeQzbPssXZduRTJYhSqSySR9UwaGmvu",
+    "name": "CaioVicentino2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "tJargMaeciu3R3r8P9V6ndsBRXjY4boKPe24ExU36GM",
+    "name": "Ostekake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BaLCEtq6qgPFruxfnjWBJBkWwCXdwmuodn4NUicQqMSw",
+    "name": "Cupsey2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CZRZzgaqS6xWf3GU9ckvnrZxA5J2qGzj55YffN4KWxEw",
+    "name": "CASINO3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3LrP2PJ8nEixwXQBWChj33unQHZvLxX6LsYjtsdkwcaH",
+    "name": "PartyHat",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4orSZaYmdiFoo2woqNKnbGsYrfp9NC2FtE3iJSzf5Vf2",
+    "name": "Mixclix",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4tEKAoFM3YENGTuZJPU34Ny4KNnkkVsr5wsFaRGGYe6Q",
+    "name": "mixclixprob",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "winkACDSxstg19HJgX1pwDGpD8f2ZpiqqAjyAbkgXLu",
+    "name": "don",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J23qr98GjGJJqKq9CBEnyRhHbmkaVxtTJNNxKu597wsA",
+    "name": "gr3g",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GijFWw4oNyh9ko3FaZforNsi3jk6wDovARpkKahPD4o5",
+    "name": "lunarfang",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "539iRxKyM12dyhbrzBtdumziLZgRV57zSBmxe97JyrsD",
+    "name": "Sonecarox",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "777777SKLnxYweGxa7yjNCyHhiRas6CRYBSrxmvWzmu4",
+    "name": "SVR6",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gt7q9kcvBwX2YVsZfD2N1hmdVgPV4bN5ErjGEe9rQWvu",
+    "name": "WojakWhale3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "E49oNcKzEbQK2bfYdnhmEdUnndzxLDr2kUe2msszHmbk",
+    "name": "SVR",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FTuVz99N6FRj74KyuEdrb2rpwiM36KQWEx2cYffbViYT",
+    "name": "AlphaUseless",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FncXQcuxnv6QYH9pDpJWWcD8uAwE78JVynoS1SXysi9d",
+    "name": "AlphaUseless3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3viJDcQ64SuN7dDNk6Wfqf4xG8EuQgos7zAAWi2i7Ens",
+    "name": "AlphaUseless2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HaZtFxgw99iM97LxmwFuDW6k4MP1XwsWTGoy7GUoSELj",
+    "name": "Cobie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ArYiVRSsSr1ykVTgFMwDEHQwzUH9NLTq5H9ndKdsfQdT",
+    "name": "Tailsman",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "66gDJAy89NXfH1boMchUNx9trNbNhnbkCg3gMGUTx5WG",
+    "name": "Missor",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2sqTwLCEqKxmyUq79HVL4bwS6QjvfMtnqnZznLFmwJMi",
+    "name": "ChrisKitchen",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A3QXtNe1Q1WERpn9eUbPdyDbFSh3wopZetk8UfqoaC2c",
+    "name": "Wuzie:::",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Tdsn1GHfCtLSaUCbUwDWN7x7zqtzgN5sX8p8FuTq9Db",
+    "name": "sadcat3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8yKxiYRTgMsFmR5PGdYw6rX8SbxdjBEZjjEvmXdjxXPK",
+    "name": "NinetyNew",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ABJQKkQaAfCfv6U8dt7Cz2HLmv4Wk9k1NFSSmi2S2q4N",
+    "name": "Bobo45",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "heyUaWFT9iU51Cd78xgiHSx45RrYvH9MQVsbFXTzBEc",
+    "name": "SVRNEW4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "74HG4sMrMcFAKSAeJ3pUqCjeFP16bR6GE4yi4nygTe2X",
+    "name": "Patty3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4PjuMZvy4YjKR7iqUtUuNZPF7gLwj7sqv1wTBKnx5Zyc",
+    "name": "SojuMeteora",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EBxgMjihSYK1UsfsJtNUhYq6RvuzYh5qFzQVfKew79cb",
+    "name": "WhiteWhale2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DXq2nz7p9pwsHs63cJAzqHtUAUS5bcsvLJe7Yk7LBW4m",
+    "name": "Acid",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DbbpFGmD15Rqrmswf8xC74ikpx1YBHVRkw5oDpUSTJdq",
+    "name": "Winston2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Hwgr6WXfUHztpDFodxcxL6ubz1UXykfAmnTT1FTr1ryV",
+    "name": "Winston2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "fattytKHsHmwGUxXb7xRUKEJXsn73HNSkzm13bBxWLc",
+    "name": "SVR42",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "61BvoQj97QNGQa2aaeC34vGEM6GfMzcB22vJoZywUG7F",
+    "name": "Chris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "76fx1SGT35mqUfG5dcmpWS2gzLBr5AGrvMDEq144XPkJ",
+    "name": "Rayan",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8xaYdsrAUkfmAMJC9TXYQnrGGqdNWWZAZx5wVUWboweq",
+    "name": "Neko",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BtMBMPkoNbnLF9Xn552guQq528KKXcsNBNNBre3oaQtr",
+    "name": "letterbomb",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Da5rk4XmxEMr68FA4PxkpCSWY7BjaHRh7ERsoWipump",
+    "name": "FlippingProfits",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "dATMod1UTXYzvaXji4mBsvXTeAUAC73TNJQAejKS54X",
+    "name": "omtad",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Dc9YGJsfrExV7trS9gChLss5bEk98emBYQHKPMcXKQns",
+    "name": "EuniceAl...",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DDSpvAK8DbuAdEaaBHkfLieLPSJVCWWgquFAA3pvxXoX",
+    "name": "BonkTeam",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DfMxre4cKmvogbLrPigxmibVTTQDuzjdXojWzjCXXhzj",
+    "name": "Euris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DFYHE3kb7ebZVqfzBScVZMD9Uo7GDhpPmumY7QA3d5Fx",
+    "name": "Leia2403",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DGPYpCdiVg2shab2TnNiZ2RnsjBQSmhgN71hJyWC5cYn",
+    "name": "traderpow",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Dh3izCxKfJzkRhahnQoSBwB3DpzjsUTDfuTC4qYNqiEy",
+    "name": "MIXCLICKOS",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DKgvpfttzmJqZXdavDwTxwSVkajibjzJnN2FA99dyciK",
+    "name": "Rowdy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DNfuF1L62WWyW3pNakVkyGGFzVVhj4Yr52jSmdTyeBHm",
+    "name": "Gake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DRAcXsiRBy36RKtLqB7hmcaRUG17aDXu59sqCVa4zznr",
+    "name": "Hank2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DScqtGwFoDTme2Rzdjpdb2w7CtuKc6Z8KF7hMhbx8ugQ",
+    "name": "Shaw",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DTLP71yuspBu11pST5NEvRCVHwinK1awwLdgNNxwtqxs",
+    "name": "Marcel4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DwtF6KdjB9xgzKhCvcxKQLGU1NezdFFdVo8tLzSb7C8W",
+    "name": "AltPow",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "En5cdGrKgFHmfLkz9fAUicB5V3sJD9xTFh45dzwjz85y",
+    "name": "DevLemon",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ErznZdkgwkYowN2ZQ5omL5fqUZ4VF1kqvZjzqMmFLH3N",
+    "name": "Brox2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EuC9bwq7AhtvgqhzFG5TtB2q8PYmgWbQ7Eei7FaC4oG3",
+    "name": "Millerius",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EUWNAcx3C9Fr8fE4B5choQ3jYqKrYejNwECsKFp8wkKv",
+    "name": "Nevryh",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "F5BwXazdmZjM5wYFZEhf18P9zdg5ZVAyUwwCVrgwfhsd",
+    "name": "FartcoinWhale",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "F5jWYuiDLTiaLYa54D88YbpXgEsA6NKHzWy4SN4bMYjt",
+    "name": "Mercy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FbVbRbGqLk7DtprRHV1THa26ynoRZjUC6RuAxT9yaohM",
+    "name": "RayTrap",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FkSnMJzEfPGUQNxwpgYA5pdUjg27L1BoMibQGjUHo3yM",
+    "name": "Nekoo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "G5nxEXuFMfV74DSnsrSatqCW32F34XUnBeq3PfDS7w5E",
+    "name": "Profit",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Gpz8HiRqUWkAa6SFD8DPuXCNzkvqnHbdVhRNNqUxsUbh",
+    "name": "EurisAlt5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GrD2umbfEBjQKFPDQvmmYNQ5eyRL9SAdWJj9FFMyeaDN",
+    "name": "Solstice",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HchyReyfN66tuXgCgkbvKpYT4KZgNAzMcF3nj9DNXeqA",
+    "name": "Eunice",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HCQb4Qrtk4qCfChDH8XvM5onymmCSmRj9bddV6QCPdRe",
+    "name": "Rektober",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Hf7xn3xNfmFdzJMUcNGm6MEX3QTQqgQ3q7H3rWKWfJXF",
+    "name": "Mixclix7",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HiqmkvnpkXu8zphthEmsnZYcmyDt37RkjRbcZWo8pump",
+    "name": "Stxticcss",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HKFNFPFiei2qu3fR7vJjLqtdpoCkDNgqGTSPGJ4GKXwP",
+    "name": "HKCNCN",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HLJiH4Z4at4HDVhnbTFHdYqEr6Yqnrt7yGvLCum6Sb4E",
+    "name": "Gotham",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HUzZ1MrEUXrdPJoAnn5B8uTcshwyyXxFW1EqY2dvcVhe",
+    "name": "Giga Quant",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HZgvM9pJy9mnY1imY6rFbXXYpT4fNrGnh2He9H68eQ9k",
+    "name": "xunlee",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J4dW7Ky9YsZeZb3knL4tpGavgJYMHXpJDe67bRpRr54Q",
+    "name": "PowAlt2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "JDd3hy3gQn2V982mi1zqhNqUw1GfV2UL6g76STojCJPN",
+    "name": "West",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "pZvr15v7aKoJRjbAywq76WyNT2M722iFXNwnpwBQ12C",
+    "name": "RaySide",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "zQzH6nHRw1NzhnfuWiGEK8FDGoxvLpp8F6fMm2vyrmZ",
+    "name": "Sammy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B4W3aaE5phWyMQi33BwLX7k5TSQ4zjvu8mRTW52fVxBD",
+    "name": "Mxclix",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DhnK3KRCkuyDh2RBgDDMUtB4KMcpN9ctjei9qsHVXoeU",
+    "name": "Lair",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ECyvtxvY4KNBt5vfLtdsMrp77mKjL3JD6aha9m3aXBvd",
+    "name": "WhiteWhale",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DaUBRKnAjuqzozUjkH4QuVJUJiSmrbnLbCeqAgwA6dGF",
+    "name": "Rachel",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HHDp6ztCSJaJhhiVMh4U624YFb3yNX8iJmodiQ8oXBgE",
+    "name": "Fuk?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ALi4SsgqJHKjv1KVEwDm7MQMWwiye61DuoV3c6rKeA1w",
+    "name": "ZagyNEW",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5B79fMkcFeRTiwm7ehsZsFiKsC7m7n1Bgv9yLxPp9q2X",
+    "name": "Bandit",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "PMJA8UQDyWTFw2Smhyp9jGA6aTaP7jKHR7BPudrgyYN",
+    "name": "Chester",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "PUNTz1vHc1DcpssW8UWo2teqG2Smexj2KXo3VZgvjz7",
+    "name": "Ninety2",
+    "groups": ["Main", "Ninety"]
+  },
+  {
+    "trackedWalletAddress": "BEqgQrYrUVquFhdFfjfiLEZQreZqN4wFSSeJUVvCQYJE",
+    "name": "Redbulish",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5iE3Ys3ReLyU2afp838z9qP4tzEbBeYGQ14fARCRiieG",
+    "name": "Wuzei4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4QuwcA8W8B6RNU2nnhVC9zDbBGrFRTyAznHLaVYVWXkw",
+    "name": "CartelProb",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8aYA62aDxTeYFjb8yoRyYhHnw8EKqffZwGUig96FF9KJ",
+    "name": "WuzieSide3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "498g1rVnFcnjBjpfw1xyqA1WvgQXUU8RWuELjxkjAayQ",
+    "name": "FrankDegods",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BCW9yqXmL2kPGUasPfBvR6koXxnahHHQWvVoETmj7t3G",
+    "name": "Brazilzz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A3W8psibkTUvjxs4LRscbnjux6TFDXdvD4m4GsGpQ2KJ",
+    "name": "Numer0",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EYWQ1pXy7s66rS5wpVT5CYM5kjGLiUagmfsgmiCrrFSw",
+    "name": "InsiderTest4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DNmG4FvxgvzEhoH6GBeTd8kYBdUdQxAqSjxabnDKR1JH",
+    "name": "ChrisKitchen?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B64DGzhz7d3M5RvbWZBB6zPEphkktPd3ADDeaTAFHSvm",
+    "name": "Zav",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "nsZtEE77jV81bx7eF9Gt1hex1t2Aa7hhu5191Hin8cF",
+    "name": "xetb6",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "76ZUBj1JLz7arTVHSRJok5oSTEqDuVBgySFMVHtzxzZc",
+    "name": "EarlyAlpha",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "F4GnRh2tvdVLoArFrrUJD89Vy5ygAtGGf7G4Y9UqiZHS",
+    "name": "xetb4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HNs8oatWhSx9j52FGCkruGSYF89rHYvckQHFY5Cz9ACH",
+    "name": "xetb5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HwKo2PhfA63HQmx1jLwXvfHb5GCXgn5vJrXbBighsY8r",
+    "name": "DV2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2VqPovJiWV8c9EhXWnzEnCUQX3JW3AU8UV37tkWprK4K",
+    "name": "DV3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "87MZqjjJgpuFvaU8GyQJKbZGnCFFhX82qAjBGLRXPfcn",
+    "name": "Nyhrox",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Cx3CBLZrBiAZUCz5KCidKKsPhuExmHVWrz67ymE1a3gk",
+    "name": "Murad dev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HUZTcoKriw1WYsNjoLAmQSGs1KjffXhS9eG6uym3w5cU",
+    "name": "Hank5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "bpCadLdpFdia31jr1ny7NoBynPjHLQcQSD4HW4HA6Ku",
+    "name": "Bihoz4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8MaVa9kdt3NW4Q5HyNAm1X5LbR8PQRVDc1W8NMVK88D5",
+    "name": "Daumen",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EUYKESbr7HD5Gsqt18VwvS4eBCLiYDX7Cx4TKigrZBy9",
+    "name": "MrRed",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8nYhCpvHu8S7yg2Vmq1m6ufVafeuzwiWj8X8vwXoWxrf",
+    "name": "Doops",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4X3dEAesyaLYi8xe7nbaF3MHH6YDGhwpSVy3YZagkd37",
+    "name": "Spark dev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8fep51AffjPmoKboAmvb5XKkraZWNPCQrzXVNvV4Jaw3",
+    "name": "Nimazaki",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7SzfSJAvw2fLXSR3JbEoNtAt2BNc8yBnSD3Y3e4yYP5k",
+    "name": "Doops2",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "6mjJ6NJ39ofz1yHsLqShHEN9EJm8m9FHVzY4CkJNJmU1",
+    "name": "Doops",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "Bq1Qrc3iwHeBzMjGPaGpg5vowJwkcRrT4cXpNQNWRZ8M",
+    "name": "LexaPro2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Hd2oxKYvsv83qN421fjN4o3K7QXu2h8g8jiua4kfG61F",
+    "name": "Doops",
+    "groups": ["Main", "Lair"]
+  },
+  {
+    "trackedWalletAddress": "4Be9CvxqHW6BYiRAxW9Q3xu1ycTMWaL5z8NX4HR3ha7t",
+    "name": "Mitch",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4qmDEXkyNxPbPUxCkrKRvfECZ5JKaH4QK7B7TqwdGCwu",
+    "name": "Nimazaki3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5GHbLdLrYeJqdU1qXhokzLrgLWntDPPnhDzZmdAKNCUi",
+    "name": "Wuzie",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8P7egttcY32cP9wjN7qB6meQjf7HzWPeVfL7oVLaGZyT",
+    "name": "Berkan",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7EQjTHVNHunhQHT7iRQDCR99mjDm2GvHyGKHVGzX8jv2",
+    "name": "Neko",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ANaLZKT8UsCytKW4V1wd65RViC6Ss2bA1rQzN885Nrvc",
+    "name": "64new",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "84YypfNFMHjYn1H8ML2jwGa2DTFQpit4vuBMpGuroeoU",
+    "name": "64",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6FJPtnqLNa4qo3XZnQBjstoeKPNMGnU8VtoTBvLLMWET",
+    "name": "IT4I",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GZtmB5cbiF4VzuWocnrA59d16aCU7KAYC8EpgsFc83MH",
+    "name": "Mog",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9mfmHqDv5gt6ShZz7wZLxpKqd4SMaVJWphcsXp2pCxWK",
+    "name": "Files2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "cgyGGMaYQg7haFMoJWVrT7hWknYrfjW7N1VXN1pvwJc",
+    "name": "Nimazaki",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ALdDnrrd5ZizbC82d96QSAwr9A5UGkSELB7k73f75Xfq",
+    "name": "SVR2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6S8GezkxYUfZy9JPtYnanbcZTMB87Wjt1qx3c6ELajKC",
+    "name": "Nyhrox",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GKBGpnxArVB86xzKwoNA3eJMEoVu3ZrwhesnxK87X1tU",
+    "name": "Neko2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5fprK2GKVWvrLTH6QzfmsNnFx4XJSFHc9Da7DDMshqbK",
+    "name": "JacksonInu",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7iRo63BzGA3BoXyNhrhR3WNzBzRN1WP4bDik4Q5t9fDR",
+    "name": "RektBOBO",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "mpNGe8NdZZkFFQPYSpwwV2dKHsAMmDvMSW3xNBhRoY7",
+    "name": "Xet1SOL",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "UvsXNihusMGgQKUYKwYXUwXxd77xM3wXVybRmchgMcC",
+    "name": "Dan",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4BdKaxN8G6ka4GYtQQWk4G4dZRUTX2vQH9GcXdBREFUk",
+    "name": "Jijo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5bLnKpFZymMYwRWs4f9UCnBL8gomJzCGrP2zJdYZgg55",
+    "name": "ScholarChris3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2y1pPdrXddPiU9Sf8Ki7pfWnWSspMrXiK7ERmSfSPUi5",
+    "name": "Daumen3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Ev5trSxL7WzvTzWY29nwGa4P4zH96iaiLtHXNau8sESu",
+    "name": "ZagyBiaoDEv",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "93kk52HkrH5pHEPyb2KM62mP4cWA1N5DaSgBgDzA2uT9",
+    "name": "Limfork2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7YWEEDvCFg3AVxS6WYfkXyUxRgRUV3Njze9e7QEhGeMh",
+    "name": "SVR24",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9bqx8GEcwuw4r3WzhWnJx8fpjt7aXdvVZhWE56bzWBoK",
+    "name": "NillaGurila2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "pau23UpU2BFwF4JZrLxAnf4ZqgnD3xLnz6ESu7vPsao",
+    "name": "DexBot2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "TimeAdRpWxqKXR5YPEwGBF48KC5V5TxB2g6mnyCp4VR",
+    "name": "Time",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Fyr3eVTySpfyczEzUFcJ3SPtEKRwWKhxsmAWLghwP3FL",
+    "name": "Limfork3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6iwsM2pNWSCGxZ3q3aTEX7oEmcp99nEZmjQeuRu8o18q",
+    "name": "Xet20",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CmYCyGeMPMjzMe7zoirybkLnQ9PMEv77TuVbHfWcnXm9",
+    "name": "LairWho",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "41sEWFMHD169ivPv4AWQDB4wfczAptzoHdHmyNkMLG5c",
+    "name": "LairWho",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DxM1hfY8FQ8dNGrucuJzhJcF8KRbjk8WBwrgKvQ9spPv",
+    "name": "Rob",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HCGZE3Z3PkPR2kSGT8GweNigpg3ev7HhqQektseVCRPJ",
+    "name": "BrancheBONK",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B93svZrj7Rd7U4x3kzdVw72WeVDEu1ZqGJ44RqRM6mq5",
+    "name": "Finn",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2ibAQfQvZF6iSi5xkSkD5gtEMzHRpX43Uf39FLpy9TBH",
+    "name": "sadcatChallenger",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5R4RJojpoKNwBcJNgVYGtwXdmhyEHWXGDBQqUnSpLfcW",
+    "name": "AndyFartCoin",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AY6gBgm3p1jeJu542cPRqLKgjrjyS4jPk5TGoG1kRpbN",
+    "name": "ChairSidor",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2pDhRxLSGriCnFBY4BH5YFJXUFfE1R1ZnCCdP8iMGpxk",
+    "name": "ChairSide?",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "G4Wjj9YBGkS5KcWGchVydPzYwP5LXoJx1d9Wx8BUymjc",
+    "name": "Chairside2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CTC7HVkCkPuChSJjArVip375ogvMUtQLhdzLfiPizdEc",
+    "name": "Dexdex",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8o2sLDqQ8qqXHF7bzZvw65cdozPGuhtUQHGgpMysKFaW",
+    "name": "MemecoinMuscle",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B4ZrrCc8rmZz2cLEUjCSouGsow3ZnXeUSqcS5ogw6jFf",
+    "name": "Fibo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FWGMX6yEgGSGZLH4pzFPWPNFy7GT8qnk29VZmRqo4tK1",
+    "name": "hereforshitcoins",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "61Nj1gnUokdyanzt1WXsQxV9YG79it87ZkGoCgL9uYaM",
+    "name": "InsiderCalls9",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "69ubbULXG8qwbWLaX9rHmSpCAWwsWN6BKSqy6TBcMD5d",
+    "name": "Chair4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "E1ED87qzdUPfK2zTLgYGatEnuo1pLHfukTLUjxxG7j7y",
+    "name": "Rachel2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6hpnWZ7b5yjMewM5Br9AX1SrvjpABKWJ9QJrCWRXHRNs",
+    "name": "Leia41",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "86cXrcEcjPCcaKHScb5MpUTFpwmfpX2eMH92ovYQQUxx",
+    "name": "EddyDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Cbs1d8Es5mAhVVP4esogdKUDZFR2FdkZgViD4bTEtGQV",
+    "name": "SnowBallPNL",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ByzZhzYh9HJhkSyd5ueMNsNAPH7WL6GL5ndx3xXH461",
+    "name": "Remus",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EaVboaPxFCYanjoNWdkxTbPvt57nhXGu5i6m9m6ZS2kK",
+    "name": "Danny EliteFNF",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AhujU8XfA5B6rkmU7rj62pw6ZzZtwRow5Xh1TFvT2Zap",
+    "name": "SamLair",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "j38fhfqWsJyt8hzym48P8QMsXWx1FfLUxQwuor7Ti4o",
+    "name": "Nilla Gurilla",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9fuiQHMbLnVT1gYk9jNDr3523SuyZXRSBz3b7eUXNs72",
+    "name": "sadcat2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ACTbvbNm5qTLuofNRPxFPMtHAAtdH1CtzhCZatYHy831",
+    "name": "JasonArk",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6My97BBVoJz3j7mQWFVz5pykFxMsCs44gjhaqmczcAND",
+    "name": "Smokey",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CAZbcoLGLaTYd6vJwVFqFRWs8fLMdBGJsshH4F91b2NH",
+    "name": "DoctaMaybe",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK",
+    "name": "Cupsey",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BCagckXeMChUKrHEd6fKFA1uiWDtcmCXMsqaheLiUPJd",
+    "name": "DV",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "J4FyFKkHzLQeCQgV3A9Diawfpx5pSK539xHwVhN5Gd3D",
+    "name": "TrenchWarrior",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9qMEvPibix8AsdwXsNLJQuNTfTEj1g5kz8LnzNzqYtai",
+    "name": "FinnBags3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6nMxRxd33WMSpnXoPXenEE2evhpE18N88b36cWDzwqrF",
+    "name": "maybexet",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7NAd2EpYGGeFofpyvgehSXhH5vg6Ry6VRMW2Y6jiqCu1",
+    "name": "Cupsey2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DekUkL3NsWRai6vYfWaGTb8HoW7cEWvAdYajiPRFzBUV",
+    "name": "Danchou",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8KGsQmbP3sWiCHhSWq5hjZR1bZr1EXDwAyxMxJHzLFD5",
+    "name": "BoboDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AKEdEDrQa2aNzEuKzzzPhfmWR5L4KyLka3eD8cL6H7Dd",
+    "name": "Boocake5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8VVRub7ps3ha88rpAJF5nZ6LdcxX7XwsBwzkRyZ9dND8",
+    "name": "64New",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7ZAyRfkiXMrpnVJ5Q8cW51dy2d9XGVLnbZQx653FdA1m",
+    "name": "Joji3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3JG2cWmjFVMU632g6Wpc69i5VYGdYAmXbAQoePqYowik",
+    "name": "Frost2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "D1qxDozP9EZaZvqwNVyB8pHDTTrSRcTEs1JXkLhpfDAC",
+    "name": "Frost3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "APUnpSv4HDpNPfed4dPqAnz75REWYbM5vTHaTnApLe1P",
+    "name": "MikuWhale",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7zp53pV8CCuwLSei1jiQXCtK8w3eqtkUGYoh63KMsBXw",
+    "name": "AlchDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7sD2YvFEuME73PEDrtFxLGRnwxsNWyw42q3bUqyXvZP7",
+    "name": "King.eth",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AoLU3yjbR5adBjTsgLtxV274UXvFY9Kz28a5imwBBeYy",
+    "name": "Zagy4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2xQ5epAkYM6V9p1JpekriwtDmSkGCu335AxDnRdKEd83",
+    "name": "Zagy5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DQu6RDQpMCBn4ZZLL5Wdmn2FqjTu7d2yBTaA22K3xLdv",
+    "name": "Rowdy3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4vw54BmAogeRV3vPKWyFet5yf8DTLcREzdSzx4rw9Ud9",
+    "name": "decu",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DgqnawaJTJvGHrs3MTxgdj9mu47ojaifjhG6QEPWc5Ln",
+    "name": "SVR68",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4JwcPbdN17rTfWgG62Hz7BP14CgKT45EhyqaUBG4yHjs",
+    "name": "Jorland",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5pP9vHc74aFeEnKaVV5fXbTKAWx6WqyYiToLfR8QYXbT",
+    "name": "Tom",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "kKpDurdTiugjtsjmXSSfdkas7fAWi2ugR4PX9iUDyjk",
+    "name": "Rayan3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4w6nLFzk9gCMUhyqhUARZCdnKKvtYAnhzjoUrQk2dVhS",
+    "name": "Ravenouz4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "G7mfcf5GbZezcBKqcDo5u16TSLARTVxTRSjXxDYbVnaq",
+    "name": "Danny/Euris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A1ECE86o3tz6UWmwMWicrqZmwRZ7RCRzmYYa9okNQRBw",
+    "name": "HimGajara",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3zyU8y4Y4qX5bpapttBv8GXnQ5jXnV1UpkMGSfRAwumw",
+    "name": "ProbpyraFake",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "5ZCdQCsd2mgdfYin5oRZP2hb5UwnidvmseWiKPTsmNrF",
+    "name": "Rachel3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9nBTEZSLuokxuZAxbZoYoci86zWK3Ekx6tQuADu2bkV",
+    "name": "Eddy4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HCDKhabdNQE4AgVMrvfwhmfzt27HbReVxRAr2dMVen3q",
+    "name": "Eddy5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Bb6fcHWBquiNbQb1NRE9DJqeZ2b1tWcx5Tq7McSuRSbF",
+    "name": "Who",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4nwfXw7n98jEQn93VWY7Cuf1jnn1scHXuXCPGVYS9k6T",
+    "name": "Frost",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9KEShFaBjyBjLVWSXGE6mvWwQbJkkxw1vF2K2R1abKvy",
+    "name": "ChineseFiat",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DXej3KxRPjiB3xrcxNFBwKuonPgk8HAemFAgvf3hRVHN",
+    "name": "Lair",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "UfRxQVpas7BkuTG92kyyBNziJz42jC4v4Y9ZLvMjuQn",
+    "name": "RyanFerris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3rekSXANqBqGqdGyzYfxwme2QjDjLxsHZ7SCMpwzxiYR",
+    "name": "EddyDeploy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "ELhgzugD4CKakgQMXmhQPS41QXchsucVzXcbKZNB5eRS",
+    "name": "AcidWhale",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "71PCu3E4JP5RDBoY6wJteqzxkKNXLyE1byg5BTAL9UtQ",
+    "name": "Ramset",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "G84Yz6fDA8wun3po1QG6SrGknK3cha2okXog9MmrqAQt",
+    "name": "OTTA2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CGDcR9PVNSbQagsrDd2pVmHzKga1yHNi3FReK14KHvpu",
+    "name": "JacksonInu",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "APq1bKM5maTcz5URtN8N9Q4rGCfxueR6HnmsHGDZY3X",
+    "name": "Orange5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "525LueqAyZJueCoiisfWy6nyh4MTvmF4X9jSqi6efXJT",
+    "name": "Joji",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3s5k6d2XfDM4vceU4DvYaiNHdHVFUp3rvE3QMjsCwDDo",
+    "name": "Files8",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2vgtXaB7KJC6fmKSHBH8SjUvkCEoXM264yzuW7i7y185",
+    "name": "Files6",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HYWo71Wk9PNDe5sBaRKazPnVyGnQDiwgXCFKvgAQ1ENp",
+    "name": "AlphaLexapro",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Jn1cLCDqGrz2C3VshGteuYhRu5tZ8xNYpGubURFgnKM",
+    "name": "Files7",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "GSajM2kZ2dk6jSh8QUQLFAavmzEA1ijrpQVHpmRzpRp4",
+    "name": "Leia100",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4YzpSZpxDdjNf3unjkCtdWEsz2FL5mok7e5XQaDNqry8",
+    "name": "XunLee",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A3xg7w92spczRpUiaTSgKJQEy5k3bUttbEz5GWASAXpL",
+    "name": "SyndicateRapist",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "1okeR1RKMpD4hpVivBQtxDqAJuiG2vbUPmFgCK6BoPx",
+    "name": "SyndicateRapist2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Bk6iaBrqpxDrtg1GQKycSwyTEabFVpjGDsFabc8WWeYd",
+    "name": "SchollarChris7",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Fk2bRcyre5VVLePD7DGCcPjQQ1R6KbbWenrFkrR9aFsw",
+    "name": "ScholarChris6",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B9X81XFVxBrLjN3Y1gsGNoWHqEPMzgF6DK5RiSqrvHEr",
+    "name": "Chair3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "B2XoN31GvPzKYe29hRDz8QAeV6mTP56E8Ydk5Vt3NoiG",
+    "name": "Chair2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "44BMGh6EupbUNfvxv1TSWXGSuQoQJ6mUWf9rhvqHcRtG",
+    "name": "TechGod2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9iWSRVDCeELjAcF5eXn6Qvh4BCw7HYJYisPqRu9cLmh1",
+    "name": "BooDev1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Hqu85svBmrKDaPyFgwKFXzz1XbfCQZeR5sWMaXbFcVEa",
+    "name": "KOL COPYTRADER BOT",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HyYNVYmnFmi87NsQqWzLJhUTPBKQUfgfhdbBa554nMFF",
+    "name": "FartcoinDev",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+    "name": "6M PNL",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "3kGaUKSo1Vhr8fQiCyf18hFTCahD99h1sRVwFWCqK6H8",
+    "name": "CENTED SIDE 2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "99i9uVA7Q56bY22ajKKUfTZTgTeP5yCtVGsrG9J4pDYQ",
+    "name": "Zeroo",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AYEHKbGooTCishm755ArC88YZPJ29Rfh3b4q2hpyJPAQ",
+    "name": "CENTED SIDE 3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "kcoijLaxnjsyVrrMCubeURmHRbJrBo4fqMmjJUkrX8a",
+    "name": "INSIDER QFE",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BZmxuXQ68QeZABbDFSzveHyrXCv5EG6Ut1ATw5qZgm2Q",
+    "name": "ProbBizz",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4hwPamSooBr5JhxHdcEC21HoxN5HUwYR2hGucLPyZAi8",
+    "name": "JG",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "8jognn53ca3ACnFq72uRbLC3c9zeA4bdTZUNPnS2fxvL",
+    "name": "SVR15",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6mWEJG9LoRdto8TwTdZxmnJpkXpTsEerizcGiCNZvzXd",
+    "name": "Slingoor",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "DtjYbZntc2mEm1UrZHNcKguak6h6QM4S5xobnwFgg92Y",
+    "name": "Files1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AVAZvHLR2PcWpDf8BXY4rVxNHYRBytycHkcB5z5QNXYm",
+    "name": "ANSEM",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "12tBRLKFGZXPyBFUXk5iHCC95fJF97kBDPs1SGcz1R16",
+    "name": "RayHide2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9NmUsY29y8bZ4BEgaKCsi9DbiZAnihp23LdtX6nY4Zob",
+    "name": "Rachel",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "LYTNvmTZwnu4hiVTSxw6TWvupXYwUM4S2DCt1vp7bzD",
+    "name": "Leyten",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "moo7FRNJBtAfKZjLMLpbWVXbR3LfimmajiU8hSeUXeT",
+    "name": "SVR",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "A2P3fshPYUgCd2h1Zp8hZC6FgWdY7JMMsejc4yKVpzje",
+    "name": "xetb3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7xwDKXNG9dxMsBSCmiAThp7PyDaUXbm23irLr7iPeh7w",
+    "name": "Shah5",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HknfVes7oCMZ4ygZAovuu2ZjZ8cKZnNyNTsVcFdhfb3d",
+    "name": "Shah6",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "F7gCwFf8MYNraixX3PU3RvpsvTAUhY3LWvX2FL1TG6Uy",
+    "name": "SouljaBoy",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "BFwZULQk48VERX53i5S8AE1K71UgNrNZkVSyVz8sM7Tb",
+    "name": "64",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6BQTsUaU5GEFCKaAbMbCZHzZXBEURDZ9b4KV4c6x3pnA",
+    "name": "ScholarChris",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "2CXvb83bXUJ4meLc7KxnWPhJPMZjuLfWxrS6EhP5AU1K",
+    "name": "Files4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "Be24Gbf5KisDk1LcWWZsBn8dvB816By7YzYF5zWZnRR6",
+    "name": "Chair",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "bocsoUiM4EuZAgs9NBDFZW1ghzFXsjBX6hx9V3zMqTJ",
+    "name": "BOCAO",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "HYSq1KBAvqWpEv1pCbV31muKM1za5A1WSHGdiVLUoNhb",
+    "name": "CENTED BUNDLE3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "91S5XHKqFXSry52S8FoC13YedRf2uaNehRMgDBiAgXQo",
+    "name": "CENTED BUNDLE1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "4Ht23UURTaBcruj7MgJerv3KHdhpoM2DuhLgwdcCPbtU",
+    "name": "CENTED BUNDLE2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6wowwKG1ztzTRBzrVmxuWnZVUh8AwcPD2DFEXPgR1VsM",
+    "name": "CUPSEY BUNDLE2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "CJKksKnktWH3AcNupDPzdry2KpoCVBT5nyPNpe975qUK",
+    "name": "CUPSEY BUNDLE1",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "6jC3ikXo1769Dsg4Qe3kkVsFQttEZVJqnmcU9eL9bghM",
+    "name": "Acid2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "FSTNPYhiBNrbkCPeVnqavgBqRMuZTLMRMbfT2T9oizty",
+    "name": "Acid4",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "APCen6BA3Hs6FigX8Avc3hmt1xFGCQindsTCRbs81cUQ",
+    "name": "ACID3",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9vZ3T6zYJW3mpv1bkmpX3G8aRBM4b8b7iDpDkZXJiVkA",
+    "name": "MAGEAREZ CTO",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "9agFZUZaRfGjPK2SQn5MSDVwo8yteUogNZwpkhC3uh1V",
+    "name": "MageArez Friend",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "TVXQGG8QqLhD84Lbdzmi9tQBu4YdRAGRqx3e1m6tQD9",
+    "name": "BANDIT2",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "AshrbWUoxpNjWzdyJHdA9QiUVeoyc8zQBLKPZ1RFo4gd",
+    "name": "WEST",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "EMp115dQaDGcMnogrB8FnxBc9XF6AZAq4QJ9wFK5utFB",
+    "name": "SouljaSide",
+    "groups": ["Main"]
+  },
+  {
+    "trackedWalletAddress": "7QQisrj2cs4vw1DKJSxM1AXtASZ5MWpz489mogCjbDsU",
+    "name": "PikaHide",
+    "groups": ["Pika"]
+  }
+]

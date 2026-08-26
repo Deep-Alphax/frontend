@@ -75,6 +75,7 @@ export function Footer() {
              {/*  <FooterLink href="#">Aprender</FooterLink>
               <FooterLink href="#">Mentoria</FooterLink> */}
               <FooterLink href="/radar">Radar</FooterLink>
+              <FooterLink href="/wallet-reader">Wallet Reader</FooterLink>
               <FooterLink href="/">Meu perfil</FooterLink>
              {/*  <FooterLink href="#">Copiloto</FooterLink> */}
             </nav>

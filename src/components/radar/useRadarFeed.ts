@@ -50,11 +50,24 @@ export interface RadarSource {
   count: number;
 }
 
+/**
+ * Seleção da rail de Fontes:
+ * - `null` → "Todas as fontes" (feed central sem filtro).
+ * - guild → todas as capturas do servidor (por `guildName`).
+ * - channel → um canal específico (por `channelId`).
+ */
+export type SourceSelection =
+  | null
+  | { kind: "guild"; guild: string | null }
+  | { kind: "channel"; channelId: string };
+
 /** Grupo (servidor Discord) — árvore agregada no backend (contagens totais). */
 export interface RadarGroup {
   /** Chave estável do grupo (guildName). `null` = mensagens sem grupo. */
   key: string | null;
   name: string;
+  /** URL do ícone do servidor (CDN do Discord); null = usa a inicial. */
+  iconUrl: string | null;
   count: number;
   /** Canais desse grupo (subgrupos), ordenados por contagem desc. */
   subgroups: RadarSubgroup[];
@@ -203,6 +216,7 @@ export function useRadarFeed(
       (groupsQuery.data ?? []).map((g) => ({
         key: g.guildName ?? null,
         name: g.guildName ?? GROUP_FALLBACK,
+        iconUrl: g.guildIconUrl ?? null,
         count: g.count,
         subgroups: g.channels.map((c) => ({
           channelId: c.channelId,

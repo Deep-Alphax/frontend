@@ -10,7 +10,7 @@ import { RadarFeed } from "@/components/radar/RadarFeed";
 import { ColumnResizer } from "@/components/radar/ColumnResizer";
 import { FavoritesPanel } from "@/components/radar/FavoritesPanel";
 import { ProfilePanel } from "@/components/radar/ProfilePanel";
-import { useRadarFeed } from "@/components/radar/useRadarFeed";
+import { useRadarFeed, type SourceSelection } from "@/components/radar/useRadarFeed";
 import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
 
 /** Largura das colunas laterais 2/4 (px) — limites de arraste + default. */
@@ -52,27 +52,13 @@ export function RadarScreen() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  // Feed central = todas as capturas (sem filtro de canal); a busca aplica no backend.
-  const feed = useRadarFeed(null, search);
+  // Seleção da rail: `null` (todas) · servidor (guild) · canal. Default = todas.
+  const [selection, setSelection] = useState<SourceSelection>(null);
 
-  // Fontes = CANAIS monitorados (achatados dos grupos). Cada canal é uma fonte —
-  // servidores com vários canais viram várias fontes na rail.
-  const sources = useMemo(
-    () =>
-      feed.groups.flatMap((g) =>
-        g.subgroups.map((s) => ({
-          channelId: s.channelId,
-          name: s.name,
-          guildName: g.key,
-          count: s.count,
-        })),
-      ),
-    [feed.groups],
-  );
-
-  // Fonte ativa: `null` = "Todas as fontes" (default; feed central sem filtro);
-  // senão o `channelId` do canal selecionado na rail.
-  const [activeSource, setActiveSource] = useState<string | null>(null);
+  // Canal selecionado → o feed central é buscado JÁ FILTRADO no backend (completo,
+  // não só o que caiu no pool agregado). "Todas"/servidor usam o pool agregado.
+  const activeChannelId = selection?.kind === "channel" ? selection.channelId : null;
+  const feed = useRadarFeed(activeChannelId, search);
 
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
@@ -98,20 +84,26 @@ export function RadarScreen() {
     }
   }, [leftW, rightW]);
 
-  // Feed central = todas as capturas ("Todas as fontes") OU recorte do pool pela
-  // FONTE (canal) selecionada na rail.
-  const centerMessages = useMemo(
-    () =>
-      activeSource === null
-        ? feed.messages
-        : feed.messages.filter((m) => m.channelId === activeSource),
-    [feed.messages, activeSource],
-  );
+  // Feed central conforme a seleção: todas · servidor (guildName, recorte do pool)
+  // · canal (o feed já vem filtrado do backend por channelId).
+  const centerMessages = useMemo(() => {
+    if (selection === null) return feed.messages;
+    if (selection.kind === "guild")
+      return feed.messages.filter((m) => (m.guildName ?? null) === selection.guild);
+    return feed.messages;
+  }, [feed.messages, selection]);
 
-  const activeSourceObj = useMemo(
-    () => sources.find((s) => s.channelId === activeSource) ?? null,
-    [sources, activeSource],
-  );
+  // Nome da seleção (empty state do feed central).
+  const selectedName = useMemo(() => {
+    if (selection === null) return null;
+    if (selection.kind === "guild")
+      return feed.groups.find((g) => g.key === selection.guild)?.name ?? null;
+    for (const g of feed.groups) {
+      const s = g.subgroups.find((x) => x.channelId === selection.channelId);
+      if (s) return s.name;
+    }
+    return null;
+  }, [selection, feed.groups]);
 
   // Identidade estável p/ o memo do card não re-renderizar a cada render.
   const onSelectAuthor = useCallback(
@@ -132,12 +124,8 @@ export function RadarScreen() {
           className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[69px_var(--left-w)_minmax(0,1fr)_var(--right-w)] lg:overflow-hidden"
           style={{ "--left-w": `${leftW}px`, "--right-w": `${rightW}px` } as React.CSSProperties}
         >
-          {/* 1 — Fontes (canais) */}
-          <SourcesRail
-            sources={sources}
-            activeKey={activeSource}
-            onSelect={setActiveSource}
-          />
+          {/* 1 — Fontes (agrupadas por servidor) */}
+          <SourcesRail groups={feed.groups} selection={selection} onSelect={setSelection} />
 
           {/* 2 — Rick Bot (feed fixo do usuário Rick#9725) — borda direita redimensiona */}
           <div className="relative min-h-0 lg:h-full">
@@ -156,7 +144,7 @@ export function RadarScreen() {
               isFetchingNextPage={feed.isFetchingNextPage}
               hasMore={feed.hasMore}
               loadMore={feed.loadMore}
-              selectedName={activeSourceObj?.name ?? null}
+              selectedName={selectedName}
               newIds={feed.newIds}
               onSelectAuthor={onSelectAuthor}
               search={searchInput}

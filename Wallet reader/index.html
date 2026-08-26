@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wallet Reader — KOL Index</title>
+  <link rel="icon" href="assets/memes/doge.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-mark" src="assets/memes/doge.png" alt="" />
+        <div>
+          <div class="brand-name">Wallet Reader</div>
+          <div class="brand-sub">KOL Index</div>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <a class="side-nav-item active" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18M8 14h4"/></svg>
+          KOLs
+        </a>
+        <a class="side-nav-item" href="#" id="navGroups">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Grupos / FnFs
+        </a>
+        <a class="side-nav-item disabled" href="#" onclick="return false" title="em breve">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Config
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="search" type="text" placeholder="Buscar por nome ou endereço de carteira…" autocomplete="off" />
+        </div>
+        <select id="sortSel">
+          <option value="relevance">Relevância ↓</option>
+          <option value="name">Nome A–Z</option>
+          <option value="wallets">Nº de carteiras ↓</option>
+          <option value="tier">Categoria ↓</option>
+        </select>
+        <span id="count"></span>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost" id="manageGroupsBtn">Grupos / FnFs</button>
+          <button class="btn btn-primary" id="addKolBtn">+ Adicionar KOL</button>
+        </div>
+      </header>
+
+      <div class="stats" id="statsRow"></div>
+
+      <div class="filter-row" id="tierFilterRow"><span class="filter-label">Categoria</span></div>
+      <div class="filter-row" id="typeFilterRow"><span class="filter-label">Tipo</span></div>
+      <div class="filter-row" id="squadFilterRow"><span class="filter-label">Squad</span></div>
+      <div class="filter-row" id="fnfFilterRow"><span class="filter-label">Grupo / FnF</span></div>
+
+      <div class="util-row">
+        <button class="btn btn-ghost" id="legendBtn">Como funciona a relevância?</button>
+        <button class="btn btn-ghost" id="exportBtn">Exportar backup (.json)</button>
+        <button class="btn btn-ghost" id="importBtn">Importar backup</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;" />
+        <button class="btn btn-ghost" id="resetBtn">Limpar edições</button>
+      </div>
+      <div class="legend-pop" id="legendPop">
+        <b>Relevância (0–100)</b> começa com uma sugestão automática = nº de carteiras rastreadas para o mesmo trader (mais carteiras ⇒ mais ativo) + bônus se ele pertence a um squad nomeado (Lair, Ninety, Maurits…). É só um ponto de partida — ajuste o slider no perfil com base em popularidade real, frequência de calls e volume que o trader move.<br /><br />
+        <b>Tipo de trader</b> (Trencher, Whale, Alpha, Rugger…) não vem preenchido — são só etiquetas disponíveis para você classificar.<br /><br />
+        <b>Grupos / FnFs</b> são etiquetas que você cria pra marcar quem anda junto — uma call room, uma FnF, uma cabal. Diferente do "Squad" (que vem fixo do <code>wallets.txt</code>), esses grupos são 100% seus.<br /><br />
+        Tudo isso (twitter, tipo, relevância, notas, foto, grupos/FnFs, carteiras adicionadas/removidas, KOLs criados/removidos) fica salvo <b>só no seu navegador</b> (localStorage). Use "Exportar backup" para guardar um arquivo .json de segurança.
+      </div>
+
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" style="display:none;">Nenhum trader encontrado.</div>
+
+      <footer>
+        Base: <span id="footerCount"></span> · gerado de <code>wallets.txt</code> por <code>scripts/build-kols.js</code>. Twitter, tipo e relevância não são confirmados automaticamente — preencha manualmente conforme for confirmando.
+      </footer>
+    </main>
+  </div>
+
+  <div class="overlay" id="profileOverlay">
+    <div class="profile-card" id="profileCard">
+      <button class="p-nav" id="prevBtn">‹</button>
+      <button class="p-nav" id="nextBtn">›</button>
+      <button class="p-close" id="closeProfile">✕</button>
+      <div id="profileBody"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="addKolOverlay">
+    <div class="profile-card mini-card">
+      <button class="p-close" id="closeAddKol">✕</button>
+      <h2 class="mini-title">Adicionar KOL</h2>
+      <div class="mini-field">
+        <label for="newKolName">Nome do KOL</label>
+        <input class="p-input" id="newKolName" type="text" placeholder="ex: Novo Trader" />
+      </div>
+      <div class="mini-field">
+        <label for="newKolWalletName">Apelido da carteira (opcional)</label>
+        <input class="p-input" id="newKolWalletName" type="text" placeholder="ex: Principal" />
+      </div>
+      <div class="mini-field">
+        <label for="newKolWalletAddr">Endereço da carteira (opcional)</label>
+        <input class="p-input" id="newKolWalletAddr" type="text" placeholder="cole o endereço Solana aqui" />
+      </div>
+      <div class="mini-actions">
+        <button class="btn btn-ghost" id="cancelAddKol">Cancelar</button>
+        <button class="btn btn-primary" id="confirmAddKol">Criar KOL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="groupsOverlay">
+    <div class="profile-card mini-card">
+      <button class="p-close" id="closeGroups">✕</button>
+      <h2 class="mini-title">Grupos / FnFs</h2>
+      <p class="mini-desc">Crie etiquetas suas pra marcar FnFs, call rooms ou cabais. Renomeie ou apague quando quiser.</p>
+      <div id="groupsList" class="groups-list"></div>
+      <div class="mini-field">
+        <label for="newGroupName">Novo grupo / FnF</label>
+        <div class="inline-add">
+          <input class="p-input" id="newGroupName" type="text" placeholder="ex: FnF do Cupsey" />
+          <button class="btn btn-primary" id="createGroupBtn">Criar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirmOverlay">
+    <div class="profile-card mini-card">
+      <button class="p-close" id="closeConfirm">✕</button>
+      <h2 class="mini-title" id="confirmTitle">Confirmar</h2>
+      <p class="mini-desc" id="confirmMessage"></p>
+      <div class="mini-actions">
+        <button class="btn btn-ghost" id="confirmCancelBtn">Cancelar</button>
+        <button class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastHost"></div>
+  <div class="selection-bar" id="selectionBar" style="display:none;">
+    <span id="selectionCount"></span>
+    <button class="btn btn-ghost" id="clearSelectionBtn">Limpar</button>
+    <button class="btn btn-ghost" id="copySelectionBtn">Copiar</button>
+    <button class="btn btn-primary" id="exportSelectionBtn">Exportar .txt</button>
+  </div>
+  <input type="file" id="avatarFile" accept="image/*" style="display:none;" />
+
+  <script src="assets/data/kol-profiles.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

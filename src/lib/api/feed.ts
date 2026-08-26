@@ -183,6 +183,8 @@ export interface FeedChannel {
 /** Grupo (servidor) com seus canais e contagens totais reais. */
 export interface FeedGroup {
   guildName: string | null;
+  /** URL do ícone do servidor (CDN do Discord); null quando não capturado. */
+  guildIconUrl: string | null;
   count: number;
   channels: FeedChannel[];
 }
