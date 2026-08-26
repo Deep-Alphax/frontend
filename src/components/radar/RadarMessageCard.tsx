@@ -2,11 +2,12 @@
 
 import { memo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Check, Copy, Star } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
+import { extractCa, shortenCa } from "@/lib/ca";
 import { DURATION, EASE } from "@/lib/motion";
 import {
   cardBgFor,
@@ -15,10 +16,12 @@ import {
   toneFor,
 } from "@/components/radar/favoriteColors";
 import { DiscordText } from "@/components/radar/DiscordText";
+import { RoleBadge, cardGradientFor } from "@/components/radar/roleBadge";
 import { MoreChip, TokenChip } from "@/components/radar/TokenChip";
 import { LinksModal } from "@/components/radar/LinksModal";
 import {
   getEmbedMedia,
+  getLinkMedia,
   isEmbedOnlyText,
   type EmbedMediaItem,
 } from "@/components/radar/embedMedia";
@@ -64,7 +67,47 @@ function DateInfo({ iso, small }: { iso: string; small?: boolean }) {
       <time dateTime={iso}>{date}</time>
       <span className="h-px w-1.5 bg-gray-6" aria-hidden />
       <span>{time}</span>
+      {small && <span className="h-px w-full bg-gray-6" aria-hidden />}
     </div>
+  );
+}
+
+/**
+ * Chip do contract address: mostra o CA encurtado + ícone de copiar. Clicar copia
+ * o CA COMPLETO p/ a área de transferência (feedback breve de "copiado"). Usado nas
+ * capturas do Rick Bot p/ pegar o CA do token sem abrir a mensagem.
+ */
+function CaChip({ ca }: { ca: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(ca);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // clipboard indisponível (contexto não-seguro) — ignora silenciosamente.
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title={copied ? "Copiado!" : `Copiar CA: ${ca}`}
+      aria-label={`Copiar contract address ${ca}`}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-xs transition-colors",
+        copied
+          ? "border-green-8 bg-green-3 text-green-11"
+          : "border-gray-6 bg-gray-3 text-gray-12 hover:border-gray-8",
+      )}
+    >
+      {copied ? (
+        <Check className="size-3.5 shrink-0" strokeWidth={2} />
+      ) : (
+        <Copy className="size-3.5 shrink-0 text-gray-11" strokeWidth={2} />
+      )}
+      <span>{copied ? "Copiado" : shortenCa(ca)}</span>
+    </button>
   );
 }
 
@@ -75,6 +118,22 @@ interface RadarMessageCardProps {
   compact?: boolean;
   /** Variante destacada (node 491:7505) — cards do perfil em análise. */
   highlighted?: boolean;
+  /**
+   * Superfície do card (node Figma 654:14193):
+   * - "card" (default) → caixa com borda e cantos arredondados (perfil, destaque).
+   * - "list" → sem caixa, divisória inferior + tint sutil por papel (os 3 feeds).
+   */
+  surface?: "card" | "list";
+  /**
+   * Faixa de destaque (gradiente violeta) atrás do nome + data no rodapé —
+   * variante das colunas laterais (fonte/favoritos, node Figma 748:25317).
+   */
+  nameAccent?: boolean;
+  /**
+   * Mostra o CA do token analisado como chip clicável (copia ao clicar), sem
+   * precisar abrir a mensagem. Usado nas capturas do Rick Bot.
+   */
+  showCa?: boolean;
   /**
    * Habilita o refluxo animado (`layout`) do framer. Só no feed central (a página
    * rola). Em listas virtualizadas NÃO deve ligar — conflita com o `translateY`
@@ -91,6 +150,9 @@ function RadarMessageCardBase({
   compact = false,
   highlighted = false,
   animateLayout = false,
+  surface = "card",
+  nameAccent = false,
+  showCa = false,
   onSelectAuthor,
 }: RadarMessageCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -110,18 +172,43 @@ function RadarMessageCardBase({
   // Cor escolhida → borda + gradiente sutil no card (node 492:8120).
   const colorBorder = cardBorderFor(fav?.color);
   const colorBg = cardBgFor(fav?.color);
+  const isList = surface === "list";
+  // Tint por papel (só quando não há cor de favorito, que tem prioridade visual).
+  const roleGrad = colorBg ? "" : cardGradientFor(m.role);
   const text = m.text ?? "";
   const isLong = text.length > CLAMP_THRESHOLD || text.split("\n").length > 6;
 
-  // Mídia dos embeds (GIF/imagem/vídeo). Se o texto é só o link/título do embed,
-  // renderizamos só a mídia (o GIF no lugar do texto), como o Discord.
-  const media = getEmbedMedia(m.embed);
-  const showText = text.length > 0 && !(media.length > 0 && isEmbedOnlyText(text, m.embed));
-
   const links = m.links ?? [];
-  const visibleChips = links.slice(0, MAX_VISIBLE_CHIPS);
-  const hiddenCount = links.length - visibleChips.length;
-  const hasChips = links.length > 0;
+
+  // Mídia = embeds + LINKS diretos de mídia (ex.: anexo `cdn.discordapp.com/…gif`,
+  // que não vira embed → sem isto apareceria como link cru). Dedup por src.
+  const linkMedia = getLinkMedia(links);
+  const mediaUrls = new Set(linkMedia.map((x) => x.src));
+  const embedMedia = getEmbedMedia(m.embed);
+  const media = [
+    ...embedMedia,
+    ...linkMedia.filter((x) => !embedMedia.some((e) => e.src === x.src)),
+  ];
+
+  // Links de mídia saem dos chips (já viram a própria mídia).
+  const chipLinks = mediaUrls.size ? links.filter((l) => !mediaUrls.has(l)) : links;
+  const visibleChips = chipLinks.slice(0, MAX_VISIBLE_CHIPS);
+  const hiddenCount = chipLinks.length - visibleChips.length;
+  const hasChips = chipLinks.length > 0;
+
+  // Texto sem as URLs de mídia (o GIF é mostrado como mídia, não como link cru).
+  const cleanedText = mediaUrls.size
+    ? [...mediaUrls].reduce((t, u) => t.split(u).join(" "), text).trim()
+    : text;
+  // Não mostra texto quando ele era só o link do embed OU só a(s) URL(s) de mídia.
+  const isMediaOnly =
+    media.length > 0 &&
+    (isEmbedOnlyText(text, m.embed) || cleanedText.replace(/\s+/g, "").length === 0);
+  const showText = text.length > 0 && !isMediaOnly;
+  const displayText = mediaUrls.size ? cleanedText : text;
+
+  // CA do token analisado (Rick Bot) — mostrado como chip clicável (copia).
+  const ca = showCa ? extractCa(text, links) : null;
 
   // Identidade = authorTag (presente em 100% das capturas → todo card clicável).
   const selectable = Boolean(onSelectAuthor && m.authorTag);
@@ -144,34 +231,58 @@ function RadarMessageCardBase({
       // `layout` só quando explicitamente habilitado (feed central). Em listas
       // virtualizadas/scroll interno ele desalinha o card — mantido desligado.
       layout={animateLayout && !reduce ? "position" : false}
-      initial={animateIn ? { opacity: 0 } : false}
-      animate={{ opacity: 1 }}
+      // Entrada de mensagem nova (realtime): sobe DE BAIXO (y+ → 0) + fade. É só
+      // transform (não altera altura), então não conflita com a ancoragem do chat.
+      initial={animateIn ? { opacity: 0, y: 12 } : false}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: DURATION.emphasis, ease: EASE.out }}
       onClick={onCardClick}
       className={cn(
-        "relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg border",
-        colorBorder
-          ? cn(colorBorder, colorBg)
-          : highlighted
-            ? "border-gray-7 bg-gray-3"
-            : "border-gray-6 bg-gray-2",
+        "relative flex w-full min-w-0 flex-col overflow-hidden",
+        // Superfície: lista vs caixa (borda + cantos). A divisória inferior entre
+        // mensagens fica SÓ no feed principal (lista wide); colunas laterais
+        // (compact) não têm divisória entre cards.
+        isList
+          ? cn(
+            !compact && "last:border-none border-b border-gray-6/70",
+            colorBg ? colorBg : roleGrad || "bg-transparent",
+          )
+          : cn(
+            "rounded-lg border",
+            colorBorder
+              ? cn(colorBorder, colorBg)
+              : highlighted
+                ? "border-gray-7 bg-gray-3"
+                : "border-gray-6 bg-gray-2",
+          ),
         selectable && "cursor-pointer transition-colors",
-        selectable && !colorBorder && "hover:border-gray-8",
+        selectable && !isList && !colorBorder && "hover:border-gray-8",
+        selectable && isList && "hover:bg-gray-2/50",
       )}
     >
       {/* Cabeçalho: avatar + autor/grupo (+ data no wide) */}
       <header
         className={cn(
-          "flex items-center gap-2",
+          "relative flex items-center gap-2",
           compact ? "p-3" : "justify-between px-4 py-3",
         )}
       >
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="relative flex min-w-0 items-center gap-2">
+          {/* Faixa violeta atrás do nome (node 748:25317) — só colunas laterais.
+              Dimensiona pelo BLOCO DO NOME (`right-0`) → acompanha o nome inteiro,
+              não importa o comprimento. `-left-3` estende até a borda do card
+              (compensa o p-3 do header). Gradiente exato do Figma. */}
+          {nameAccent && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -left-3 -right-6 top-1/2 h-10 -translate-y-1/2 rounded-r-[32px] bg-linear-to-l from-violeta-5 via-violeta-2 to-gray-1"
+            />
+          )}
           <div className="relative shrink-0">
             <Avatar
               src={fav?.photoUrl}
               name={displayName}
-              className={compact ? "size-7" : "size-8"}
+              className="size-8"
               fallbackClassName={toneFor(fav?.color)}
             />
             {following && (
@@ -180,15 +291,18 @@ function RadarMessageCardBase({
               </span>
             )}
           </div>
-          <div className="min-w-0">
-            <p
-              className={cn(
-                "truncate font-semibold leading-tight text-gray-12",
-                compact ? "text-sm" : "text-base",
-              )}
-            >
-              {displayName}
-            </p>
+          <div className="relative min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <p
+                className={cn(
+                  "min-w-0 truncate font-semibold leading-tight text-gray-12",
+                  compact ? "text-sm" : "text-base",
+                )}
+              >
+                {displayName}
+              </p>
+              <RoleBadge role={m.role} />
+            </div>
             <p
               className={cn(
                 "truncate leading-tight text-gray-11",
@@ -202,6 +316,13 @@ function RadarMessageCardBase({
         {!compact && <DateInfo iso={m.createdAt} />}
       </header>
 
+      {/* CA do token (Rick Bot) — sempre visível, clicar copia. */}
+      {ca && (
+        <div className={cn("pt-1 pb-1", padX)}>
+          <CaChip ca={ca} />
+        </div>
+      )}
+
       {/* Corpo: texto renderizado como o Discord (links inline) + "Ler mais" */}
       {showText && (
         <div className={cn("flex w-full min-w-0 flex-col items-start gap-1 pt-1", padX, hasChips || media.length > 0 || compact ? "pb-2" : "pb-4")}>
@@ -214,7 +335,7 @@ function RadarMessageCardBase({
               !expanded && isLong && "line-clamp-5",
             )}
           >
-            <DiscordText text={text} />
+            <DiscordText text={displayText} />
           </p>
           {isLong && (
             <button
@@ -278,7 +399,7 @@ function RadarMessageCardBase({
         </div>
       )}
 
-      {/* Rodapé com data (só compact) */}
+      {/* Rodapé: só a data (sem linha divisória) — colunas laterais. */}
       {compact && (
         <div className={cn("pb-3 pt-1", padX)}>
           <DateInfo iso={m.createdAt} small />

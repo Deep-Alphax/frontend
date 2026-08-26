@@ -8,7 +8,7 @@ import {
   FAVORITE_MESSAGES_KEY,
   useFavorites,
 } from "@/components/radar/useFavorites";
-import { VirtualMessageList } from "@/components/radar/VirtualMessageList";
+import { ChatMessageList } from "@/components/radar/ChatMessageList";
 
 /** Badge de contagem do header (tokens do DS: principal 3/8/11). */
 function CountBadge({ children }: { children: React.ReactNode }) {
@@ -57,9 +57,9 @@ export function FavoritesPanel({ onSelectAuthor }: FavoritesPanelProps) {
   const hasItems = items.length > 0;
 
   return (
-    <aside className="flex max-h-[calc(100dvh-8rem)] flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
+    <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header */}
-      <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-gray-6 px-3">
+      <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 bg-gray-2 border-b border-gray-6 px-3">
         <h2 className="text-base font-semibold text-gray-12">Seus favoritos</h2>
         {count > 0 && <CountBadge>{count}</CountBadge>}
       </div>
@@ -71,12 +71,14 @@ export function FavoritesPanel({ onSelectAuthor }: FavoritesPanelProps) {
           ))}
         </div>
       ) : hasItems ? (
-        <VirtualMessageList
-          items={items}
-          hasNextPage={query.hasNextPage}
-          isFetchingNextPage={query.isFetchingNextPage}
-          fetchNextPage={query.fetchNextPage}
+        <ChatMessageList
+          messages={items}
+          hasOlder={query.hasNextPage}
+          isLoadingOlder={query.isFetchingNextPage}
+          loadOlder={query.fetchNextPage}
           onSelectAuthor={onSelectAuthor}
+          surface="list"
+          compact
         />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-7 px-4 py-[52px] text-center">

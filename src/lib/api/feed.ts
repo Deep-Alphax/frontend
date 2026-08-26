@@ -40,6 +40,12 @@ export interface CapturedMessage {
   authorTag: string | null;
   /** ID do autor no Discord (snowflake) — identidade estável p/ perfil/favoritos. */
   authorId: string | null;
+  /**
+   * Papel do autor no radar → badge do card (ex.: "call_owner", "scan",
+   * "copytrader", "sniper"). Código estável mapeado no front por `roleBadge.tsx`;
+   * `null`/ausente = sem badge. Papéis desconhecidos caem no estilo neutro.
+   */
+  role?: string | null;
   matchedPattern: string | null;
   discordMessageId: string | null;
   text: string;

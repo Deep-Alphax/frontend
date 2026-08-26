@@ -16,6 +16,19 @@ export function formatUsd(value: string | number, fractionDigits = 0): string {
   return `${n < 0 ? "−" : ""}US$ ${abs}`;
 }
 
+/** Compacto: "US$ 214K" / "US$ 1,2M" / "US$ 950" (para volumes grandes). */
+export function formatCompactUsd(value: string | number): string {
+  const n = toNumber(value);
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  const fmt = (x: number, s: string) =>
+    `${sign}US$ ${x.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}${s}`;
+  if (abs >= 1e9) return fmt(abs / 1e9, "B");
+  if (abs >= 1e6) return fmt(abs / 1e6, "M");
+  if (abs >= 1e3) return fmt(abs / 1e3, "K");
+  return `${sign}US$ ${abs.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+}
+
 /** "+US$ 8.817" / "−US$ 1.200" — com sinal explícito (para PnL). */
 export function formatSignedUsd(value: string | number, fractionDigits = 0): string {
   const n = toNumber(value);

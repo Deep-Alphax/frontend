@@ -36,6 +36,20 @@ export interface RadarSubgroup {
   count: number;
 }
 
+/**
+ * Fonte plana p/ a rail: um CANAL monitorado (não o servidor). Servidores com
+ * vários canais viram várias fontes — cada canal é uma fonte distinta.
+ */
+export interface RadarSource {
+  /** Identidade estável do canal — filtra o feed central por channelId. */
+  channelId: string;
+  /** Rótulo do canal (`#nome`). */
+  name: string;
+  /** Servidor de origem (para tooltip/cor). */
+  guildName: string | null;
+  count: number;
+}
+
 /** Grupo (servidor Discord) — árvore agregada no backend (contagens totais). */
 export interface RadarGroup {
   /** Chave estável do grupo (guildName). `null` = mensagens sem grupo. */
@@ -45,17 +59,6 @@ export interface RadarGroup {
   /** Canais desse grupo (subgrupos), ordenados por contagem desc. */
   subgroups: RadarSubgroup[];
 }
-
-/**
- * Seleção do filtro de grupos.
- * - `null`  → "Todos os grupos" (sem filtro).
- * - group   → filtra por `guildName` (client-side, sobre o pool carregado).
- * - channel → filtra por `channelId` (server-side, feed dedicado do canal).
- */
-export type RadarSelection =
-  | null
-  | { type: "group"; guild: string | null }
-  | { type: "channel"; channelId: string };
 
 export interface RadarFeed {
   messages: CapturedMessage[];

@@ -1,33 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
 import { cn } from "@/lib/cn";
-import { RadarMessageCard } from "@/components/radar/RadarMessageCard";
-
-/** Rótulo do divisor de dia: "Hoje", "Ontem" ou "DD/MM". */
-function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const diffDays = Math.round((startOf(today) - startOf(d)) / 86_400_000);
-  if (diffDays <= 0) return "Hoje";
-  if (diffDays === 1) return "Ontem";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function DayDivider({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3 py-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-        {label}
-      </span>
-      <span className="h-px flex-1 bg-gray-6" />
-    </div>
-  );
-}
+import { ChatMessageList } from "@/components/radar/ChatMessageList";
 
 interface RadarFeedProps {
   messages: CapturedMessage[];
@@ -64,10 +41,10 @@ function FeedSearch({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Buscar mensagens ou usuários..."
-        aria-label="Buscar no feed"
+        placeholder="Buscar mensagem..."
+        aria-label="Buscar mensagem..."
         className={cn(
-          "h-11 w-full rounded-lg border border-gray-6 bg-gray-2 pl-10 pr-10",
+          "h-9 w-full rounded-lg border border-gray-6 bg-gray-1 pl-9 pr-14",
           "text-sm text-gray-12 placeholder:text-gray-11 outline-none",
           "focus-visible:border-secundaria-11/60 focus-visible:ring-2 focus-visible:ring-secundaria-11/30",
         )}
@@ -86,7 +63,10 @@ function FeedSearch({
   );
 }
 
-/** Coluna central: feed de capturas com divisores por dia e scroll infinito. */
+/**
+ * Coluna central: "Feed principal". Header + busca fixos no topo; o corpo é uma
+ * lista estilo chat (novas embaixo, ver ChatMessageList) que rola sozinha.
+ */
 export function RadarFeed({
   messages,
   isLoading,
@@ -99,46 +79,26 @@ export function RadarFeed({
   search,
   onSearchChange,
 }: RadarFeedProps) {
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const searching = search.trim().length > 0;
 
-  // Scroll infinito: carrega a próxima página quando o sentinela entra na viewport.
-  // Mais eficiente que polling/paginação manual e evita botão extra.
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasMore) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) loadMore();
-      },
-      { rootMargin: "400px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasMore, loadMore, messages.length]);
-
-  // Pré-calcula o rótulo do dia e onde entra o divisor — evita mutar variável
-  // durante o render (regra de imutabilidade do React 19).
-  const rows = messages.map((m, i) => {
-    const label = dayLabel(m.createdAt);
-    const prev = i > 0 ? dayLabel(messages[i - 1].createdAt) : null;
-    return { m, label, showDivider: label !== prev };
-  });
-
   return (
-    <div className="mx-auto flex max-w-153.5 w-full flex-col gap-3">
-      {/* Busca — acima do divisor de data */}
-      <FeedSearch value={search} onChange={onSearchChange} />
+    <div className="flex max-h-[85dvh] min-h-0 flex-col border-b border-gray-6 lg:max-h-none lg:h-full lg:border-b-0 lg:border-r">
+      {/* Header: título à esquerda + busca à direita */}
+      <div className="flex h-[46px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 bg-gray-2 px-4">
+        <h2 className="shrink-0 text-base font-semibold text-gray-12">Feed principal</h2>
+        <div className="w-full max-w-[320px]">
+          <FeedSearch value={search} onChange={onSearchChange} />
+        </div>
+      </div>
 
       {isLoading ? (
-        Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-32 animate-pulse rounded-xl border border-gray-6 bg-gray-2"
-          />
-        ))
+        <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-32 animate-pulse rounded-xl border border-gray-6 bg-gray-2" />
+          ))}
+        </div>
       ) : messages.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-6 bg-gray-2 px-6 py-16 text-center">
+        <div className="mx-4 mb-4 flex flex-col items-center gap-2 rounded-xl border border-gray-6 bg-gray-2 px-6 py-16 text-center">
           <p className="text-sm font-semibold text-gray-12">
             {searching ? "Nenhum resultado" : "Nenhuma mensagem por aqui"}
           </p>
@@ -151,35 +111,16 @@ export function RadarFeed({
           </p>
         </div>
       ) : (
-        <>
-          {rows.map(({ m, label, showDivider }) => (
-            <Fragment key={m.id}>
-              {showDivider && <DayDivider label={label} />}
-              <RadarMessageCard
-                m={m}
-                isNew={newIds.has(m.id)}
-                animateLayout
-                onSelectAuthor={onSelectAuthor}
-              />
-            </Fragment>
-          ))}
-
-          {/* Sentinela + estado de carregamento da próxima página */}
-          <div ref={sentinelRef} />
-          {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-11">
-              <span>Carregando mais</span>
-              <span className="flex gap-1">
-                <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-gray-6" />
-              </span>
-            </div>
-          )}
-          {!hasMore && (
-            <p className="py-4 text-center text-xs text-gray-11">Você chegou ao fim.</p>
-          )}
-        </>
+        <ChatMessageList
+          messages={messages}
+          hasOlder={hasMore}
+          isLoadingOlder={isFetchingNextPage}
+          loadOlder={loadMore}
+          newIds={newIds}
+          onSelectAuthor={onSelectAuthor}
+          surface="list"
+          showDayDividers
+        />
       )}
     </div>
   );

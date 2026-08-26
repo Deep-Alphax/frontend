@@ -13,7 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useFavorites } from "@/components/radar/useFavorites";
 import { starFor, toneFor } from "@/components/radar/favoriteColors";
 import { UserCustomizeModal } from "@/components/radar/UserCustomizeModal";
-import { VirtualMessageList } from "@/components/radar/VirtualMessageList";
+import { ChatMessageList } from "@/components/radar/ChatMessageList";
 
 interface ProfilePanelProps {
   /** Tag do autor selecionado (identidade de perfil/favorito). */
@@ -98,9 +98,9 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
   };
 
   return (
-    <aside className="flex max-h-[calc(100dvh-8rem)] flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
+    <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header */}
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-gray-6 px-3">
+      <div className="flex h-[46px] shrink-0 items-center gap-2 bg-gray-2 border-b border-gray-6 px-3">
         <button
           type="button"
           onClick={onBack}
@@ -178,24 +178,23 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
         </div>
       </div>
 
-      {/* Posts */}
-      <p className="shrink-0 px-4 pt-3 text-sm font-semibold text-gray-12">Posts</p>
+      {/* Mensagens do autor — mesmo design das outras colunas (lista, compact). */}
       {query.isLoading ? (
         <div className="flex flex-col gap-3 p-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-lg border border-gray-6 bg-gray-1" />
+            <div key={i} className="h-24 animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
           ))}
         </div>
       ) : messages.length === 0 ? (
         <p className="p-4 text-sm text-gray-11">Nenhuma mensagem recente.</p>
       ) : (
-        <VirtualMessageList
-          items={messages}
-          hasNextPage={query.hasNextPage}
-          isFetchingNextPage={query.isFetchingNextPage}
-          fetchNextPage={query.fetchNextPage}
-          compact={true}
-          highlighted
+        <ChatMessageList
+          messages={messages}
+          hasOlder={query.hasNextPage}
+          isLoadingOlder={query.isFetchingNextPage}
+          loadOlder={query.fetchNextPage}
+          surface="list"
+          compact
         />
       )}
 

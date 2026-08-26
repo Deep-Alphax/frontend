@@ -80,6 +80,47 @@ export function getEmbedMedia(embed: unknown): EmbedMediaItem[] {
   return out;
 }
 
+// Extensões de mídia direta (Discord CDN, imgur, etc.). Um `.gif` num <img>
+// anima nativamente — é o que o Discord faz com anexos.
+const IMAGE_EXT = /\.(gif|png|jpe?g|webp|avif|bmp)(?:[?#]|$)/i;
+const VIDEO_EXT = /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i;
+
+/** True se a URL aponta p/ uma imagem/gif direta (por extensão). */
+export function isImageUrl(url: string): boolean {
+  return IMAGE_EXT.test(url);
+}
+/** True se a URL aponta p/ um vídeo direto (por extensão). */
+export function isVideoUrl(url: string): boolean {
+  return VIDEO_EXT.test(url);
+}
+/** True se a URL é mídia direta renderizável (imagem/gif/vídeo). */
+export function isMediaUrl(url: string): boolean {
+  return isImageUrl(url) || isVideoUrl(url);
+}
+
+/**
+ * Mídia renderizável a partir de LINKS diretos (anexos do Discord, imgur, …).
+ * Cobre o caso do anexo `cdn.discordapp.com/.../arquivo.gif`, que NÃO vira embed
+ * — sem isto o GIF apareceria como um link cru. Um `.gif` vira `image` (o <img>
+ * anima o GIF); `.mp4/.webm` viram `video` (autoplay/loop/mudo).
+ */
+export function getLinkMedia(links: string[] | undefined): EmbedMediaItem[] {
+  if (!links) return [];
+  const out: EmbedMediaItem[] = [];
+  const seen = new Set<string>();
+  for (const url of links) {
+    if (seen.has(url)) continue;
+    if (isVideoUrl(url)) {
+      seen.add(url);
+      out.push({ kind: "video", src: url });
+    } else if (isImageUrl(url)) {
+      seen.add(url);
+      out.push({ kind: "image", src: url });
+    }
+  }
+  return out;
+}
+
 /**
  * True quando o texto da mensagem é ESSENCIALMENTE só o link/título do embed —
  * caso em que renderizamos só a mídia (o "texto" é redundante com o GIF).

@@ -34,7 +34,7 @@ export function LoginScreen() {
 
         {/* Termos */}
         <p className="max-w-[444px] text-center text-sm text-gray-11">
-          Ao continuar você aceita os{" "}
+          {/* Ao continuar você aceita os{" "}
           <a href="#" className="underline underline-offset-2">
             Termos
           </a>{" "}
@@ -42,7 +42,7 @@ export function LoginScreen() {
           <a href="#" className="underline underline-offset-2">
             Política de privacidade
           </a>
-          .
+          . */}
         </p>
       </section>
 

@@ -1,28 +1,50 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Topbar } from "@/components/home/Topbar";
-import { GroupsPanel } from "@/components/radar/GroupsPanel";
+import { SourcesRail } from "@/components/radar/SourcesRail";
+import { RadarModuleBar } from "@/components/radar/RadarModuleBar";
+import { RickBotPanel } from "@/components/radar/RickBotPanel";
 import { RadarFeed } from "@/components/radar/RadarFeed";
+import { ColumnResizer } from "@/components/radar/ColumnResizer";
 import { FavoritesPanel } from "@/components/radar/FavoritesPanel";
 import { ProfilePanel } from "@/components/radar/ProfilePanel";
-import { useRadarFeed, type RadarSelection } from "@/components/radar/useRadarFeed";
+import { useRadarFeed } from "@/components/radar/useRadarFeed";
 import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
-import { Footer } from "@/components/home/Footer";
+
+/** Largura das colunas laterais 2/4 (px) — limites de arraste + default. */
+const COL_MIN = 260;
+const COL_MAX = 620;
+const COL_DEFAULT = 340;
+const clampCol = (w: number) => Math.min(COL_MAX, Math.max(COL_MIN, w));
+
+/** Lê a largura persistida (guardado p/ SSR e localStorage bloqueado). */
+function readCol(key: string): number {
+  if (typeof window === "undefined") return COL_DEFAULT;
+  try {
+    const v = Number(window.localStorage.getItem(key));
+    return Number.isFinite(v) && v > 0 ? clampCol(v) : COL_DEFAULT;
+  } catch {
+    return COL_DEFAULT;
+  }
+}
 
 /**
- * Tela de Radar (node Figma 492:9713): feed de capturas ao centro, grupos
- * (servidores Discord) à esquerda e favoritos à direita.
+ * Tela de Radar (node Figma 748:25272): app-shell de largura e altura totais —
+ * Topbar fixa + uma linha de 4 colunas que preenchem a viewport, cada uma com
+ * rolagem própria (não a página):
+ *  1) rail de "Fontes" (servidores) → seleciona a fonte ativa (controla o centro);
+ *  2) "Rick Bot" — feed FIXO do usuário Rick#9725 (query própria por autor);
+ *  3) "Feed principal" — a FONTE SELECIONADA na rail (recorte do pool por guildName);
+ *  4) "Seus favoritos" (autores seguidos) / detalhes do perfil.
  *
- * O filtro por grupo é aplicado no cliente sobre as mensagens já carregadas —
- * a API de feed não expõe filtro por guild. Ao rolar, novas páginas engrossam
- * o mesmo pool, mantendo grupos e contagens coerentes.
+ * Proporções do Figma (1440): rail 69 · rick 382 · central 1fr · favoritos 382.
+ * A busca do feed central é server-side (debounced). O feed central reaproveita o
+ * pool (todas as capturas) filtrado por `guildName` — sem custo extra de rede.
  */
 export function RadarScreen() {
-  // `null` = "Todos os grupos" (default ativo); grupo (guild) ou canal específico.
-  const [selection, setSelection] = useState<RadarSelection>(null);
-  // Busca no feed (mensagens/usuários) — debounced p/ não requisitar por tecla.
+  // Busca no feed central (mensagens/usuários) — debounced p/ não requisitar por tecla.
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   useEffect(() => {
@@ -30,37 +52,66 @@ export function RadarScreen() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  // Canal selecionado → o feed central é buscado já filtrado no backend.
-  const activeChannelId = selection?.type === "channel" ? selection.channelId : null;
-  const feed = useRadarFeed(activeChannelId, search);
+  // Feed central = todas as capturas (sem filtro de canal); a busca aplica no backend.
+  const feed = useRadarFeed(null, search);
+
+  // Fontes = CANAIS monitorados (achatados dos grupos). Cada canal é uma fonte —
+  // servidores com vários canais viram várias fontes na rail.
+  const sources = useMemo(
+    () =>
+      feed.groups.flatMap((g) =>
+        g.subgroups.map((s) => ({
+          channelId: s.channelId,
+          name: s.name,
+          guildName: g.key,
+          count: s.count,
+        })),
+      ),
+    [feed.groups],
+  );
+
+  // Fonte ativa: `null` = "Todas as fontes" (default; feed central sem filtro);
+  // senão o `channelId` do canal selecionado na rail.
+  const [activeSource, setActiveSource] = useState<string | null>(null);
+
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
     id: string;
     name: string;
   } | null>(null);
 
-  const visible = useMemo(() => {
-    if (selection == null) return feed.messages; // sem filtro (todos os grupos)
-    if (selection.type === "group")
-      return feed.messages.filter((m) => (m.guildName ?? null) === selection.guild);
-    return feed.messages; // canal: o feed já vem filtrado por channelId do backend
-  }, [feed.messages, selection]);
+  // Larguras redimensionáveis das colunas 2 (Rick) e 4 (favoritos); a central
+  // absorve o `1fr`. Arraste nas duas divisórias da coluna central (ColumnResizer).
+  // Inicializa com o valor persistido (lazy → SSR devolve o default). O grid usa
+  // suppressHydrationWarning por causa do var de estilo (server=default vs client).
+  const [leftW, setLeftW] = useState(() => readCol("radar:leftW"));
+  const [rightW, setRightW] = useState(() => readCol("radar:rightW"));
+  const dragStart = useRef(0); // largura no início do arraste (um por vez)
 
-  const selectedName = useMemo(() => {
-    if (selection == null) return null;
-    if (selection.type === "group")
-      return (
-        feed.groups.find((g) => g.key === selection.guild)?.name ??
-        selection.guild ??
-        "Sem grupo"
-      );
-    // Canal: procura o subgrupo correspondente para exibir o rótulo (#canal).
-    for (const g of feed.groups) {
-      const sub = g.subgroups.find((s) => s.channelId === selection.channelId);
-      if (sub) return sub.name;
+  // Persiste o tamanho escolhido (só escrita → sem setState no effect).
+  useEffect(() => {
+    try {
+      localStorage.setItem("radar:leftW", String(leftW));
+      localStorage.setItem("radar:rightW", String(rightW));
+    } catch {
+      // localStorage indisponível (modo privado/cota) — ignora.
     }
-    return null;
-  }, [selection, feed.groups]);
+  }, [leftW, rightW]);
+
+  // Feed central = todas as capturas ("Todas as fontes") OU recorte do pool pela
+  // FONTE (canal) selecionada na rail.
+  const centerMessages = useMemo(
+    () =>
+      activeSource === null
+        ? feed.messages
+        : feed.messages.filter((m) => m.channelId === activeSource),
+    [feed.messages, activeSource],
+  );
+
+  const activeSourceObj = useMemo(
+    () => sources.find((s) => s.channelId === activeSource) ?? null,
+    [sources, activeSource],
+  );
 
   // Identidade estável p/ o memo do card não re-renderizar a cada render.
   const onSelectAuthor = useCallback(
@@ -70,63 +121,68 @@ export function RadarScreen() {
 
   return (
     <FavoritesLookupProvider>
-    <div className="flex min-h-dvh flex-col bg-gray-1">
-      <Topbar />
+      <div className="flex h-dvh flex-col overflow-hidden bg-gray-1">
+        <Topbar />
 
-      <main className="mx-auto w-full max-w-7xl px-6 pb-24 pt-8 md:px-12 lg:px-0">
-        {/* Cabeçalho da seção */}
-        <div className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="font-display text-display-24 text-gray-12">
-            Radar
-          </h1>
-          {feed.total > 0 && (
-            <p className="text-sm text-gray-11 tabular-nums">
-              {visible.length.toLocaleString("pt-BR")} de{" "}
-              {feed.total.toLocaleString("pt-BR")} mensagens
-            </p>
-          )}
-        </div>
+        {/* Linha de colunas — preenche a viewport. Em telas < lg, rola a página.
+            Larguras das col. 2/4 via CSS var (só no template `lg:` — no mobile o
+            grid-cols-1 vence e as vars ficam inertes). */}
+        <div
+          suppressHydrationWarning
+          className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[69px_var(--left-w)_minmax(0,1fr)_var(--right-w)] lg:overflow-hidden"
+          style={{ "--left-w": `${leftW}px`, "--right-w": `${rightW}px` } as React.CSSProperties}
+        >
+          {/* 1 — Fontes (canais) */}
+          <SourcesRail
+            sources={sources}
+            activeKey={activeSource}
+            onSelect={setActiveSource}
+          />
 
-        {/* 3 colunas em desktop; empilha em telas menores. */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,264px)_minmax(0,1fr)_minmax(0,354px)]">
-          <div className="lg:sticky lg:top-8 lg:self-start">
-            <GroupsPanel
-              groups={feed.groups}
-              total={feed.total}
-              selection={selection}
-              onSelect={setSelection}
+          {/* 2 — Rick Bot (feed fixo do usuário Rick#9725) — borda direita redimensiona */}
+          <div className="relative min-h-0 lg:h-full">
+            <RickBotPanel onSelectAuthor={onSelectAuthor} />
+            <ColumnResizer
+              onStart={() => (dragStart.current = leftW)}
+              onMove={(dx) => setLeftW(clampCol(dragStart.current + dx))}
             />
           </div>
 
-          <RadarFeed
-            messages={visible}
-            isLoading={feed.isLoading}
-            isFetchingNextPage={feed.isFetchingNextPage}
-            hasMore={feed.hasMore}
-            loadMore={feed.loadMore}
-            selectedName={selectedName}
-            newIds={feed.newIds}
-            onSelectAuthor={onSelectAuthor}
-            search={searchInput}
-            onSearchChange={setSearchInput}
-          />
-
-          <div className="lg:sticky lg:top-8 lg:self-start">
-            {selectedAuthor ? (
-              <ProfilePanel
-                author={selectedAuthor.id}
-                authorName={selectedAuthor.name}
-                onBack={() => setSelectedAuthor(null)}
-              />
-            ) : (
-              <FavoritesPanel onSelectAuthor={onSelectAuthor} />
-            )}
+          {/* 3 — Feed principal (a fonte selecionada) — borda direita redimensiona os favoritos */}
+          <div className="relative min-h-0 lg:h-full">
+            <RadarFeed
+              messages={centerMessages}
+              isLoading={feed.isLoading}
+              isFetchingNextPage={feed.isFetchingNextPage}
+              hasMore={feed.hasMore}
+              loadMore={feed.loadMore}
+              selectedName={activeSourceObj?.name ?? null}
+              newIds={feed.newIds}
+              onSelectAuthor={onSelectAuthor}
+              search={searchInput}
+              onSearchChange={setSearchInput}
+            />
+            <ColumnResizer
+              onStart={() => (dragStart.current = rightW)}
+              onMove={(dx) => setRightW(clampCol(dragStart.current - dx))}
+            />
           </div>
-        </div>
-      </main>
 
-      <Footer />
-    </div>
+          {/* 4 — Favoritos / perfil */}
+          {selectedAuthor ? (
+            <ProfilePanel
+              author={selectedAuthor.id}
+              authorName={selectedAuthor.name}
+              onBack={() => setSelectedAuthor(null)}
+            />
+          ) : (
+            <FavoritesPanel onSelectAuthor={onSelectAuthor} />
+          )}
+        </div>
+
+        {/* Barra inferior (substitui o footer) — module chips de métricas. */}
+        <RadarModuleBar />
+      </div>
     </FavoritesLookupProvider>
   );
 }

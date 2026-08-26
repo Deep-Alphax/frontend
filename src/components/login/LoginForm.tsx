@@ -130,12 +130,12 @@ export function LoginForm() {
               )}
             />
 
-            <Link
+           {/*  <Link
               href="/forgot-password"
               className="text-base text-gray-11 transition-colors hover:text-gray-12"
             >
               Esqueci minha senha
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

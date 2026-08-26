@@ -43,11 +43,20 @@ export interface ConcentrationBucket {
  */
 export interface PortfolioAnalytics {
   totalTrades: number;
+  buys: number;
+  sells: number;
   realizedPnlUsd: string;
   tradingPnlUsd: string;
   netPnlUsd: string;
   feesUsd: string;
   volumeUsd: string;
+
+  /** Tamanhos de entrada — total investido e ticket médio de compra. */
+  entrySizes: {
+    totalBuyUsd: string;
+    avgBuyUsd: string;
+    byToken: { mint: string; symbol: string | null; buyUsd: string; buys: number }[];
+  };
 
   daily: DayBucket[];
   weekdayBlocks: WeekdayBlockCell[];
@@ -64,6 +73,12 @@ export interface PortfolioAnalytics {
     winners: number;
     losers: number;
     winRatePct: number;
+    /** PnL de trading médio das vendas vencedoras (≥ 0). */
+    avgWinUsd: string;
+    /** PnL de trading médio das vendas perdedoras (≤ 0). */
+    avgLossUsd: string;
+    /** ganho médio ÷ |perda média|; null se sem perdas. */
+    winLossRatio: number | null;
   };
   profitConcentration: {
     totalUsd: string;
