@@ -1,14 +1,76 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { ChevronLeft, ChevronRight, Copy, Check, Trash2, Upload } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { Modal } from "@/components/walletReader/Modal";
 import { SidewalletBlock } from "@/components/walletReader/SidewalletBlock";
 import type { useKolIndex } from "@/lib/walletReader/useKolIndex";
-import { useScans } from "@/lib/walletReader/useScans";
-import { KOL_TYPES, avatarSrc, tierFor } from "@/lib/walletReader/types";
+import { getKol, type KolOverridePatch } from "@/lib/api/walletReader";
+import { useScan, useScans } from "@/lib/walletReader/useScans";
+import { fileToAvatar } from "@/lib/walletReader/avatar";
+import {
+  KOL_TYPES,
+  memeAvatarFor,
+  tierFor,
+  type KolState,
+  type WalletRef,
+} from "@/lib/walletReader/types";
+
+/**
+ * Rascunho do modal: tudo que o botão "Salvar alterações" manda de uma vez.
+ *
+ * As edições ficam locais até o Salvar — antes cada tecla/clique virava um
+ * PATCH. Um KOL editado por inteiro agora custa UMA requisição em vez de uma
+ * por campo, e o usuário controla quando aquilo passa a valer.
+ */
+interface Draft {
+  name: string;
+  twitter: string;
+  notes: string;
+  relevance: number;
+  types: string[];
+  fnfGroups: string[];
+  /** Avatar EFETIVO exibido; `null` = sem foto própria (cai no avatar por hash). */
+  avatar: string | null;
+  wallets: WalletRef[];
+  dismissed: string[];
+}
+
+function draftFrom(state: KolState): Draft {
+  return {
+    name: state.name,
+    twitter: state.twitter.replace(/^@/, ""),
+    notes: state.notes,
+    relevance: state.relevance,
+    types: state.types,
+    fnfGroups: state.fnfGroups,
+    avatar: state.avatar,
+    wallets: state.wallets,
+    dismissed: state.dismissedSidewallets,
+  };
+}
+
+/** Assinatura estável (listas ordenadas) p/ comparar rascunho × original. */
+function fingerprint(d: Draft): string {
+  return JSON.stringify({
+    name: d.name.trim(),
+    twitter: d.twitter.trim().replace(/^@/, ""),
+    notes: d.notes,
+    relevance: d.relevance,
+    avatar: d.avatar,
+    types: [...d.types].sort(),
+    fnfGroups: [...d.fnfGroups].sort(),
+    dismissed: [...d.dismissed].sort(),
+    wallets: d.wallets.map((w) => `${w.name}|${w.address}`).sort(),
+  });
+}
+
+const sameList = (a: string[], b: string[]) =>
+  a.length === b.length && [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 type Index = ReturnType<typeof useKolIndex>;
 
@@ -20,33 +82,6 @@ function Section({ label, children }: { label: string; children: React.ReactNode
       {children}
     </div>
   );
-}
-
-/** Redimensiona a imagem escolhida p/ 200×200 (cover) → data URL JPEG. */
-function fileToAvatar(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const size = 200;
-        const c = document.createElement("canvas");
-        c.width = size;
-        c.height = size;
-        const ctx = c.getContext("2d");
-        if (!ctx) return reject(new Error("no ctx"));
-        const s = Math.max(size / img.width, size / img.height);
-        const w = img.width * s;
-        const h = img.height * s;
-        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-        resolve(c.toDataURL("image/jpeg", 0.85));
-      };
-      img.onerror = reject;
-      img.src = String(e.target?.result ?? "");
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 /** Linha de carteira: seleção (clique), copiar, remover. */
@@ -125,43 +160,164 @@ interface KolProfileModalProps {
   onStep: (dir: 1 | -1) => void;
   onOpenKol: (id: string) => void;
   isSelected: (kolId: string, address: string) => boolean;
-  toggleSelect: (kolId: string, w: { name: string; address: string }) => void;
+  toggleSelect: (
+    kolId: string,
+    w: { name: string; address: string },
+    squads?: string[],
+  ) => void;
 }
 
-/** Modal de perfil/edição de um KOL (node do app original, adaptado ao DS). */
-export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelected, toggleSelect }: KolProfileModalProps) {
-  const { getState, patchOverride, addWallet, removeWallet, removeKol, groups, createGroup } = index;
-  const { scans, runScan } = useScans();
-  const state = getState(id);
-  const tier = tierFor(state.relevance);
+/**
+ * Busca o KOL COMPLETO (com as carteiras) e só então monta o formulário.
+ *
+ * A listagem não traz mais as carteiras — carregar os endereços de 60 KOLs para
+ * exibir uma contagem era metade do payload da página.
+ */
+export function KolProfileModal(props: KolProfileModalProps) {
+  const { data: state } = useQuery({
+    queryKey: ["kol", props.id],
+    queryFn: () => getKol(props.id),
+  });
+
+  if (!state) {
+    return (
+      <Modal open onClose={props.onClose} title="Carregando…">
+        <div className="h-64 animate-pulse bg-gray-2" aria-hidden />
+      </Modal>
+    );
+  }
+  // `key` reinicia o rascunho ao trocar de KOL.
+  return <KolProfileForm key={props.id} {...props} state={state} />;
+}
+
+function KolProfileForm({
+  id,
+  index,
+  state,
+  onClose,
+  onStep,
+  onOpenKol,
+  isSelected,
+  toggleSelect,
+}: KolProfileModalProps & { state: KolState }) {
+  const { patchOverride, removeKol, groups, createGroup } = index;
+  const { runScan } = useScans();
+  const scan = useScan(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
   const [newGroup, setNewGroup] = useState("");
-  const [relView, setRelView] = useState(state.relevance);
+  const [saving, setSaving] = useState(false);
+
+  // O modal remonta a cada KOL (`key={openId}` na tela), então o rascunho nasce
+  // do estado efetivo uma única vez — edição em curso não é atropelada por
+  // atualização de cache vinda do servidor.
+  const [initial, setInitial] = useState<Draft>(() => draftFrom(state));
+  const [draft, setDraft] = useState<Draft>(initial);
+
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
+    setDraft((p) => ({ ...p, [k]: v }));
+
+  const dirty = useMemo(
+    () => fingerprint(draft) !== fingerprint(initial),
+    [draft, initial],
+  );
+
+  const tier = tierFor(draft.relevance);
+  const twHandle = draft.twitter.trim().replace(/^@/, "");
 
   const onUpload = async (file: File | undefined) => {
     if (!file) return;
     try {
-      patchOverride(id, { avatar: await fileToAvatar(file) });
+      set("avatar", await fileToAvatar(file));
     } catch {
-      // ignora
+      toast.error("Não foi possível ler a imagem.");
     }
   };
 
-  const twHandle = state.twitter.replace(/^@/, "");
+  /** Só os campos que mudaram — o backend trata chave ausente como "não mexe". */
+  const buildPatch = (): KolOverridePatch => {
+    const patch: KolOverridePatch = {};
+    const name = draft.name.trim();
+    if (name && name !== initial.name) patch.name = name;
+    if (twHandle !== initial.twitter) patch.twitter = twHandle;
+    if (draft.notes !== initial.notes) patch.notes = draft.notes;
+    if (draft.relevance !== initial.relevance) patch.relevance = draft.relevance;
+    if (!sameList(draft.types, initial.types)) patch.types = draft.types;
+    if (!sameList(draft.fnfGroups, initial.fnfGroups)) patch.fnfGroups = draft.fnfGroups;
+    if (!sameList(draft.dismissed, initial.dismissed)) {
+      patch.dismissedSidewallets = draft.dismissed;
+    }
+    // `""` diz ao backend "limpei a foto"; `null` ali significaria herdar o preset.
+    if (draft.avatar !== initial.avatar) patch.avatar = draft.avatar ?? "";
+
+    const walletKeys = (ws: WalletRef[]) => ws.map((w) => `${w.name}|${w.address}`);
+    if (!sameList(walletKeys(draft.wallets), walletKeys(initial.wallets))) {
+      // Manda a lista EFETIVA: o servidor deriva added/removed contra o preset,
+      // então o cliente não precisa carregar a camada base só para isso.
+      patch.wallets = draft.wallets;
+    }
+    return patch;
+  };
+
+  const save = async () => {
+    const patch = buildPatch();
+    if (!Object.keys(patch).length) return;
+    setSaving(true);
+    const ok = await patchOverride(id, patch);
+    setSaving(false);
+    // Só considera limpo se o servidor aceitou — o erro já virou toast + rollback.
+    if (ok) {
+      setInitial(draft);
+      toast.success("Alterações salvas na sua conta.");
+    }
+  };
+
+  /** Fechar/navegar com rascunho sujo perderia a edição — pergunta antes. */
+  const canLeave = () =>
+    !dirty || window.confirm("Você tem alterações não salvas neste KOL. Descartar?");
+  const guardedClose = () => {
+    if (canLeave()) onClose();
+  };
 
   return (
     <Modal
       open
-      onClose={onClose}
+      onClose={guardedClose}
       className="max-w-xl"
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-gray-11">
+            {dirty
+              ? "Alterações não salvas."
+              : ""}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={!dirty || saving}
+              onClick={() => setDraft(initial)}
+              className="rounded-lg border border-gray-6 bg-gray-3 px-3 py-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Descartar
+            </button>
+            <button
+              type="button"
+              disabled={!dirty || saving}
+              onClick={save}
+              className="rounded-lg bg-principal-9 px-4 py-2 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? "Salvando…" : "Salvar alterações"}
+            </button>
+          </div>
+        </div>
+      }
       title={
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => onStep(-1)}
+            onClick={() => canLeave() && onStep(-1)}
             aria-label="Anterior"
             className="flex size-7 items-center justify-center rounded-md text-gray-11 hover:bg-gray-3 hover:text-gray-12"
           >
@@ -169,13 +325,13 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
           </button>
           <button
             type="button"
-            onClick={() => onStep(1)}
+            onClick={() => canLeave() && onStep(1)}
             aria-label="Próximo"
             className="flex size-7 items-center justify-center rounded-md text-gray-11 hover:bg-gray-3 hover:text-gray-12"
           >
             <ChevronRight className="size-4" strokeWidth={2} />
           </button>
-          <span className="ml-1 truncate">{state.name}</span>
+          <span className="ml-1 truncate">{draft.name}</span>
         </div>
       }
     >
@@ -183,7 +339,7 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       <div className="flex items-center gap-3 px-4 py-4">
         <div className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatarSrc(state)} alt="" width={56} height={56} className="size-14 rounded-full border border-gray-6 object-cover" />
+          <img src={draft.avatar || memeAvatarFor(id)} alt="" width={56} height={56} className="size-14 rounded-full border border-gray-6 object-cover" />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -205,11 +361,9 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
         </div>
         <div className="min-w-0 flex-1">
           <input
-            defaultValue={state.name}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              if (v && v !== state.name) patchOverride(id, { name: v });
-            }}
+            value={draft.name}
+            onChange={(e) => set("name", e.target.value)}
+            aria-label="Nome do KOL"
             className="w-full rounded-md border border-transparent bg-transparent text-lg font-semibold text-gray-12 outline-none hover:border-gray-6 focus:border-secundaria-11/60 focus:bg-gray-1"
           />
           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -217,15 +371,15 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
               {tier.label}
             </span>
             <span className="rounded-md border border-gray-6 px-2 py-0.5 text-xs text-gray-11">
-              {state.walletCount} carteira{state.walletCount !== 1 ? "s" : ""}
+              {draft.wallets.length} carteira{draft.wallets.length !== 1 ? "s" : ""}
             </span>
             {state.isCustom && (
               <span className="rounded-md border border-gray-6 px-2 py-0.5 text-xs text-gray-11">criado manualmente</span>
             )}
-            {state.avatar && (
+            {draft.avatar && (
               <button
                 type="button"
-                onClick={() => patchOverride(id, { avatar: null })}
+                onClick={() => set("avatar", null)}
                 className="text-xs text-gray-11 underline underline-offset-2 hover:text-gray-12"
               >
                 remover foto
@@ -239,9 +393,10 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       <Section label="Twitter / X">
         <div className="flex items-center gap-2">
           <input
-            defaultValue={twHandle}
+            value={draft.twitter}
+            onChange={(e) => set("twitter", e.target.value)}
             placeholder="@handle (nada aqui é verificado)"
-            onBlur={(e) => patchOverride(id, { twitter: e.target.value.trim().replace(/^@/, "") })}
+            aria-label="Twitter / X do KOL"
             className="h-9 min-w-0 flex-1 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
           />
           {twHandle && (
@@ -260,15 +415,13 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       {/* Relevância */}
       <Section label="Relevância">
         <div className="flex items-center gap-4">
-          <span className={cn("w-10 shrink-0 text-2xl font-semibold tabular-nums", tier.text)}>{relView}</span>
+          <span className={cn("w-10 shrink-0 text-2xl font-semibold tabular-nums", tier.text)}>{draft.relevance}</span>
           <input
             type="range"
             min={0}
             max={100}
-            value={relView}
-            onChange={(e) => setRelView(Number(e.target.value))}
-            onMouseUp={() => patchOverride(id, { relevance: relView })}
-            onTouchEnd={() => patchOverride(id, { relevance: relView })}
+            value={draft.relevance}
+            onChange={(e) => set("relevance", Number(e.target.value))}
             className="h-2 w-full cursor-pointer accent-principal-9"
           />
         </div>
@@ -283,16 +436,16 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       <Section label="Tipo de trader">
         <div className="flex flex-wrap gap-2">
           {KOL_TYPES.map((t) => {
-            const on = state.types.includes(t.id);
+            const on = draft.types.includes(t.id);
             return (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => {
-                  const set = new Set(state.types);
-                  if (set.has(t.id)) set.delete(t.id);
-                  else set.add(t.id);
-                  patchOverride(id, { types: Array.from(set) });
+                  const next = new Set(draft.types);
+                  if (next.has(t.id)) next.delete(t.id);
+                  else next.add(t.id);
+                  set("types", Array.from(next));
                 }}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
@@ -311,16 +464,16 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
         {groups.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {groups.map((g) => {
-              const on = state.fnfGroups.includes(g.id);
+              const on = draft.fnfGroups.includes(g.id);
               return (
                 <button
                   key={g.id}
                   type="button"
                   onClick={() => {
-                    const set = new Set(state.fnfGroups);
-                    if (set.has(g.id)) set.delete(g.id);
-                    else set.add(g.id);
-                    patchOverride(id, { fnfGroups: Array.from(set) });
+                    const next = new Set(draft.fnfGroups);
+                    if (next.has(g.id)) next.delete(g.id);
+                    else next.add(g.id);
+                    set("fnfGroups", Array.from(next));
                   }}
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
@@ -342,11 +495,14 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
           />
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
               const n = newGroup.trim();
               if (!n) return;
-              const g = createGroup(n);
-              patchOverride(id, { fnfGroups: Array.from(new Set(state.fnfGroups).add(g.id)) });
+              // O grupo em si é uma entidade da conta: nasce no servidor na hora
+              // (precisa de id). Marcar o KOL nele é que entra no rascunho.
+              const g = await createGroup(n);
+              if (!g) return;
+              set("fnfGroups", Array.from(new Set(draft.fnfGroups).add(g.id)));
               setNewGroup("");
             }}
             className="h-9 shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
@@ -369,19 +525,19 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       )}
 
       {/* Carteiras */}
-      <Section label={`Carteiras (${state.wallets.length})`}>
+      <Section label={`Carteiras (${draft.wallets.length})`}>
         <div className="flex flex-col gap-1.5">
-          {state.wallets.length === 0 && (
+          {draft.wallets.length === 0 && (
             <p className="text-xs text-gray-11">Nenhuma carteira ainda — adicione uma abaixo.</p>
           )}
-          {state.wallets.map((w) => (
+          {draft.wallets.map((w) => (
             <WalletRow
               key={w.address}
               name={w.name}
               address={w.address}
               selected={isSelected(id, w.address)}
-              onToggle={() => toggleSelect(id, w)}
-              onRemove={() => removeWallet(id, w.address)}
+              onToggle={() => toggleSelect(id, w, state.squads)}
+              onRemove={() => set("wallets", draft.wallets.filter((x) => x.address !== w.address))}
             />
           ))}
         </div>
@@ -402,8 +558,8 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
             type="button"
             onClick={() => {
               const addr = wAddr.trim();
-              if (!addr || state.wallets.some((w) => w.address === addr)) return;
-              addWallet(id, wName.trim() || "Carteira", addr);
+              if (!addr || draft.wallets.some((w) => w.address === addr)) return;
+              set("wallets", draft.wallets.concat([{ name: wName.trim() || "Carteira", address: addr }]));
               setWName("");
               setWAddr("");
             }}
@@ -417,11 +573,9 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       {/* Sidewallets / Copytraders */}
       <Section label="Sidewallets / Copytraders">
         <SidewalletBlock
-          scan={scans[id]}
-          dismissed={state.dismissedSidewallets}
-          onDismiss={(address) =>
-            patchOverride(id, { dismissedSidewallets: state.dismissedSidewallets.concat([address]) })
-          }
+          scan={scan ?? undefined}
+          dismissed={draft.dismissed}
+          onDismiss={(address) => set("dismissed", draft.dismissed.concat([address]))}
           onRun={async () => {
             await runScan(id);
           }}
@@ -432,10 +586,11 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
       {/* Notas */}
       <Section label="Notas">
         <textarea
-          defaultValue={state.notes}
+          value={draft.notes}
+          onChange={(e) => set("notes", e.target.value)}
           rows={3}
           placeholder="ex: costuma comprar cedo em runners de baixo mcap…"
-          onBlur={(e) => patchOverride(id, { notes: e.target.value })}
+          aria-label="Notas do KOL"
           className="w-full resize-y rounded-lg border border-gray-6 bg-gray-1 p-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
         />
       </Section>
@@ -447,7 +602,8 @@ export function KolProfileModal({ id, index, onClose, onStep, onOpenKol, isSelec
           <button
             type="button"
             onClick={() => {
-              removeKol(id);
+              if (!window.confirm("Remover este KOL da sua coleção?")) return;
+              removeKol(id, state.isCustom);
               onClose();
             }}
             className="shrink-0 rounded-lg border border-vermelho-7 bg-vermelho-3 px-3 py-1.5 text-sm font-semibold text-vermelho-11 transition-colors hover:bg-vermelho-4"

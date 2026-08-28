@@ -1,341 +1,225 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
-import type { KolGroup, KolOverride, KolProfile, KolState, WalletRef } from "@/lib/walletReader/types";
+import { getApiErrorMessage, isNotFoundError } from "@/lib/api/client";
+import {
+  createCustomKol,
+  createKolGroup,
+  deleteKolGroup,
+  deleteKolOverride,
+  exportKolBackup,
+  getKolIndex,
+  importKolBackup,
+  patchKolOverride,
+  renameKolGroup,
+  resetKolAccount,
+  type KolGroup,
+  type KolIndexPage,
+  type KolIndexParams,
+  type KolOverridePatch,
+} from "@/lib/api/walletReader";
+import type { WalletRef } from "@/lib/walletReader/types";
 
-const PROFILES_URL = "/wallet-reader/kol-profiles.json";
-const LS_PREFIX = "wr:kol:v1:";
-const CUSTOM_IDS_KEY = "wr:custom:ids";
-const GROUPS_KEY = "wr:fnf:groups";
+/** Raiz da chave — invalidar por ela alcança TODA combinação de filtro. */
+export const KOL_INDEX_KEY = ["kol-index"] as const;
+export const kolIndexKey = (p: KolIndexParams) => [...KOL_INDEX_KEY, p] as const;
 
-// Cache dos perfis-base entre montagens (dados estáticos, imutáveis na sessão).
-let profilesCache: KolProfile[] | null = null;
+/** Itens por página. O servidor devolve no máximo 200. */
+const PAGE = 60;
 
-function readJson<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-/** Lê TODOS os overrides salvos (varre as chaves `wr:kol:v1:*`). */
-function loadAllOverrides(): Record<string, KolOverride> {
-  const out: Record<string, KolOverride> = {};
-  if (typeof window === "undefined") return out;
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith(LS_PREFIX)) {
-      out[k.slice(LS_PREFIX.length)] = readJson<KolOverride>(localStorage.getItem(k), {});
-    }
-  }
-  return out;
-}
-
-/** Backup completo (mesmo formato do app original — compatível com import). */
+/** Backup da conta. Formato mantido compatível com os arquivos antigos. */
 export interface KolBackup {
   version: 1;
   exportedAt: string;
-  overrides: Record<string, KolOverride>;
+  overrides: Record<string, KolOverridePatch>;
   customIds: string[];
   groups: KolGroup[];
 }
 
 /**
- * Fonte única de dados do Wallet Reader: carrega os perfis-base + as edições do
- * usuário (localStorage) e expõe os estados efetivos (base + override) e as ações
- * de mutação. Persistência 100% local — nenhum dado sai do navegador.
+ * Índice de KOLs, paginado NO SERVIDOR.
+ *
+ * O merge `preset + override`, os filtros, as contagens da rail e a ordenação
+ * são do backend — o cliente recebe só a página que está mostrando. Antes vinha
+ * o índice inteiro (73 KB, linear no tamanho do preset) a cada carregamento.
+ *
+ * As mutações invalidam a raiz da chave em vez de costurar o cache: com lista
+ * paginada e filtrada no servidor, remendar página por página erra fácil (um
+ * item editado pode sair do filtro atual) e o custo de uma refetch é baixo.
  */
-export function useKolIndex() {
-  const [profiles, setProfiles] = useState<KolProfile[]>(profilesCache ?? []);
-  const [loaded, setLoaded] = useState(profilesCache != null);
-  const [overrides, setOverrides] = useState<Record<string, KolOverride>>({});
-  const [customIds, setCustomIds] = useState<string[]>([]);
-  const [groups, setGroups] = useState<KolGroup[]>([]);
+export function useKolIndex(params: KolIndexParams) {
+  const qc = useQueryClient();
 
-  // Carrega perfis (1×) + estado local no mount.
-  useEffect(() => {
-    let alive = true;
-    const hydrate = () => {
-      if (typeof window === "undefined") return;
-      setOverrides(loadAllOverrides());
-      setCustomIds(readJson<string[]>(localStorage.getItem(CUSTOM_IDS_KEY), []));
-      setGroups(readJson<KolGroup[]>(localStorage.getItem(GROUPS_KEY), []));
-    };
-    if (profilesCache) {
-      hydrate();
-      return;
-    }
-    fetch(PROFILES_URL)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: KolProfile[]) => {
-        if (!alive) return;
-        profilesCache = data;
-        setProfiles(data);
-        setLoaded(true);
-        hydrate();
-      })
-      .catch(() => alive && setLoaded(true));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const baseById = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
-  const groupById = useCallback((id: string) => groups.find((g) => g.id === id) ?? null, [groups]);
-
-  // Estado efetivo de um id (base + override).
-  const getState = useCallback(
-    (id: string): KolState => {
-      const base = baseById.get(id) ?? null;
-      const o = overrides[id] ?? {};
-      const removed = new Set(o.walletsRemoved ?? []);
-      const added = o.walletsAdded ?? [];
-      const baseWallets = base?.wallets ?? [];
-      const wallets = baseWallets.filter((w) => !removed.has(w.address)).concat(added);
-      const name = o.name?.trim() || base?.name || "Sem nome";
-      return {
-        id,
-        name,
-        wallets,
-        walletCount: wallets.length,
-        squads: base?.squads ?? [],
-        seedRelevance: base?.seedRelevance ?? 20,
-        isCustom: !base,
-        relevance: typeof o.relevance === "number" ? o.relevance : (base?.seedRelevance ?? 20),
-        types: Array.isArray(o.types) ? o.types : [],
-        fnfGroups: Array.isArray(o.fnfGroups) ? o.fnfGroups.filter((gid) => groups.some((g) => g.id === gid)) : [],
-        twitter: o.twitter ?? "",
-        notes: o.notes ?? "",
-        avatar: o.avatar ?? null,
-        dismissedSidewallets: Array.isArray(o.dismissedSidewallets) ? o.dismissedSidewallets : [],
-      };
+  const query = useInfiniteQuery({
+    queryKey: kolIndexKey(params),
+    queryFn: ({ pageParam }) =>
+      getKolIndex({ ...params, offset: pageParam, limit: PAGE }),
+    initialPageParam: 0,
+    getNextPageParam: (last: KolIndexPage, all: KolIndexPage[]) => {
+      const loaded = all.reduce((n, p) => n + p.items.length, 0);
+      return loaded < last.total ? loaded : undefined;
     },
-    [baseById, overrides, groups],
+  });
+
+  const pages = useMemo(() => query.data?.pages ?? [], [query.data]);
+  /** A 1ª página carrega as facetas — elas valem para a consulta inteira. */
+  const head = pages[0];
+
+  // Dedup por id: paginação por offset pode repetir um item se a ordenação
+  // empatar entre páginas (mesmo cuidado do feed do Radar).
+  const items = useMemo(() => {
+    const seen = new Set<string>();
+    return pages
+      .flatMap((p) => p.items)
+      .filter((it) => (seen.has(it.id) ? false : (seen.add(it.id), true)));
+  }, [pages]);
+
+  const invalidate = useCallback(
+    () => qc.invalidateQueries({ queryKey: KOL_INDEX_KEY }),
+    [qc],
   );
 
-  const allIds = useMemo(() => {
-    const staticIds = profiles.map((p) => p.id);
-    return staticIds.concat(customIds).filter((id) => !overrides[id]?.deleted);
-  }, [profiles, customIds, overrides]);
-
-  const states = useMemo(() => allIds.map(getState), [allIds, getState]);
-
-  // ── Mutations (state + localStorage) ──
-  const patchOverride = useCallback((id: string, patch: KolOverride) => {
-    setOverrides((prev) => {
-      const next = { ...(prev[id] ?? {}), ...patch, updatedAt: Date.now() };
-      try {
-        localStorage.setItem(LS_PREFIX + id, JSON.stringify(next));
-      } catch {
-        // storage cheio — silencioso (o app original só avisa via toast)
+  const onError = useCallback(
+    (error: unknown, fallback: string) => {
+      if (isNotFoundError(error)) {
+        void invalidate();
+        toast.error("Este KOL não existe mais. A lista foi atualizada.");
+        return;
       }
-      return { ...prev, [id]: next };
-    });
-  }, []);
-
-  const persistCustomIds = useCallback((next: string[]) => {
-    try {
-      localStorage.setItem(CUSTOM_IDS_KEY, JSON.stringify(next));
-    } catch {
-      // ignora
-    }
-    setCustomIds(next);
-  }, []);
-
-  const persistGroups = useCallback((next: KolGroup[]) => {
-    try {
-      localStorage.setItem(GROUPS_KEY, JSON.stringify(next));
-    } catch {
-      // ignora
-    }
-    setGroups(next);
-  }, []);
-
-  const addWallet = useCallback(
-    (id: string, name: string, address: string) => {
-      const o = overrides[id] ?? {};
-      const removed = new Set(o.walletsRemoved ?? []);
-      if (removed.has(address)) {
-        removed.delete(address);
-        patchOverride(id, { walletsRemoved: Array.from(removed) });
-      } else {
-        patchOverride(id, { walletsAdded: (o.walletsAdded ?? []).concat([{ name, address }]) });
-      }
+      toast.error(getApiErrorMessage(error, fallback));
     },
-    [overrides, patchOverride],
+    [invalidate],
   );
 
-  const removeWallet = useCallback(
-    (id: string, address: string) => {
-      const o = overrides[id] ?? {};
-      const added = o.walletsAdded ?? [];
-      const idx = added.findIndex((w) => w.address === address);
-      if (idx >= 0) {
-        const next = added.slice();
-        next.splice(idx, 1);
-        patchOverride(id, { walletsAdded: next });
-      } else {
-        const removed = new Set(o.walletsRemoved ?? []);
-        removed.add(address);
-        patchOverride(id, { walletsRemoved: Array.from(removed) });
-      }
-    },
-    [overrides, patchOverride],
+  const patchMut = useMutation({
+    mutationFn: ({ kolId, patch }: { kolId: string; patch: KolOverridePatch }) =>
+      patchKolOverride(kolId, patch),
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível salvar a edição."),
+  });
+
+  /** Salva as edições da conta. `true` = o servidor aceitou. */
+  const patchOverride = useCallback(
+    (id: string, patch: KolOverridePatch): Promise<boolean> =>
+      patchMut
+        .mutateAsync({ kolId: id, patch })
+        .then(() => true)
+        .catch(() => false),
+    [patchMut],
   );
+
+  const addKolMut = useMutation({
+    mutationFn: createCustomKol,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível criar o KOL."),
+  });
 
   const addKol = useCallback(
-    (name: string, wallet?: WalletRef): string => {
-      const id = "custom-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      patchOverride(id, {
-        name,
-        walletsAdded: wallet ? [wallet] : [],
-        relevance: 20,
-        types: [],
-        twitter: "",
-        notes: "",
-      });
-      persistCustomIds(customIds.concat([id]));
-      return id;
+    async (name: string, wallet?: WalletRef): Promise<string | null> => {
+      const entry = await addKolMut.mutateAsync({ name, wallet }).catch(() => null);
+      return entry?.kolId ?? null;
     },
-    [customIds, patchOverride, persistCustomIds],
+    [addKolMut],
   );
 
+  const removeMut = useMutation({
+    mutationFn: deleteKolOverride,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível remover o KOL."),
+  });
+
+  /**
+   * Um KOL custom é do usuário e some de vez; um do preset só é escondido —
+   * o preset é global e não é ele quem manda nele.
+   */
   const removeKol = useCallback(
-    (id: string) => {
-      if (!baseById.has(id)) {
-        persistCustomIds(customIds.filter((x) => x !== id));
-        try {
-          localStorage.removeItem(LS_PREFIX + id);
-        } catch {
-          // ignora
-        }
-        setOverrides((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
-        });
-      } else {
-        patchOverride(id, { deleted: true });
-      }
+    (id: string, isCustom: boolean) => {
+      if (isCustom) removeMut.mutate(id);
+      else void patchOverride(id, { deleted: true });
     },
-    [baseById, customIds, patchOverride, persistCustomIds],
+    [removeMut, patchOverride],
   );
+
+  // ── Grupos / FnFs ──────────────────────────────────────────────────────────
+
+  const createGroupMut = useMutation({
+    mutationFn: createKolGroup,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível criar o grupo."),
+  });
 
   const createGroup = useCallback(
-    (name: string): KolGroup => {
-      const existing = groups.find((g) => g.name.toLowerCase() === name.toLowerCase());
-      if (existing) return existing;
-      const g: KolGroup = {
-        id: "fnf-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-        name,
-      };
-      persistGroups(groups.concat([g]));
-      return g;
-    },
-    [groups, persistGroups],
+    (name: string): Promise<KolGroup | null> =>
+      createGroupMut.mutateAsync(name).catch(() => null),
+    [createGroupMut],
   );
 
-  const renameGroup = useCallback(
-    (id: string, name: string) => persistGroups(groups.map((g) => (g.id === id ? { ...g, name } : g))),
-    [groups, persistGroups],
-  );
+  const renameGroupMut = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => renameKolGroup(id, name),
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível renomear o grupo."),
+  });
 
-  const deleteGroup = useCallback(
-    (id: string) => {
-      persistGroups(groups.filter((g) => g.id !== id));
-      // Remove o grupo de todos os KOLs que o tinham.
-      Object.entries(overrides).forEach(([kolId, o]) => {
-        if (Array.isArray(o.fnfGroups) && o.fnfGroups.includes(id)) {
-          patchOverride(kolId, { fnfGroups: o.fnfGroups.filter((g) => g !== id) });
-        }
-      });
-    },
-    [groups, overrides, persistGroups, patchOverride],
-  );
+  const deleteGroupMut = useMutation({
+    mutationFn: deleteKolGroup,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível remover o grupo."),
+  });
 
-  const groupMembers = useCallback(
-    (id: string) =>
-      allIds
-        .filter((kolId) => overrides[kolId]?.fnfGroups?.includes(id))
-        .map(getState)
-        .sort((a, b) => b.relevance - a.relevance || a.name.localeCompare(b.name)),
-    [allIds, overrides, getState],
-  );
+  // ── Backup da conta ────────────────────────────────────────────────────────
 
-  const exportBackup = useCallback((): KolBackup => {
-    const out: Record<string, KolOverride> = {};
-    allIds.forEach((id) => {
-      const o = overrides[id];
-      if (o && Object.keys(o).length) out[id] = o;
-    });
-    return { version: 1, exportedAt: new Date().toISOString(), overrides: out, customIds, groups };
-  }, [allIds, overrides, customIds, groups]);
+  const importMut = useMutation({
+    mutationFn: importKolBackup,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível importar o backup."),
+  });
 
   const importBackup = useCallback(
-    (parsed: Partial<KolBackup>): number => {
-      const imported = parsed.overrides ?? {};
-      Object.entries(imported).forEach(([id, o]) => {
-        try {
-          localStorage.setItem(LS_PREFIX + id, JSON.stringify(o));
-        } catch {
-          // ignora
-        }
-      });
-      setOverrides((prev) => ({ ...prev, ...imported }));
-      if (Array.isArray(parsed.customIds)) {
-        persistCustomIds(Array.from(new Set(customIds.concat(parsed.customIds))));
-      }
-      if (Array.isArray(parsed.groups)) {
-        const byId = new Map(groups.map((g) => [g.id, g]));
-        parsed.groups.forEach((g) => g?.id && byId.set(g.id, g));
-        persistGroups(Array.from(byId.values()));
-      }
-      return Object.keys(imported).length;
+    async (parsed: Partial<KolBackup>): Promise<number> => {
+      const list = Object.entries(parsed.overrides ?? {}).map(([kolId, patch]) => ({
+        ...patch,
+        kolId,
+      }));
+      const res = await importMut
+        .mutateAsync({ overrides: list, groups: parsed.groups ?? [] })
+        .catch(() => null);
+      return res?.imported ?? 0;
     },
-    [customIds, groups, persistCustomIds, persistGroups],
+    [importMut],
   );
 
-  const reset = useCallback(() => {
-    profiles.forEach((p) => {
-      try {
-        localStorage.removeItem(LS_PREFIX + p.id);
-      } catch {
-        // ignora
-      }
-    });
-    customIds.forEach((id) => {
-      try {
-        localStorage.removeItem(LS_PREFIX + id);
-      } catch {
-        // ignora
-      }
-    });
-    persistCustomIds([]);
-    persistGroups([]);
-    setOverrides({});
-  }, [profiles, customIds, persistCustomIds, persistGroups]);
+  const resetMut = useMutation({
+    mutationFn: resetKolAccount,
+    onSuccess: invalidate,
+    onError: (e) => onError(e, "Não foi possível limpar as edições."),
+  });
 
   return {
-    loaded,
-    profiles,
-    states,
-    groups,
-    getState,
-    groupById,
-    groupMembers,
+    loaded: !query.isPending,
+    items,
+    total: head?.total ?? 0,
+    counts: head?.counts ?? { byTier: {}, byType: {}, bySquad: {}, byGroup: {} },
+    viewCounts: head?.viewCounts ?? {},
+    squads: head?.squads ?? [],
+    groups: head?.groups ?? [],
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
     patchOverride,
-    addWallet,
-    removeWallet,
     addKol,
     removeKol,
     createGroup,
-    renameGroup,
-    deleteGroup,
-    exportBackup,
+    renameGroup: (id: string, name: string) => renameGroupMut.mutate({ id, name }),
+    deleteGroup: (id: string) => deleteGroupMut.mutate(id),
+    exportBackup: exportKolBackup,
     importBackup,
-    reset,
+    reset: () => resetMut.mutate(),
   };
 }

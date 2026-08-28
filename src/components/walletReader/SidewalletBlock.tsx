@@ -24,6 +24,12 @@ export function SidewalletBlock({
   const dset = new Set(dismissed);
   const visible = (scan?.flagged ?? []).filter((f) => !dset.has(f.address));
 
+  // A varredura roda em FILA no backend: o pedido volta na hora como `queued` e
+  // o resultado chega por socket. O estado de "em andamento" tem que vir do
+  // scan, não só do clique local — senão o botão reabilita antes da hora e um
+  // reload perde o rastro de que já tem varredura pendente.
+  const pending = running || scan?.status === "queued" || scan?.status === "running";
+
   const run = async () => {
     setRunning(true);
     setError(null);
@@ -40,20 +46,30 @@ export function SidewalletBlock({
     <div>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs text-gray-11">
-          {scan ? "Última varredura: " + new Date(scan.scannedAt).toLocaleString("pt-BR") : "Ainda não escaneado."}
+          {scan && scan.status === "complete"
+            ? "Última varredura: " + new Date(scan.scannedAt).toLocaleString("pt-BR")
+            : scan && pending
+              ? "Varredura em andamento — o resultado aparece aqui sozinho."
+              : "Ainda não escaneado."}
         </span>
         <button
           type="button"
           onClick={run}
-          disabled={running}
+          disabled={pending}
           className="shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:opacity-60"
         >
-          {running ? "Escaneando…" : scan ? "Rodar nova varredura" : "Rodar varredura"}
+          {pending
+            ? scan?.status === "queued"
+              ? "Na fila…"
+              : "Escaneando…"
+            : scan
+              ? "Rodar nova varredura"
+              : "Rodar varredura"}
         </button>
       </div>
 
       <p className="mb-3 text-xs leading-relaxed text-gray-11">
-        Cruza dados on-chain (GMGN) dos últimos 5 tokens da carteira pública contra as outras carteiras do
+        Cruza dados on-chain dos últimos 5 tokens da carteira pública contra as outras carteiras do
         índice. Só confirma com evidência forte (link direto ou padrão repetido).
       </p>
 

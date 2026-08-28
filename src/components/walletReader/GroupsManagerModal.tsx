@@ -1,14 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { Modal } from "@/components/walletReader/Modal";
 import type { useKolIndex } from "@/lib/walletReader/useKolIndex";
+import { getKolIndex, type KolListItem } from "@/lib/api/walletReader";
 import { avatarSrc, groupHue, tierFor } from "@/lib/walletReader/types";
 
 type Index = ReturnType<typeof useKolIndex>;
+
+/**
+ * Membros de um grupo, buscados NO SERVIDOR.
+ *
+ * Antes saíam de um `groupMembers()` que varria todos os KOLs em memória — o
+ * cliente não carrega mais o índice inteiro, então a consulta é o próprio filtro
+ * por grupo que o backend já sabe fazer.
+ */
+function useGroupMembers(groupId: string, enabled: boolean) {
+  const { data } = useQuery({
+    queryKey: ["kol-group-members", groupId],
+    queryFn: () => getKolIndex({ groups: [groupId], sort: "relevance", limit: 100 }),
+    enabled,
+  });
+  return data?.items ?? [];
+}
 
 /** Gerenciador de Grupos/FnFs: criar, renomear, apagar + ver membros. */
 export function GroupsManagerModal({
@@ -22,7 +40,7 @@ export function GroupsManagerModal({
   index: Index;
   onOpenProfile: (id: string) => void;
 }) {
-  const { groups, createGroup, renameGroup, deleteGroup, groupMembers } = index;
+  const { groups, createGroup, renameGroup, deleteGroup } = index;
   const [name, setName] = useState("");
 
   return (
@@ -55,9 +73,43 @@ export function GroupsManagerModal({
 
       <div className="flex flex-col gap-4 p-4">
         {groups.length === 0 && <p className="text-sm text-gray-11">Nenhum grupo/FnF criado ainda.</p>}
-        {groups.map((g) => {
-          const members = groupMembers(g.id);
-          return (
+        {groups.map((g) => (
+          <GroupRow
+            key={g.id}
+            id={g.id}
+            name={g.name}
+            open={open}
+            onRename={renameGroup}
+            onDelete={deleteGroup}
+            onOpenProfile={onOpenProfile}
+          />
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+/** Uma linha de grupo — busca os próprios membros só enquanto o modal está aberto. */
+function GroupRow({
+  id,
+  name,
+  open,
+  onRename,
+  onDelete,
+  onOpenProfile,
+}: {
+  id: string;
+  name: string;
+  open: boolean;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onOpenProfile: (kolId: string) => void;
+}) {
+  const members: KolListItem[] = useGroupMembers(id, open);
+  const g = { id, name };
+  const renameGroup = onRename;
+  const deleteGroup = onDelete;
+  return (
             <div key={g.id} className="rounded-lg border border-gray-6 bg-gray-1">
               <div className="flex items-center gap-2 border-b border-gray-6 p-2.5">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ background: `hsl(${groupHue(g.id)} 60% 55%)` }} />
@@ -109,9 +161,5 @@ export function GroupsManagerModal({
                 )}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </Modal>
   );
 }

@@ -1,7 +1,9 @@
 /**
  * Wallet Reader (KOL Index) — port do app standalone p/ o Deep Alpha (React + DS).
- * Tipos e constantes de domínio. Dados base vêm de `public/wallet-reader/kol-profiles.json`;
- * todas as edições do usuário ficam em `localStorage` (ver `useKolIndex`).
+ * Tipos e constantes de domínio. O índice vem do backend em duas camadas — o
+ * PRESET global (`KolPreset`, editável só por ADMIN em /admin/kols) e o OVERRIDE
+ * da conta (`KolUserOverride`) —, mescladas em `useKolIndex`. O JSON em
+ * `public/wallet-reader/` ficou só como semente histórica do backend.
  */
 
 /** Carteira on-chain de um KOL. */
@@ -95,14 +97,16 @@ export interface TierSpec {
   chipBorder: string;
   /** Cor da barra de relevância. */
   meter: string;
+  /** Pílula de categoria do card (gradiente + borda + texto), como no Figma. */
+  pill: string;
 }
 
 export const KOL_TIERS: TierSpec[] = [
-  { id: "comum", label: "Low", min: 0, max: 24, text: "text-gray-11", chipBg: "bg-gray-4", chipBorder: "border-gray-6", meter: "bg-gray-8" },
-  { id: "incomum", label: "Medium", min: 25, max: 49, text: "text-green-11", chipBg: "bg-green-3", chipBorder: "border-green-7", meter: "bg-green-9" },
-  { id: "raro", label: "High", min: 50, max: 69, text: "text-azul-11", chipBg: "bg-azul-3", chipBorder: "border-azul-7", meter: "bg-azul-9" },
-  { id: "epico", label: "Alpha", min: 70, max: 84, text: "text-violeta-11", chipBg: "bg-violeta-3", chipBorder: "border-violeta-7", meter: "bg-violeta-9" },
-  { id: "lendario", label: "Super Alpha", min: 85, max: 100, text: "text-principal-11", chipBg: "bg-principal-3", chipBorder: "border-principal-8", meter: "bg-principal-9" },
+  { id: "comum", label: "Low", min: 0, max: 24, text: "text-gray-11", chipBg: "bg-gray-4", chipBorder: "border-gray-6", meter: "bg-gray-8", pill: "border-gray-7 from-gray-6 to-gray-3 text-gray-12" },
+  { id: "incomum", label: "Medium", min: 25, max: 49, text: "text-green-11", chipBg: "bg-green-3", chipBorder: "border-green-7", meter: "bg-green-9", pill: "border-green-9 from-green-8 to-green-3 text-green-12" },
+  { id: "raro", label: "High", min: 50, max: 69, text: "text-azul-11", chipBg: "bg-azul-3", chipBorder: "border-azul-7", meter: "bg-azul-9", pill: "border-azul-9 from-azul-8 to-azul-3 text-azul-12" },
+  { id: "epico", label: "Alpha", min: 70, max: 84, text: "text-violeta-11", chipBg: "bg-violeta-3", chipBorder: "border-violeta-7", meter: "bg-violeta-9", pill: "border-violeta-9 from-violeta-8 to-violeta-3 text-violeta-12" },
+  { id: "lendario", label: "Super Alpha", min: 85, max: 100, text: "text-principal-11", chipBg: "bg-principal-3", chipBorder: "border-principal-8", meter: "bg-principal-9", pill: "border-principal-8 from-principal-7 to-principal-3 text-principal-12" },
 ];
 
 export function tierFor(score: number): TierSpec {
@@ -152,12 +156,16 @@ export interface ScanFlagged {
   reason: string;
 }
 
+/** Scan sem as evidências — o que a listagem carrega. */
+export type ScanSummary = Omit<ScanResult, "flagged">;
+
 /** Resultado de um scan de um KOL (cacheado ou ao vivo). */
 export interface ScanResult {
   kolId: string;
   kolName: string;
   scannedAt: number;
-  status: "complete" | "error";
+  /** `queued`/`running`: a varredura roda em fila no backend e avisa por socket. */
+  status: "queued" | "running" | "complete" | "error";
   publicWallet: string;
   tokensAnalyzed: number;
   apiCalls: number;

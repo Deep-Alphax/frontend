@@ -238,6 +238,36 @@
 
   /* Barra de progresso INDETERMINADA (sync de carteira sem % real do provider). */
   --animate-indeterminate: indeterminate 1.4s ease-in-out infinite;
+
+  /* Entrada/saída de painéis flutuantes (Select, popovers) — ver `ui/Select.tsx`. */
+  --animate-popover-in: popover-in var(--duration-quick) var(--ease-standard);
+  --animate-popover-out: popover-out var(--duration-instant) var(--ease-in);
+}
+
+/*
+ * Painel flutuante: cresce a partir da origem que o Radix expõe
+ * (`--radix-*-content-transform-origin`), então abre "colado" no gatilho.
+ */
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 /* Segmento que desliza pelo trilho — usado por `animate-indeterminate`. */

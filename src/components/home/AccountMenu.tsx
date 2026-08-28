@@ -165,6 +165,12 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
                   <span>Admin · Feed do Discord</span>
                 </Link>
               </DropdownMenu.Item>
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/kols">
+                  <Shield className="size-4 text-gray-11" />
+                  <span>Admin · Preset de KOLs</span>
+                </Link>
+              </DropdownMenu.Item>
             </>
           ) : null}
 

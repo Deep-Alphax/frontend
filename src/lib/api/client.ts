@@ -46,6 +46,15 @@ interface ApiErrorBody {
 }
 
 /**
+ * `true` quando o backend respondeu 404 — o recurso não existe mais lá. Sinal
+ * de que o cache local está desatualizado e precisa ser refeito, não de erro
+ * transitório para tentar de novo.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  return error instanceof AxiosError && error.response?.status === 404;
+}
+
+/**
  * Extrai uma mensagem amigável (pt-BR) de um erro do axios, sem vazar detalhes
  * internos. Mapeia os status mais comuns do fluxo de auth para textos claros.
  */
