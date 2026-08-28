@@ -2,25 +2,45 @@
 
 import { useState } from "react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+
 import { cn } from "@/lib/cn";
-import type { ScanResult } from "@/lib/walletReader/types";
+import type { ScanResult, WalletRef } from "@/lib/walletReader/types";
 
 /** Bloco de sidewallets/copytraders de um KOL (resultado cacheado + varredura). */
 export function SidewalletBlock({
-  scan,
+  wallets,
+  scans,
   dismissed,
   onDismiss,
   onRun,
   onOpenKol,
 }: {
-  scan: ScanResult | undefined;
+  /** Carteiras do KOL — o usuário escolhe QUAL varrer. */
+  wallets: WalletRef[];
+  /** Varreduras já feitas, uma por carteira. */
+  scans: ScanResult[];
   dismissed: string[];
   onDismiss: (address: string) => void;
-  onRun: () => Promise<void>;
+  onRun: (address: string) => Promise<void>;
   onOpenKol: (id: string) => void;
 }) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // A varredura é de UMA carteira: analisa os últimos tokens DELA. Quem escolhe
+  // é o usuário porque a primeira do cadastro costuma não ser a mais ativa —
+  // varrer uma carteira parada devolve "nada encontrado" sem que isso signifique
+  // que o KOL não tem sidewallet.
+  const [target, setTarget] = useState(() => wallets[0]?.address ?? "");
+  const scan = scans.find((s) => s.publicWallet === target);
+
   const dset = new Set(dismissed);
   const visible = (scan?.flagged ?? []).filter((f) => !dset.has(f.address));
 
@@ -31,10 +51,11 @@ export function SidewalletBlock({
   const pending = running || scan?.status === "queued" || scan?.status === "running";
 
   const run = async () => {
+    if (!target) return;
     setRunning(true);
     setError(null);
     try {
-      await onRun();
+      await onRun(target);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha na varredura.");
     } finally {
@@ -44,18 +65,28 @@ export function SidewalletBlock({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs text-gray-11">
-          {scan && scan.status === "complete"
-            ? "Última varredura: " + new Date(scan.scannedAt).toLocaleString("pt-BR")
-            : scan && pending
-              ? "Varredura em andamento — o resultado aparece aqui sozinho."
-              : "Ainda não escaneado."}
-        </span>
+      {/* Escolha da carteira + disparo. */}
+      <div className="mb-2 flex items-end gap-2">
+        <label className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-xs text-gray-11">Carteira a varrer</span>
+          <Select value={target} onValueChange={setTarget}>
+            <SelectTrigger size="sm" aria-label="Carteira a varrer">
+              <SelectValue placeholder="Escolha uma carteira" />
+            </SelectTrigger>
+            <SelectContent>
+              {wallets.map((w) => (
+                <SelectItem key={w.address} value={w.address}>
+                  {w.name} · {w.address.slice(0, 6)}…{w.address.slice(-4)}
+                  {scans.some((s) => s.publicWallet === w.address) ? " ✓" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
         <button
           type="button"
           onClick={run}
-          disabled={pending}
+          disabled={pending || !target}
           className="shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:opacity-60"
         >
           {pending
@@ -68,9 +99,19 @@ export function SidewalletBlock({
         </button>
       </div>
 
+      <p className="mb-2 text-xs text-gray-11">
+        {scan && scan.status === "complete"
+          ? "Última varredura desta carteira: " +
+            new Date(scan.scannedAt).toLocaleString("pt-BR")
+          : pending
+            ? "Varredura em andamento — o resultado aparece aqui sozinho."
+            : "Esta carteira ainda não foi varrida."}
+      </p>
+
       <p className="mb-3 text-xs leading-relaxed text-gray-11">
-        Cruza dados on-chain dos últimos 5 tokens da carteira pública contra as outras carteiras do
-        índice. Só confirma com evidência forte (link direto ou padrão repetido).
+        Cruza dados on-chain dos últimos 5 tokens da carteira escolhida contra quem transacionou com
+        ela. Descobre endereços que ainda não estão no índice e só confirma com evidência forte
+        (link direto ou padrão repetido).
       </p>
 
       {error && (

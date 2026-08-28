@@ -10,7 +10,7 @@ import { Modal } from "@/components/walletReader/Modal";
 import { SidewalletBlock } from "@/components/walletReader/SidewalletBlock";
 import type { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { getKol, type KolOverridePatch } from "@/lib/api/walletReader";
-import { useScan, useScans } from "@/lib/walletReader/useScans";
+import { useKolScans, useScans } from "@/lib/walletReader/useScans";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
 import {
   KOL_TYPES,
@@ -202,7 +202,7 @@ function KolProfileForm({
 }: KolProfileModalProps & { state: KolState }) {
   const { patchOverride, removeKol, groups, createGroup } = index;
   const { runScan } = useScans();
-  const scan = useScan(id);
+  const scans = useKolScans(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [wName, setWName] = useState("");
@@ -573,11 +573,12 @@ function KolProfileForm({
       {/* Sidewallets / Copytraders */}
       <Section label="Sidewallets / Copytraders">
         <SidewalletBlock
-          scan={scan ?? undefined}
+          wallets={draft.wallets}
+          scans={scans}
           dismissed={draft.dismissed}
           onDismiss={(address) => set("dismissed", draft.dismissed.concat([address]))}
-          onRun={async () => {
-            await runScan(id);
+          onRun={async (address) => {
+            await runScan(id, address);
           }}
           onOpenKol={onOpenKol}
         />

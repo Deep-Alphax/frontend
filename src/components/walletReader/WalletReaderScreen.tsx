@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/Select";
 import { cn } from "@/lib/cn";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
-import { useScans } from "@/lib/walletReader/useScans";
 import { KolProfileModal } from "@/components/walletReader/KolProfileModal";
 import { GroupsManagerModal } from "@/components/walletReader/GroupsManagerModal";
 import { AddKolModal } from "@/components/walletReader/AddKolModal";

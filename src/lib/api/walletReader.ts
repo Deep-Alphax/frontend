@@ -302,25 +302,33 @@ export async function getScans(): Promise<Record<string, ScanSummary>> {
   return data.scans ?? {};
 }
 
-/** GET /api/v1/wallet-reader/scans/:kolId — resultado completo, sob demanda. */
-export async function getScan(kolId: string): Promise<ScanResult> {
-  const { data } = await api.get<ScanResult>(
+/**
+ * GET /api/v1/wallet-reader/scans/:kolId — as varreduras do KOL, uma por
+ * carteira já varrida, com as evidências. Sob demanda (o modal abriu).
+ */
+export async function getScansOf(kolId: string): Promise<ScanResult[]> {
+  const { data } = await api.get<ScanResult[]>(
     `/api/v1/wallet-reader/scans/${encodeURIComponent(kolId)}`,
   );
   return data;
 }
 
 /**
- * POST /api/v1/wallet-reader/scan/:kolId — pede a varredura.
+ * POST /api/v1/wallet-reader/scan/:kolId — varre UMA carteira do KOL.
  *
- * Responde NA HORA: devolve o scan em cache se ainda vale, senão volta como
- * `queued` e o resultado chega depois pelo socket (`scan:update`).
+ * `wallet` é o endereço escolhido (sem ele, a primeira do KOL). Responde NA
+ * HORA: devolve o scan em cache se ainda vale, senão volta como `queued` e o
+ * resultado chega depois pelo socket (`scan:update`).
  */
-export async function requestScan(kolId: string, force = false): Promise<ScanResult> {
+export async function requestScan(
+  kolId: string,
+  wallet?: string,
+  force = false,
+): Promise<ScanResult> {
   const { data } = await api.post<ScanResult>(
     `/api/v1/wallet-reader/scan/${encodeURIComponent(kolId)}`,
     undefined,
-    { params: force ? { force: 1 } : undefined },
+    { params: { wallet: wallet || undefined, force: force ? 1 : undefined } },
   );
   return data;
 }

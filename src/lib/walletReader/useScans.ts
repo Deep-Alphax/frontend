@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getScan, getScans, requestScan } from "@/lib/api/walletReader";
+import { getScans, getScansOf, requestScan } from "@/lib/api/walletReader";
 import { getSocket } from "@/lib/realtime/socket";
 import type { ScanResult, ScanSummary } from "@/lib/walletReader/types";
 
@@ -11,10 +11,20 @@ const SCANS_URL = "/wallet-reader/sidewallet-scans.json";
 
 /** Chave da query — o realtime chega por ela. */
 export const SCANS_KEY = ["wallet-reader-scans"] as const;
-/** Chave do resultado COMPLETO de um scan (com evidências). */
+/** Chave das varreduras COMPLETAS de um KOL (uma por carteira). */
 export const scanKey = (kolId: string) => ["wallet-reader-scan", kolId] as const;
 
 type ScanMap = Record<string, ScanSummary>;
+
+/** Substitui (ou insere) a varredura daquela CARTEIRA na lista do KOL. */
+function upsertScan(prev: ScanResult[] | undefined, r: ScanResult): ScanResult[] {
+  const list = prev ?? [];
+  const i = list.findIndex((x) => x.publicWallet === r.publicWallet);
+  if (i === -1) return [r, ...list];
+  const next = list.slice();
+  next[i] = r;
+  return next;
+}
 
 /** Descarta as evidências — a listagem só guarda o resumo. */
 function toSummary(r: ScanResult): ScanSummary {
@@ -67,9 +77,9 @@ export function useScans() {
     const socket = getSocket();
     const handler = (r: ScanResult) => {
       if (!r?.kolId) return;
-      // A lista guarda só o RESUMO; as evidências ficam com `useScan(kolId)`.
+      // A lista guarda só o RESUMO; as evidências ficam com `useScans(kolId)`.
       merge(toSummary(r));
-      qc.setQueryData(scanKey(r.kolId), r);
+      qc.setQueryData<ScanResult[]>(scanKey(r.kolId), (prev) => upsertScan(prev, r));
     };
     socket.on("scan:update", handler);
     socket.connect();
@@ -82,10 +92,10 @@ export function useScans() {
 
   /** Pede a varredura. Devolve o estado imediato (cache, `queued` ou `running`). */
   const runScan = useCallback(
-    async (kolId: string, force = false): Promise<ScanResult> => {
-      const r = await requestScan(kolId, force);
+    async (kolId: string, wallet?: string, force = false): Promise<ScanResult> => {
+      const r = await requestScan(kolId, wallet, force);
       merge(toSummary(r));
-      qc.setQueryData(scanKey(kolId), r);
+      qc.setQueryData<ScanResult[]>(scanKey(kolId), (prev) => upsertScan(prev, r));
       return r;
     },
     [merge, qc],
@@ -95,18 +105,16 @@ export function useScans() {
 }
 
 /**
- * Resultado COMPLETO de um scan — só quando o modal do KOL abre.
- *
- * A listagem carrega apenas resumos; as evidências de 276 KOLs no page load
- * seriam centenas de KB que quase ninguém abre.
+ * Varreduras COMPLETAS de um KOL — uma por carteira já varrida. Só quando o
+ * modal abre: a listagem carrega apenas resumos, e as evidências de 276 KOLs no
+ * page load seriam centenas de KB que quase ninguém abre.
  */
-export function useScan(kolId: string | null) {
+export function useKolScans(kolId: string | null) {
   const { data } = useQuery({
     queryKey: scanKey(kolId ?? ""),
-    queryFn: () => getScan(kolId!),
+    queryFn: () => getScansOf(kolId!),
     enabled: Boolean(kolId),
-    // 404 = KOL ainda não varrido; insistir não ajuda.
     retry: false,
   });
-  return data ?? null;
+  return data ?? [];
 }
