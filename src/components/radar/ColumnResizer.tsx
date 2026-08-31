@@ -10,10 +10,16 @@ interface ColumnResizerProps {
 }
 
 /**
- * Alça de redimensionar coluna — faixa fina sobre a borda direita do painel.
+ * Alça de redimensionar coluna — faixa fina na divisória entre dois painéis.
  * Arrastar emite o delta horizontal; o pai aplica à largura da coluna (via CSS
  * var no grid). Pointer capture no window → o arraste segue mesmo fora da faixa.
- * Só em desktop (`lg`); a divisória vira destaque no hover/arraste.
+ *
+ * A faixa fica INTEIRA à direita da divisória (`translate-x-1/2`), sobre a
+ * margem do painel seguinte. Centrada, ela cobria a scrollbar da coluna — que
+ * mora exatamente na borda direita — e roubava o clique de quem só queria rolar.
+ * Do lado de fora não há scrollbar (em LTR), então os dois gestos convivem.
+ *
+ * Só em desktop (`lg`); a faixa acende no hover para dizer onde pegar.
  */
 export function ColumnResizer({ onStart, onMove }: ColumnResizerProps) {
   const startX = useRef(0);
@@ -42,7 +48,7 @@ export function ColumnResizer({ onStart, onMove }: ColumnResizerProps) {
       aria-orientation="vertical"
       aria-label="Redimensionar coluna"
       onPointerDown={handlePointerDown}
-      className="absolute right-0 top-0 z-20 hidden h-full w-2 -translate-x-1/2 cursor-col-resize touch-none lg:block"
+      className="absolute right-0 top-0 z-20 hidden h-full w-2 translate-x-1/2 cursor-col-resize touch-none bg-transparent transition-colors hover:bg-gray-6/60 lg:block"
     />
   );
 }
