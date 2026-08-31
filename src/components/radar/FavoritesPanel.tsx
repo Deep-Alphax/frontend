@@ -36,6 +36,8 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
 interface FavoritesPanelProps {
   /** Abre o perfil ao clicar em uma mensagem de favorito. */
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  /** Alça de reordenar coluna (renderizada no header pela RadarScreen). */
+  dragHandle?: React.ReactNode;
 }
 
 /**
@@ -43,7 +45,7 @@ interface FavoritesPanelProps {
  * seguidos, server-side + paginado, virtualizado (escala sem custo). Badge = nº
  * de seguidos. Sem favoritos → empty state.
  */
-export function FavoritesPanel({ onSelectAuthor }: FavoritesPanelProps) {
+export function FavoritesPanel({ onSelectAuthor, dragHandle }: FavoritesPanelProps) {
   const { count } = useFavorites();
 
   const query = useInfiniteQuery({
@@ -60,7 +62,10 @@ export function FavoritesPanel({ onSelectAuthor }: FavoritesPanelProps) {
     <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header */}
       <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 bg-gray-2 border-b border-gray-6 px-3">
-        <h2 className="text-base font-semibold text-gray-12">Seus favoritos</h2>
+        <div className="flex min-w-0 items-center gap-1">
+          {dragHandle}
+          <h2 className="text-base font-semibold text-gray-12">Seus favoritos</h2>
+        </div>
         {count > 0 && <CountBadge>{count}</CountBadge>}
       </div>
 

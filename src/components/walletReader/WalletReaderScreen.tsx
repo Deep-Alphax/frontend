@@ -31,14 +31,9 @@ import { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { KolProfileModal } from "@/components/walletReader/KolProfileModal";
 import { GroupsManagerModal } from "@/components/walletReader/GroupsManagerModal";
 import { AddKolModal } from "@/components/walletReader/AddKolModal";
-import {
-  KOL_TIERS,
-  KOL_TYPES,
-  KOL_TYPE_MAP,
-  avatarSrc,
-  tierFor,
-} from "@/lib/walletReader/types";
-import type { KolIndexParams, KolListItem } from "@/lib/api/walletReader";
+import { KolCard } from "@/components/walletReader/KolCard";
+import { KOL_TIERS, KOL_TYPES } from "@/lib/walletReader/types";
+import type { KolIndexParams } from "@/lib/api/walletReader";
 
 /** Chave de seleção de carteira (kolId|address). `squads` viaja junto porque a
  * tela não carrega mais o KOL inteiro — só a página que está mostrando. */
@@ -182,113 +177,6 @@ function FilterCheck({
       </span>
       <span className="shrink-0 text-xs tabular-nums text-principal-11">{count}</span>
     </label>
-  );
-}
-
-/** Card de um KOL (node Figma 846:16240). */
-function KolCard({ state, onOpen }: { state: KolListItem; onOpen: () => void }) {
-  const tier = tierFor(state.relevance);
-  const shown = state.types.slice(0, 2);
-  const extra = state.types.length - shown.length;
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="relative flex flex-col items-stretch rounded-lg border border-gray-6 bg-[linear-gradient(123.56deg,var(--color-gray-2)_0%,var(--color-gray-1)_100%)] text-left transition-colors hover:border-gray-8"
-    >
-      {/* Detalhes de canto (cantoneiras) — decorativos. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -left-px -top-px size-6 rounded-tl-lg border-l border-t border-gray-8"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -bottom-px -right-px size-6 rotate-180 rounded-tl-lg border-l border-t border-gray-8"
-      />
-
-      {/* Identidade */}
-      <div className="flex items-center gap-2 p-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={avatarSrc(state)}
-          alt=""
-          width={36}
-          height={36}
-          className="size-9 shrink-0 rounded-full border border-gray-6 object-cover"
-        />
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="min-w-0 truncate text-sm font-semibold leading-[1.1] text-gray-12">
-            {state.name}
-          </p>
-          <p className="min-w-0 truncate text-sm leading-[1.3] text-gray-11">
-            {state.squads.length > 0 ? state.squads.join(" · ") : "Sem squad"}
-          </p>
-        </div>
-      </div>
-
-      {/* Relevância */}
-      <div className="flex flex-col gap-3 px-3 py-1">
-        <div className="h-2 w-full overflow-hidden rounded-[32px] bg-gray-5">
-          <span
-            className="block h-full rounded-[32px] bg-[linear-gradient(90deg,var(--color-violeta-9)_0%,var(--color-violeta-10)_25%,var(--color-violeta-11)_75%,var(--color-violeta-12)_100%)]"
-            style={{ width: `${state.relevance}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="flex items-center gap-0.5 tabular-nums">
-            <b className="font-semibold leading-[1.1] text-gray-12">{state.relevance}</b>
-            <span className="text-gray-11">/</span>
-            <span className="text-gray-11">100</span>
-          </span>
-          <span className="flex items-center gap-1 tabular-nums">
-            <b className="font-semibold leading-[1.1] text-white">{state.walletCount}</b>
-            <span className="text-gray-11">Carteira{state.walletCount !== 1 ? "s" : ""}</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Tipos de trader */}
-      <div className="flex min-h-[62px] flex-wrap items-center gap-1 p-3">
-        {shown.length > 0 ? (
-          <>
-            {shown.map((tid) => (
-              <span
-                key={tid}
-                className="max-w-full truncate rounded border border-gray-6 bg-gray-3 px-3 py-2 text-sm text-gray-11"
-              >
-                {KOL_TYPE_MAP[tid]?.label ?? tid}
-              </span>
-            ))}
-            {extra > 0 && (
-              <span className="rounded border border-gray-6 bg-gray-3 px-3 py-2 text-sm text-gray-11">
-                +{extra}
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="rounded border border-dashed border-gray-6 px-3 py-2 text-sm text-gray-9">
-            Sem tipo definido
-          </span>
-        )}
-      </div>
-
-      <div className="px-3 py-1">
-        <div className="h-px w-full bg-gray-6" />
-      </div>
-
-      {/* Categoria + X */}
-      <div className="flex h-[53px] items-center justify-between px-3 py-4">
-        <span
-          className={cn(
-            "rounded-[20px] border bg-gradient-to-r px-3 py-2 text-sm font-medium leading-[1.3]",
-            tier.pill,
-          )}
-        >
-          {tier.label}
-        </span>
-        {state.twitter && <XIcon className="size-4 shrink-0 text-gray-11" />}
-      </div>
-    </button>
   );
 }
 
@@ -649,7 +537,7 @@ export function WalletReaderScreen() {
             {!loaded ? (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-52 animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+                  <div key={i} className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
                 ))}
               </div>
             ) : items.length === 0 ? (
@@ -661,7 +549,7 @@ export function WalletReaderScreen() {
               <>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                   {items.map((s) => (
-                    <KolCard key={s.id} state={s} onOpen={() => setOpenId(s.id)} />
+                    <KolCard key={s.id} kol={s} onOpen={() => setOpenId(s.id)} />
                   ))}
                 </div>
                 {/* Gatilho da próxima página — só existe enquanto houver mais. */}

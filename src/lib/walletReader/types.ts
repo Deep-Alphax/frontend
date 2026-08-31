@@ -81,32 +81,114 @@ export const KOL_TYPE_MAP: Record<string, { id: string; label: string; hue: numb
   Object.fromEntries(KOL_TYPES.map((t) => [t.id, t]));
 
 /**
- * Faixas de relevância (0–100). Cores mapeadas do app original p/ o DS:
- * Low=cinza, Medium=verde, High=azul(ciano), Alpha=violeta, Super Alpha=dourado.
- * Classes LITERAIS (Tailwind v4 só emite o que é estático).
+ * Níveis ("Level") do KOL — 8 faixas de relevância, do Wood ao Super alpha
+ * (node Figma 886:18067). Espelha `TIERS` em
+ * `backend/src/app/wallet-reader/kol-index.service.ts`: os `id` e as faixas TÊM
+ * que bater, senão o filtro por tier e as contagens da rail divergem.
+ *
+ * Cada nível carrega o SKIN COMPLETO do card (borda + fundo, anel do avatar,
+ * barra, cantoneiras, pílula) e o emblema exportado do Figma. Classes LITERAIS:
+ * o Tailwind v4 só emite o que é estático.
  */
 export interface TierSpec {
   id: string;
   label: string;
   min: number;
   max: number;
-  /** Cor do texto (pílula/nº). */
+  /** Emblema do nível (webp 256px, exportado do Figma). */
+  emblem: string;
+  /** Cor do texto (pílula/nº) — usada fora do card. */
   text: string;
   /** Fundo sutil da pílula. */
   chipBg: string;
   chipBorder: string;
   /** Cor da barra de relevância. */
   meter: string;
-  /** Pílula de categoria do card (gradiente + borda + texto), como no Figma. */
+  /** Skin do card: borda + fundo em degradê (112,5°). */
+  card: string;
+  /** Anel do avatar (2px). */
+  ring: string;
+  /** Degradê da barra de 2px sob o perfil. */
+  bar: string;
+  /**
+   * Cantoneiras decorativas: são um DEGRADÊ vertical (o topo do "L" é a cor
+   * viva do nível; descendo pelo braço esquerdo ela se apaga). Guarda o par
+   * `from-*`/`to-*`; a máscara que recorta o L está no KolCard.
+   */
+  corner: string;
+  /** Pílula "Level": borda + degradê do fundo. */
   pill: string;
+  /** Texto da pílula (o topo do ranking usa degradê no próprio texto). */
+  pillText: string;
 }
 
 export const KOL_TIERS: TierSpec[] = [
-  { id: "comum", label: "Low", min: 0, max: 24, text: "text-gray-11", chipBg: "bg-gray-4", chipBorder: "border-gray-6", meter: "bg-gray-8", pill: "border-gray-7 from-gray-6 to-gray-3 text-gray-12" },
-  { id: "incomum", label: "Medium", min: 25, max: 49, text: "text-green-11", chipBg: "bg-green-3", chipBorder: "border-green-7", meter: "bg-green-9", pill: "border-green-9 from-green-8 to-green-3 text-green-12" },
-  { id: "raro", label: "High", min: 50, max: 69, text: "text-azul-11", chipBg: "bg-azul-3", chipBorder: "border-azul-7", meter: "bg-azul-9", pill: "border-azul-9 from-azul-8 to-azul-3 text-azul-12" },
-  { id: "epico", label: "Alpha", min: 70, max: 84, text: "text-violeta-11", chipBg: "bg-violeta-3", chipBorder: "border-violeta-7", meter: "bg-violeta-9", pill: "border-violeta-9 from-violeta-8 to-violeta-3 text-violeta-12" },
-  { id: "lendario", label: "Super Alpha", min: 85, max: 100, text: "text-principal-11", chipBg: "bg-principal-3", chipBorder: "border-principal-8", meter: "bg-principal-9", pill: "border-principal-8 from-principal-7 to-principal-3 text-principal-12" },
+  {
+    id: "wood", label: "Wood", min: 0, max: 12,
+    emblem: "/wallet-reader/tiers/wood.webp",
+    text: "text-bronze-11", chipBg: "bg-bronze-3", chipBorder: "border-bronze-6", meter: "bg-bronze-9",
+    card: "border-bronze-4 bg-[linear-gradient(112.5deg,var(--color-bronze-3)_0%,var(--color-bronze-1)_100%)]",
+    ring: "border-bronze-6", bar: "from-bronze-6 to-bronze-9", corner: "from-laranja-6 to-laranja-6/55",
+    pill: "border-bronze-8 from-bronze-3 to-bronze-2", pillText: "text-bronze-12",
+  },
+  {
+    id: "bronze", label: "Bronze", min: 13, max: 25,
+    emblem: "/wallet-reader/tiers/bronze.webp",
+    text: "text-laranja-11", chipBg: "bg-laranja-3", chipBorder: "border-laranja-6", meter: "bg-laranja-9",
+    card: "border-laranja-6 bg-[linear-gradient(112.5deg,var(--color-laranja-3)_0%,var(--color-laranja-1)_100%)]",
+    ring: "border-laranja-6", bar: "from-laranja-6 to-laranja-9", corner: "from-laranja-9 to-laranja-9/35",
+    pill: "border-laranja-9 from-laranja-6 to-laranja-3", pillText: "text-laranja-12",
+  },
+  {
+    id: "silver", label: "Silver", min: 26, max: 37,
+    emblem: "/wallet-reader/tiers/silver.webp",
+    text: "text-gray-11", chipBg: "bg-gray-4", chipBorder: "border-gray-6", meter: "bg-gray-8",
+    card: "border-gray-6 bg-[linear-gradient(112.5deg,var(--color-gray-3)_0%,var(--color-gray-1)_100%)]",
+    ring: "border-gray-6", bar: "from-gray-6 to-gray-8", corner: "from-gray-9 to-gray-9",
+    pill: "border-gray-9 from-gray-7 to-gray-3", pillText: "text-gray-12",
+  },
+  {
+    id: "gold", label: "Gold", min: 38, max: 50,
+    emblem: "/wallet-reader/tiers/gold.webp",
+    text: "text-principal-11", chipBg: "bg-principal-3", chipBorder: "border-principal-8", meter: "bg-principal-9",
+    card: "border-principal-6 bg-[linear-gradient(112.5deg,var(--color-principal-3)_0%,var(--color-principal-1)_100%)]",
+    ring: "border-principal-6", bar: "from-principal-6 to-principal-9", corner: "from-principal-9 to-principal-9/75",
+    pill: "border-principal-9 from-principal-7 to-principal-3", pillText: "text-principal-12",
+  },
+  {
+    id: "platinum", label: "Platinum", min: 51, max: 62,
+    emblem: "/wallet-reader/tiers/platinum.webp",
+    text: "text-azul-11", chipBg: "bg-azul-3", chipBorder: "border-azul-7", meter: "bg-azul-9",
+    card: "border-azul-6 bg-[linear-gradient(112.5deg,var(--color-azul-3)_0%,var(--color-secundaria-1)_100%)]",
+    ring: "border-azul-6", bar: "from-azul-6 to-azul-9", corner: "from-azul-9 to-azul-9/80",
+    pill: "border-secundaria-9 from-secundaria-7 to-secundaria-2", pillText: "text-secundaria-12",
+  },
+  {
+    id: "diamond", label: "Diamond", min: 63, max: 75,
+    emblem: "/wallet-reader/tiers/diamond.webp",
+    text: "text-secundaria-11", chipBg: "bg-secundaria-3", chipBorder: "border-secundaria-7", meter: "bg-secundaria-9",
+    card: "border-secundaria-6 bg-[linear-gradient(112.5deg,var(--color-secundaria-2)_0%,var(--color-secundaria-1)_100%)]",
+    ring: "border-secundaria-6", bar: "from-secundaria-6 to-secundaria-9", corner: "from-secundaria-9 to-secundaria-9/80",
+    pill: "border-azul-9 from-azul-7 to-azul-4", pillText: "text-azul-12",
+  },
+  {
+    id: "alpha", label: "Alpha", min: 76, max: 87,
+    emblem: "/wallet-reader/tiers/alpha.webp",
+    text: "text-violeta-11", chipBg: "bg-violeta-3", chipBorder: "border-violeta-7", meter: "bg-violeta-9",
+    card: "border-violeta-6 bg-[linear-gradient(112.5deg,var(--color-violeta-3)_0%,var(--color-violeta-1)_100%)]",
+    ring: "border-violeta-6", bar: "from-violeta-6 to-violeta-9", corner: "from-violeta-9 to-violeta-9/70",
+    pill: "border-violeta-9 from-violeta-7 to-violeta-4", pillText: "text-violeta-12",
+  },
+  {
+    id: "super-alpha", label: "Super alpha", min: 88, max: 100,
+    emblem: "/wallet-reader/tiers/super-alpha.webp",
+    text: "text-principal-11", chipBg: "bg-principal-3", chipBorder: "border-principal-8", meter: "bg-principal-9",
+    card: "border-violeta-6 bg-[linear-gradient(112.5deg,var(--color-violeta-3)_0%,var(--color-principal-1)_100%)]",
+    ring: "border-violeta-9", bar: "from-violeta-9 to-principal-9", corner: "from-principal-9 to-violeta-9",
+    pill: "border-violeta-10 from-violeta-7 to-principal-5",
+    // Topo do ranking: o texto também é degradê (violeta → principal).
+    pillText: "bg-linear-to-r from-violeta-12 to-principal-12 bg-clip-text text-transparent",
+  },
 ];
 
 export function tierFor(score: number): TierSpec {

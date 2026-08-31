@@ -2,7 +2,7 @@
 
 import { memo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Check, Copy, Star } from "lucide-react";
+import { Check, Copy, Pencil, Star } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
 import { Avatar } from "@/components/ui/Avatar";
@@ -18,6 +18,7 @@ import {
 import { DiscordText } from "@/components/radar/DiscordText";
 import { RoleBadge, cardGradientFor } from "@/components/radar/roleBadge";
 import { MoreChip, TokenChip } from "@/components/radar/TokenChip";
+import { splitPriorityLinks } from "@/components/radar/linkPriority";
 import { LinksModal } from "@/components/radar/LinksModal";
 import {
   getEmbedMedia,
@@ -26,7 +27,7 @@ import {
   type EmbedMediaItem,
 } from "@/components/radar/embedMedia";
 import { MediaModal } from "@/components/radar/MediaModal";
-import { useFavoriteFor } from "@/components/radar/favoritesLookup";
+import { useCustomizeAuthor, useFavoriteFor } from "@/components/radar/favoritesLookup";
 
 /** Máximo de chips exibidos antes do overflow "+N" (espelha o Figma: 4 + "+N"). */
 const MAX_VISIBLE_CHIPS = 4;
@@ -134,6 +135,8 @@ interface RadarMessageCardProps {
    * precisar abrir a mensagem. Usado nas capturas do Rick Bot.
    */
   showCa?: boolean;
+  /** Chips só dos provedores de análise (gmgn/axiom/dexscreener/solscan) — Rick Bot. */
+  prioritizeLinks?: boolean;
   /**
    * Habilita o refluxo animado (`layout`) do framer. Só no feed central (a página
    * rola). Em listas virtualizadas NÃO deve ligar — conflita com o `translateY`
@@ -153,6 +156,7 @@ function RadarMessageCardBase({
   surface = "card",
   nameAccent = false,
   showCa = false,
+  prioritizeLinks = false,
   onSelectAuthor,
 }: RadarMessageCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -164,10 +168,13 @@ function RadarMessageCardBase({
   // paginação renderizam sem animação — evita "tempestade" de entrada.
   const animateIn = isNew && !reduce;
 
-  // Personalização do autor seguido (apelido/cor/foto) — reflete no card.
+  // Personalização do autor (apelido/cor/foto) — reflete no card. Existe para
+  // autor seguido E para autor só personalizado.
   const fav = useFavoriteFor(m.authorTag);
+  const openCustomize = useCustomizeAuthor();
   const following = Boolean(fav);
-  const author = m.authorTag || "Desconhecido";
+  const authorTag = m.authorTag;
+  const author = authorTag || "Desconhecido";
   const displayName = fav?.nickname?.trim() || author;
   // Cor escolhida → borda + gradiente sutil no card (node 492:8120).
   const colorBorder = cardBorderFor(fav?.color);
@@ -192,8 +199,17 @@ function RadarMessageCardBase({
 
   // Links de mídia saem dos chips (já viram a própria mídia).
   const chipLinks = mediaUrls.size ? links.filter((l) => !mediaUrls.has(l)) : links;
-  const visibleChips = chipLinks.slice(0, MAX_VISIBLE_CHIPS);
-  const hiddenCount = chipLinks.length - visibleChips.length;
+
+  // Capturas do Rick trazem uma dezena de links: mostramos só os de análise
+  // (gmgn · axiom · dexscreener · solscan) como chip e jogamos TODO o resto no
+  // "+N" (modal). Sem link priorizado, cai no padrão: primeiros N + overflow.
+  const split = prioritizeLinks ? splitPriorityLinks(chipLinks) : null;
+  const priority = split && split.primary.length > 0 ? split : null;
+  const visibleChips: { link: string; label?: string }[] =
+    priority?.primary ?? chipLinks.slice(0, MAX_VISIBLE_CHIPS).map((link) => ({ link }));
+  const hiddenCount = priority
+    ? priority.rest.length
+    : chipLinks.length - visibleChips.length;
   const hasChips = chipLinks.length > 0;
 
   // Texto sem as URLs de mídia (o GIF é mostrado como mídia, não como link cru).
@@ -238,7 +254,7 @@ function RadarMessageCardBase({
       transition={{ duration: DURATION.emphasis, ease: EASE.out }}
       onClick={onCardClick}
       className={cn(
-        "relative flex w-full min-w-0 flex-col overflow-hidden",
+        "group relative flex w-full min-w-0 flex-col overflow-hidden",
         // Superfície: lista vs caixa (borda + cantos). A divisória inferior entre
         // mensagens fica SÓ no feed principal (lista wide); colunas laterais
         // (compact) não têm divisória entre cards.
@@ -313,7 +329,29 @@ function RadarMessageCardBase({
             </p>
           </div>
         </div>
-        {!compact && <DateInfo iso={m.createdAt} />}
+        {/* Ações do autor + data. O lápis personaliza QUALQUER autor (não exige
+            seguir); no desktop só aparece no hover do card. */}
+        <div className={cn("flex shrink-0 items-center gap-2", compact && "ml-auto")}>
+          {authorTag && (
+            <button
+              type="button"
+              onClick={() =>
+                openCustomize({ authorTag, name: displayName, group: m.guildName ?? null })
+              }
+              title="Personalizar usuário"
+              aria-label={`Personalizar ${displayName}`}
+              className={cn(
+                "flex size-6 items-center justify-center rounded-md text-gray-11",
+                "transition-[opacity,color,background-color] hover:bg-gray-4 hover:text-gray-12",
+                // Sem hover (toque) fica visível e discreto; no desktop, só no hover.
+                "opacity-60 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100",
+              )}
+            >
+              <Pencil className="size-3.5" strokeWidth={2} />
+            </button>
+          )}
+          {!compact && <DateInfo iso={m.createdAt} />}
+        </div>
       </header>
 
       {/* CA do token (Rick Bot) — sempre visível, clicar copia. */}
@@ -390,8 +428,8 @@ function RadarMessageCardBase({
       {/* Chips de token/link (botões) — complementam o texto formatado */}
       {hasChips && (
         <div className={cn("flex w-full min-w-0 flex-wrap content-start items-start gap-2 pt-2 pb-4", padX)}>
-          {visibleChips.map((l) => (
-            <TokenChip key={l} link={l} compact={compact} />
+          {visibleChips.map((c) => (
+            <TokenChip key={c.link} link={c.link} label={c.label} compact={compact} />
           ))}
           {hiddenCount > 0 && (
             <MoreChip count={hiddenCount} compact={compact} onClick={() => setLinksOpen(true)} />

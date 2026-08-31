@@ -217,13 +217,19 @@ export async function getAuthorStats(authorTag: string): Promise<AuthorStats> {
   return data;
 }
 
-// ─────────────────────────── Favoritos (autores seguidos, JWT) ───────────────
+// ────────────── Favoritos / personalização de autores (por conta, JWT) ───────
 
-/** Autor do Discord seguido pela conta. */
+/**
+ * Autor do Discord seguido E/OU personalizado pela conta. A linha existe pelos
+ * dois motivos, independentes: `followed=false` é só personalização (apelido,
+ * cor, foto) — pinta os cards, mas fica fora da lista/feed de favoritos.
+ */
 export interface FavoriteAuthor {
   id: string;
   authorId: string;
   authorTag: string | null;
+  /** `false` = só personalizado (o usuário não segue este autor). */
+  followed: boolean;
   /** Apelido dado pelo usuário (sobrepõe o nome exibido). */
   nickname: string | null;
   /** Chave de cor do avatar (allowlist); null = cor por hash. */
@@ -237,6 +243,8 @@ export interface FavoriteAuthor {
 export interface UpdateFavoriteInput {
   nickname?: string | null;
   color?: string | null;
+  /** Tag do autor — usada só quando a linha é criada por este PATCH. */
+  authorTag?: string;
 }
 
 /** GET /api/v1/feed/favorites — autores seguidos. */
@@ -262,7 +270,7 @@ export async function removeFavorite(authorId: string): Promise<{ authorId: stri
   return data;
 }
 
-/** PATCH /api/v1/feed/favorites/:authorId — personaliza (apelido + cor). */
+/** PATCH /api/v1/feed/favorites/:authorId — personaliza (não exige seguir). */
 export async function updateFavorite(
   authorId: string,
   input: UpdateFavoriteInput,

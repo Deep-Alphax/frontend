@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   useInfiniteQuery,
   useMutation,
@@ -26,13 +25,8 @@ import {
 } from "@/lib/api/walletReader";
 import { KOL_INDEX_KEY } from "@/lib/walletReader/useKolIndex";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
-import {
-  KOL_TYPES,
-  KOL_TYPE_MAP,
-  memeAvatarFor,
-  tierFor,
-  type WalletRef,
-} from "@/lib/walletReader/types";
+import { KOL_TYPES, memeAvatarFor, tierFor, type WalletRef } from "@/lib/walletReader/types";
+import { KolCard } from "@/components/walletReader/KolCard";
 import { Modal } from "@/components/walletReader/Modal";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
@@ -413,24 +407,22 @@ export function KolsAdmin() {
     onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível restaurar.")),
   });
 
-  // Virtualização: o preset inteiro vem numa lista só e cresce sem teto —
-  // renderizar 276 linhas (e um dia milhares) no DOM é desperdício puro.
-  // `@tanstack/react-virtual` já era dependência do projeto e não era usado.
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const rows = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 60,
-    overscan: 8,
-  });
-
-  // Puxa a próxima página quando a virtualização chega perto do fim da lista.
-  const lastVisible = rows.getVirtualItems().at(-1)?.index ?? 0;
+  // Próxima página por sentinela no fim da grade (mesmo padrão do /wallet-reader).
+  // A grade não é virtualizada: o card do Figma tem altura variável e a página
+  // do backend (60) já limita o que entra no DOM de uma vez.
+  const sentinel = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage && lastVisible >= filtered.length - 10) {
-      void fetchNextPage();
-    }
-  }, [lastVisible, filtered.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    const el = sentinel.current;
+    if (!el || !hasNextPage) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) void fetchNextPage();
+      },
+      { rootMargin: "600px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) {
     return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
@@ -486,108 +478,78 @@ export function KolsAdmin() {
       </p>
 
       {isPending ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-14 animate-pulse rounded-lg bg-gray-2" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
           ))}
         </div>
       ) : (
-        <div
-          ref={scrollRef}
-          className="max-h-[65dvh] overflow-y-auto rounded-lg"
-          role="list"
-        >
-          <div className="relative w-full" style={{ height: rows.getTotalSize() }}>
-            {rows.getVirtualItems().map((v) => {
-              const k = filtered[v.index];
-              const tier = tierFor(k.relevance);
+        <>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+            {filtered.map((k) => {
               const removed = Boolean(k.deletedAt);
               return (
-                <div
+                <KolCard
                   key={k.id}
-                  role="listitem"
-                  ref={rows.measureElement}
-                  data-index={v.index}
-                  className="absolute left-0 top-0 w-full pb-1.5"
-                  style={{ transform: `translateY(${v.start}px)` }}
-                >
-                  <div
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg border border-gray-6 bg-gray-2 px-3 py-2",
-                      removed && "opacity-60",
-                    )}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={k.avatar || memeAvatarFor(k.id)}
-                      alt=""
-                      width={32}
-                      height={32}
-                      className="size-8 shrink-0 rounded-full border border-gray-6 object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="min-w-0 truncate text-sm font-semibold text-gray-12">
-                        {k.name}
-                        {removed && (
-                          <span className="ml-2 text-xs font-normal text-vermelho-11">removido</span>
-                        )}
-                      </p>
-                      <p className="min-w-0 truncate text-xs text-gray-11">
-                        {k.walletCount} carteira{k.walletCount !== 1 ? "s" : ""}
-                        {k.squads.length > 0 && ` · ${k.squads.join(", ")}`}
-                        {k.types.length > 0 &&
-                          ` · ${k.types.map((t) => KOL_TYPE_MAP[t]?.label ?? t).join(", ")}`}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums",
-                        tier.chipBg,
-                        tier.chipBorder,
-                        tier.text,
+                  kol={k}
+                  dimmed={removed}
+                  onOpen={() => setEditing(k)}
+                  actions={
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(k)}
+                        className="rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-xs font-medium text-gray-12 transition-colors hover:bg-gray-4"
+                      >
+                        Editar
+                      </button>
+                      <span className="text-xs tabular-nums text-gray-11">{k.relevance}/100</span>
+                      {removed && (
+                        <span className="text-xs font-medium text-vermelho-11">removido</span>
                       )}
-                    >
-                      {k.relevance} · {tier.label}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(k)}
-                      className="shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-xs font-medium text-gray-12 transition-colors hover:bg-gray-4"
-                    >
-                      Editar
-                    </button>
-                    {removed ? (
-                      <button
-                        type="button"
-                        aria-label={`Restaurar ${k.name}`}
-                        onClick={() => restoreMut.mutate(k.id)}
-                        className="shrink-0 text-gray-11 transition-colors hover:text-green-11"
-                      >
-                        <RotateCcw className="size-4" strokeWidth={1.75} />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        aria-label={`Remover ${k.name} do preset`}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Remover "${k.name}" do preset? Ele some para TODOS os usuários (as edições de conta são preservadas).`,
+                      <div className="flex-1" />
+                      {removed ? (
+                        <button
+                          type="button"
+                          aria-label={`Restaurar ${k.name}`}
+                          onClick={() => restoreMut.mutate(k.id)}
+                          className="shrink-0 text-gray-11 transition-colors hover:text-green-11"
+                        >
+                          <RotateCcw className="size-4" strokeWidth={1.75} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label={`Remover ${k.name} do preset`}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Remover "${k.name}" do preset? Ele some para TODOS os usuários (as edições de conta são preservadas).`,
+                              )
                             )
-                          )
-                            removeMut.mutate(k.id);
-                        }}
-                        className="shrink-0 text-gray-11 transition-colors hover:text-vermelho-11"
-                      >
-                        <Trash2 className="size-4" strokeWidth={1.75} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                              removeMut.mutate(k.id);
+                          }}
+                          className="shrink-0 text-gray-11 transition-colors hover:text-vermelho-11"
+                        >
+                          <Trash2 className="size-4" strokeWidth={1.75} />
+                        </button>
+                      )}
+                    </>
+                  }
+                />
               );
             })}
           </div>
-        </div>
+
+          {/* Gatilho da próxima página do preset (mesmo padrão do /wallet-reader). */}
+          {hasNextPage && (
+            <div ref={sentinel} className="flex justify-center py-2">
+              <span className="text-xs text-gray-11">
+                {isFetchingNextPage ? "Carregando mais…" : " "}
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       {creating && (

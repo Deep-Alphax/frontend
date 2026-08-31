@@ -24,9 +24,20 @@ function labelFromLink(link: string): { label: string; host: string } {
  * Chip de token/link detectado na mensagem. Espelha o node do Figma (rótulo +
  * host + divisor + botões copiar/abrir). Copiar usa a Clipboard API com feedback.
  */
-export function TokenChip({ link, compact = false }: { link: string; compact?: boolean }) {
+export function TokenChip({
+  link,
+  compact = false,
+  label: labelOverride,
+}: {
+  link: string;
+  compact?: boolean;
+  /** Rótulo fixo (provedor priorizado); sem ele, deriva da URL. */
+  label?: string;
+}) {
   const [copied, setCopied] = useState(false);
-  const { label, host } = labelFromLink(link);
+  const derived = labelFromLink(link);
+  const label = labelOverride ?? derived.label;
+  const host = derived.host;
 
   const copy = async () => {
     try {

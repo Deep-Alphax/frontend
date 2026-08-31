@@ -22,6 +22,8 @@ interface ProfilePanelProps {
   authorName: string;
   /** Volta para o painel de favoritos. */
   onBack: () => void;
+  /** Alça de reordenar coluna (renderizada no header pela RadarScreen). */
+  dragHandle?: React.ReactNode;
 }
 
 /** Idade compacta desde `iso`: "9m" · "3h" · "5d" · "2mes". */
@@ -66,7 +68,7 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
  * clicar numa mensagem. Cabeçalho + stats + seguir + posts do autor (buscados
  * por `authorId`, paginados e virtualizados).
  */
-export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) {
+export function ProfilePanel({ author, authorName, onBack, dragHandle }: ProfilePanelProps) {
   const { isFavorite, toggle, isMutating, getFavorite, customize, uploadPhoto, isSaving } =
     useFavorites();
   const following = isFavorite(author);
@@ -101,6 +103,7 @@ export function ProfilePanel({ author, authorName, onBack }: ProfilePanelProps) 
     <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header */}
       <div className="flex h-[46px] shrink-0 items-center gap-2 bg-gray-2 border-b border-gray-6 px-3">
+        {dragHandle}
         <button
           type="button"
           onClick={onBack}

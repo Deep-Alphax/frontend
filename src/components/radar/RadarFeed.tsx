@@ -21,6 +21,8 @@ interface RadarFeedProps {
   /** Termo de busca (mensagens/usuários). */
   search: string;
   onSearchChange: (value: string) => void;
+  /** Alça de reordenar coluna (renderizada no header pela RadarScreen). */
+  dragHandle?: React.ReactNode;
 }
 
 /** Barra de busca do feed (mensagens ou usuários). Server-side, debounced. */
@@ -78,15 +80,20 @@ export function RadarFeed({
   onSelectAuthor,
   search,
   onSearchChange,
+  dragHandle,
 }: RadarFeedProps) {
   const searching = search.trim().length > 0;
 
   return (
-    <div className="flex max-h-[85dvh] min-h-0 flex-col border-b border-gray-6 lg:max-h-none lg:h-full lg:border-b-0 lg:border-r">
+    <div className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header: título à esquerda + busca à direita */}
       <div className="flex h-[46px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 bg-gray-2 px-4">
-        <h2 className="shrink-0 text-base font-semibold text-gray-12">Feed principal</h2>
-        <div className="w-full max-w-[320px]">
+        <div className="flex shrink-0 items-center gap-1">
+          {dragHandle}
+          <h2 className="text-base font-semibold text-gray-12">Feed principal</h2>
+        </div>
+        {/* min-w-0: o feed pode ir p/ um slot lateral estreito — a busca encolhe. */}
+        <div className="w-full min-w-0 max-w-[320px]">
           <FeedSearch value={search} onChange={onSearchChange} />
         </div>
       </div>

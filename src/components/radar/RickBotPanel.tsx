@@ -40,6 +40,8 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
 
 interface RickBotPanelProps {
   onSelectAuthor?: (authorId: string, authorName: string) => void;
+  /** Alça de reordenar coluna (renderizada no header pela RadarScreen). */
+  dragHandle?: React.ReactNode;
 }
 
 /**
@@ -47,7 +49,7 @@ interface RickBotPanelProps {
  * `authorTag` no backend e paginado (chat: novas embaixo). Header com nome +
  * contagem total. Independe da rail de fontes (que controla o feed central).
  */
-export function RickBotPanel({ onSelectAuthor }: RickBotPanelProps) {
+export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) {
   const query = useInfiniteQuery({
     queryKey: RICK_QUERY_KEY,
     queryFn: ({ pageParam }) =>
@@ -60,10 +62,13 @@ export function RickBotPanel({ onSelectAuthor }: RickBotPanelProps) {
   const total = query.data?.pages[0]?.total ?? 0;
 
   return (
-    <aside className="flex max-h-[85dvh] min-h-0 flex-col border-b border-gray-6  lg:max-h-none lg:h-full lg:border-b-0 lg:border-r">
+    <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
       {/* Header: nome do Rick + contagem total */}
       <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-gray-6 bg-gray-2 px-3">
-        <h2 className="min-w-0 truncate text-base font-semibold text-gray-12">Rick Bot</h2>
+        <div className="flex min-w-0 items-center gap-1">
+          {dragHandle}
+          <h2 className="min-w-0 truncate text-base font-semibold text-gray-12">Rick Bot</h2>
+        </div>
         {total > 0 && <CountBadge>{fmtCount(total)}</CountBadge>}
       </div>
 
@@ -91,6 +96,7 @@ export function RickBotPanel({ onSelectAuthor }: RickBotPanelProps) {
           compact
           nameAccent
           showCa
+          prioritizeLinks
         />
       )}
     </aside>

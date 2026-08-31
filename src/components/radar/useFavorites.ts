@@ -18,7 +18,11 @@ export const FAVORITES_KEY = ["radar-favorites"] as const;
 export const FAVORITE_MESSAGES_KEY = ["radar-favorites-messages"] as const;
 
 /**
- * Autores favoritos ("seguidos"), sincronizados com o backend (react-query).
+ * Autores seguidos E personalizados, sincronizados com o backend (react-query).
+ * A query traz as duas coisas na mesma linha (ver `FavoriteAuthor.followed`):
+ * personalizar NÃO segue, então `favorites` (tudo, p/ pintar os cards) e
+ * `followed` (o painel "Seus favoritos") são listas diferentes.
+ *
  * Mutações otimistas: o botão de seguir responde na hora e reconcilia com o
  * servidor no settle; erro faz rollback. Fonte da verdade é a conta, não o device.
  */
@@ -31,9 +35,12 @@ export function useFavorites() {
     staleTime: 60_000,
   });
 
-  const ids = useMemo(
-    () => new Set((query.data ?? []).map((f) => f.authorId)),
-    [query.data],
+  const rows = useMemo(() => query.data ?? [], [query.data]);
+  // Só os SEGUIDOS (o resto da lista é personalização sem follow).
+  const followed = useMemo(() => rows.filter((f) => f.followed), [rows]);
+  const followedIds = useMemo(
+    () => new Set(followed.map((f) => f.authorId)),
+    [followed],
   );
 
   const invalidate = () => {
@@ -46,14 +53,16 @@ export function useFavorites() {
     onMutate: async ({ authorId, authorTag }) => {
       await qc.cancelQueries({ queryKey: FAVORITES_KEY });
       const prev = qc.getQueryData<FavoriteAuthor[]>(FAVORITES_KEY);
+      // Pode já existir uma linha só personalizada → vira seguida (não duplica).
       qc.setQueryData<FavoriteAuthor[]>(FAVORITES_KEY, (old = []) =>
         old.some((f) => f.authorId === authorId)
-          ? old
+          ? old.map((f) => (f.authorId === authorId ? { ...f, followed: true } : f))
           : [
               {
                 id: `tmp-${authorId}`,
                 authorId,
                 authorTag: authorTag ?? null,
+                followed: true,
                 nickname: null,
                 color: null,
                 photoUrl: null,
@@ -76,8 +85,14 @@ export function useFavorites() {
     onMutate: async (authorId: string) => {
       await qc.cancelQueries({ queryKey: FAVORITES_KEY });
       const prev = qc.getQueryData<FavoriteAuthor[]>(FAVORITES_KEY);
+      // Espelha o backend: com personalização a linha sobrevive (followed=false);
+      // sem nada personalizado, some.
       qc.setQueryData<FavoriteAuthor[]>(FAVORITES_KEY, (old = []) =>
-        old.filter((f) => f.authorId !== authorId),
+        old.flatMap((f) => {
+          if (f.authorId !== authorId) return [f];
+          const personalized = Boolean(f.nickname || f.color || f.photoUrl);
+          return personalized ? [{ ...f, followed: false }] : [];
+        }),
       );
       return { prev };
     },
@@ -103,18 +118,30 @@ export function useFavorites() {
     onMutate: async ({ authorId, input }) => {
       await qc.cancelQueries({ queryKey: FAVORITES_KEY });
       const prev = qc.getQueryData<FavoriteAuthor[]>(FAVORITES_KEY);
+      const patch = {
+        ...(input.nickname !== undefined
+          ? { nickname: input.nickname?.trim() || null }
+          : {}),
+        ...(input.color !== undefined ? { color: input.color ?? null } : {}),
+      };
       qc.setQueryData<FavoriteAuthor[]>(FAVORITES_KEY, (old = []) =>
-        old.map((f) =>
-          f.authorId === authorId
-            ? {
-                ...f,
-                ...(input.nickname !== undefined
-                  ? { nickname: input.nickname?.trim() || null }
-                  : {}),
-                ...(input.color !== undefined ? { color: input.color ?? null } : {}),
-              }
-            : f,
-        ),
+        old.some((f) => f.authorId === authorId)
+          ? old.map((f) => (f.authorId === authorId ? { ...f, ...patch } : f))
+          : // Autor ainda sem linha → personalizar cria uma NÃO seguida.
+            [
+              {
+                id: `tmp-${authorId}`,
+                authorId,
+                authorTag: input.authorTag ?? authorId,
+                followed: false,
+                nickname: null,
+                color: null,
+                photoUrl: null,
+                createdAt: new Date().toISOString(),
+                ...patch,
+              },
+              ...old,
+            ],
       );
       return { prev };
     },
@@ -136,14 +163,16 @@ export function useFavorites() {
   });
 
   return {
-    favorites: query.data ?? [],
-    count: query.data?.length ?? 0,
+    /** Tudo (seguidos + só personalizados) — usado para pintar os cards. */
+    favorites: rows,
+    /** Só os seguidos — o painel "Seus favoritos". */
+    followed,
+    count: followed.length,
     isLoading: query.isLoading,
-    isFavorite: (authorId: string) => ids.has(authorId),
-    getFavorite: (authorId: string) =>
-      (query.data ?? []).find((f) => f.authorId === authorId),
+    isFavorite: (authorId: string) => followedIds.has(authorId),
+    getFavorite: (authorId: string) => rows.find((f) => f.authorId === authorId),
     toggle: (authorId: string, authorTag?: string | null) => {
-      if (ids.has(authorId)) remove.mutate(authorId);
+      if (followedIds.has(authorId)) remove.mutate(authorId);
       else add.mutate({ authorId, authorTag });
     },
     isMutating: add.isPending || remove.isPending,

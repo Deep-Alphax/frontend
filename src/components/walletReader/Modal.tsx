@@ -13,6 +13,7 @@ export function Modal({
   children,
   footer,
   className,
+  bodyClassName,
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,6 +21,8 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** Classes do corpo — p/ trocar a rolagem única por colunas que rolam sozinhas. */
+  bodyClassName?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -58,7 +61,7 @@ export function Modal({
             <X className="size-5" strokeWidth={2} />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto", bodyClassName)}>{children}</div>
         {footer && <div className="shrink-0 border-t border-gray-6 p-4">{footer}</div>}
       </div>
     </div>

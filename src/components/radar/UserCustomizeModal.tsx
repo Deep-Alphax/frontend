@@ -150,7 +150,8 @@ function CustomizeForm({
 
   const save = async () => {
     try {
-      // A foto exige um favorito existente no servidor → sobe primeiro.
+      // Foto primeiro: o endpoint dela cria a linha do autor (sem seguir) e
+      // devolve a URL já hospedada; o PATCH seguinte só completa apelido/cor.
       if (picked) await onUploadPhoto(picked.file);
       await onSave({ nickname: nickname.trim() || null, color });
       toast.success("Alterações salvas");

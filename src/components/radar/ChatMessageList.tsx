@@ -1,9 +1,12 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowDown } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
 import { cn } from "@/lib/cn";
+import { DURATION, EASE } from "@/lib/motion";
 import { RadarMessageCard } from "@/components/radar/RadarMessageCard";
 import { useChatScroll } from "@/components/radar/useChatScroll";
 
@@ -44,6 +47,8 @@ interface ChatMessageListProps {
   nameAccent?: boolean;
   /** Mostra o chip do CA (copia ao clicar) — capturas do Rick Bot. */
   showCa?: boolean;
+  /** Chips só dos provedores de análise (ver RadarMessageCard). */
+  prioritizeLinks?: boolean;
   /** Divisores por dia (coluna central). Laterais usam a data no rodapé do card. */
   showDayDividers?: boolean;
   className?: string;
@@ -69,6 +74,7 @@ export function ChatMessageList({
   compact = false,
   nameAccent = false,
   showCa = false,
+  prioritizeLinks = false,
   showDayDividers = false,
   className,
 }: ChatMessageListProps) {
@@ -89,7 +95,8 @@ export function ChatMessageList({
     [chrono, showDayDividers],
   );
 
-  useChatScroll(scrollRef, contentRef, {
+  // `unread` = novas que chegaram no fim enquanto o usuário lia mais acima.
+  const { atBottom, unread, scrollToBottom } = useChatScroll(scrollRef, contentRef, {
     firstId: chrono[0]?.id,
     lastId: chrono[chrono.length - 1]?.id,
     count: chrono.length,
@@ -110,43 +117,103 @@ export function ChatMessageList({
   }, [hasOlder, isLoadingOlder, loadOlder, chrono.length]);
 
   return (
-    <div
-      ref={scrollRef}
-      className={cn("min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]", className)}
-    >
-      {/* Wrapper observado pelo ResizeObserver (mede o crescimento do conteúdo). */}
-      <div ref={contentRef}>
-        {/* Topo: sentinela + estado de "carregando antigas" */}
-        <div ref={topSentinelRef} />
-        {isLoadingOlder && (
-          <div className="flex items-center justify-center gap-2 py-3 text-sm text-gray-11">
-            <span>Carregando mais</span>
-            <span className="flex gap-1">
-              <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-gray-6" />
-            </span>
-          </div>
-        )}
-        {!hasOlder && chrono.length > 0 && (
-          <p className="py-3 text-center text-xs text-gray-11">Início do histórico.</p>
-        )}
+    // Wrapper relativo: o botão "ir para o fim" flutua SOBRE a lista (dentro do
+    // rolável ele rolaria junto com o conteúdo).
+    <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]">
+        {/* Wrapper observado pelo ResizeObserver (mede o crescimento do conteúdo). */}
+        <div ref={contentRef}>
+          {/* Topo: sentinela + estado de "carregando antigas" */}
+          <div ref={topSentinelRef} />
+          {isLoadingOlder && (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm text-gray-11">
+              <span>Carregando mais</span>
+              <span className="flex gap-1">
+                <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-gray-6" />
+              </span>
+            </div>
+          )}
+          {!hasOlder && chrono.length > 0 && (
+            <p className="py-3 text-center text-xs text-gray-11">Início do histórico.</p>
+          )}
 
-        {rows.map(({ m, label, showDivider }) => (
-          <Fragment key={m.id}>
-            {showDivider && <DayDivider label={label} />}
-            <RadarMessageCard
-              m={m}
-              surface={surface}
-              compact={compact}
-              nameAccent={nameAccent}
-              showCa={showCa}
-              isNew={newIds?.has(m.id)}
-              onSelectAuthor={onSelectAuthor}
-            />
-          </Fragment>
-        ))}
+          {rows.map(({ m, label, showDivider }) => (
+            <Fragment key={m.id}>
+              {showDivider && <DayDivider label={label} />}
+              <RadarMessageCard
+                m={m}
+                surface={surface}
+                compact={compact}
+                nameAccent={nameAccent}
+                showCa={showCa}
+                prioritizeLinks={prioritizeLinks}
+                isNew={newIds?.has(m.id)}
+                onSelectAuthor={onSelectAuthor}
+              />
+            </Fragment>
+          ))}
+        </div>
       </div>
+
+      <ScrollToBottomButton
+        show={!atBottom && chrono.length > 0}
+        unread={unread}
+        compact={compact}
+        onClick={scrollToBottom}
+      />
     </div>
+  );
+}
+
+/**
+ * Botão flutuante "ir para o fim" — aparece quando o usuário sobe na conversa.
+ * Com mensagens novas chegadas nesse meio-tempo, vira uma pílula com a contagem.
+ */
+function ScrollToBottomButton({
+  show,
+  unread,
+  compact,
+  onClick,
+}: {
+  show: boolean;
+  unread: number;
+  compact: boolean;
+  onClick: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const hasUnread = unread > 0;
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.button
+          type="button"
+          onClick={onClick}
+          aria-label={
+            hasUnread
+              ? `Ir para as ${unread} mensagens novas`
+              : "Ir para as mensagens mais recentes"
+          }
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+          transition={{ duration: DURATION.base, ease: EASE.out }}
+          className={cn(
+            "absolute z-10 flex items-center gap-1.5 rounded-full border shadow-lg",
+            "text-sm font-semibold transition-colors",
+            compact ? "bottom-3 right-3" : "bottom-4 right-4",
+            hasUnread ? "h-9 px-3" : "size-9 justify-center",
+            hasUnread
+              ? "border-principal-8 bg-principal-9 text-gray-1 hover:bg-principal-10"
+              : "border-gray-6 bg-gray-3 text-gray-12 hover:bg-gray-4",
+          )}
+        >
+          {hasUnread && <span className="tabular-nums">{unread > 99 ? "99+" : unread}</span>}
+          <ArrowDown className="size-4 shrink-0" strokeWidth={2.5} />
+        </motion.button>
+      )}
+    </AnimatePresence>
   );
 }
