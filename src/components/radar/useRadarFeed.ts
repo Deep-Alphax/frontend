@@ -178,10 +178,12 @@ export function useRadarFeed(
         });
       }
 
-      // "Seus favoritos" é um feed de quem você segue → tempo real também.
-      // Identidade = authorTag (a chave de follow guardada no favorito).
+      // "Seus favoritos" é um feed de quem você SEGUE → tempo real também.
+      // Identidade = authorTag (a chave de follow guardada no favorito). O
+      // `followed` é obrigatório: a mesma lista traz autores que o usuário só
+      // personalizou, e esses NÃO entram no feed (o backend também os exclui).
       const favs = queryClient.getQueryData<FavoriteAuthor[]>(FAVORITES_KEY);
-      if (msg.authorTag && favs?.some((f) => f.authorId === msg.authorTag)) {
+      if (msg.authorTag && favs?.some((f) => f.authorId === msg.authorTag && f.followed)) {
         prependInfinite(FAVORITE_MESSAGES_KEY, msg);
       }
 
