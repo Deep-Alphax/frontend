@@ -6,13 +6,12 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { getFeedMessages, type CapturedMessage } from "@/lib/api/feed";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
 import { fmtCount } from "@/components/radar/groupAvatar";
+import { RICK_BOT_TAG } from "@/components/radar/rickBot";
 
 /**
- * Usuário fixo da coluna esquerda ("Rick Bot"). Ajuste aqui se a identidade mudar.
  * A chave de query espelha a do perfil (`["feed-author", tag]`), então o realtime
  * (`feed:new` em useRadarFeed) já faz prepend das capturas do Rick sem código extra.
  */
-const RICK_BOT_TAG = "Rick#9725";
 const RICK_QUERY_KEY = ["feed-author", RICK_BOT_TAG] as const;
 
 /** Badge de contagem do header (tokens do DS: principal 3/8/11). */
@@ -95,8 +94,6 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
           surface="list"
           compact
           nameAccent
-          showCa
-          prioritizeLinks
         />
       )}
     </aside>

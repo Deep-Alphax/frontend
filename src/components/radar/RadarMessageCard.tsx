@@ -19,6 +19,7 @@ import { DiscordText } from "@/components/radar/DiscordText";
 import { RoleBadge, cardGradientFor } from "@/components/radar/roleBadge";
 import { MoreChip, TokenChip } from "@/components/radar/TokenChip";
 import { splitPriorityLinks } from "@/components/radar/linkPriority";
+import { isRickBot } from "@/components/radar/rickBot";
 import { LinksModal } from "@/components/radar/LinksModal";
 import {
   getEmbedMedia,
@@ -131,13 +132,6 @@ interface RadarMessageCardProps {
    */
   nameAccent?: boolean;
   /**
-   * Mostra o CA do token analisado como chip clicável (copia ao clicar), sem
-   * precisar abrir a mensagem. Usado nas capturas do Rick Bot.
-   */
-  showCa?: boolean;
-  /** Chips só dos provedores de análise (gmgn/axiom/dexscreener/solscan) — Rick Bot. */
-  prioritizeLinks?: boolean;
-  /**
    * Habilita o refluxo animado (`layout`) do framer. Só no feed central (a página
    * rola). Em listas virtualizadas NÃO deve ligar — conflita com o `translateY`
    * da virtualização e desalinha o card.
@@ -155,8 +149,6 @@ function RadarMessageCardBase({
   animateLayout = false,
   surface = "card",
   nameAccent = false,
-  showCa = false,
-  prioritizeLinks = false,
   onSelectAuthor,
 }: RadarMessageCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -172,9 +164,15 @@ function RadarMessageCardBase({
   // autor seguido E para autor só personalizado.
   const fav = useFavoriteFor(m.authorTag);
   const openCustomize = useCustomizeAuthor();
-  const following = Boolean(fav);
+  // A estrela é de SEGUIR, não de personalizar: o mapa também traz autores que o
+  // usuário só customizou (`followed: false`), e esses não ganham estrela.
+  const following = Boolean(fav?.followed);
   const authorTag = m.authorTag;
   const author = authorTag || "Desconhecido";
+  // Tratamento das capturas do Rick (CA em destaque + só os links de análise):
+  // vale pelo AUTOR, não pela coluna — as mensagens dele aparecem também no feed
+  // principal e no perfil, e antes só a coluna dele ganhava isso.
+  const isRick = isRickBot(authorTag);
   const displayName = fav?.nickname?.trim() || author;
   // Cor escolhida → borda + gradiente sutil no card (node 492:8120).
   const colorBorder = cardBorderFor(fav?.color);
@@ -200,10 +198,15 @@ function RadarMessageCardBase({
   // Links de mídia saem dos chips (já viram a própria mídia).
   const chipLinks = mediaUrls.size ? links.filter((l) => !mediaUrls.has(l)) : links;
 
+  // CA do token analisado (Rick Bot) — vira chip clicável (copia) E desempata
+  // links repetidos do mesmo provedor abaixo.
+  const ca = isRick ? extractCa(text, links) : null;
+
   // Capturas do Rick trazem uma dezena de links: mostramos só os de análise
-  // (gmgn · axiom · dexscreener · solscan) como chip e jogamos TODO o resto no
-  // "+N" (modal). Sem link priorizado, cai no padrão: primeiros N + overflow.
-  const split = prioritizeLinks ? splitPriorityLinks(chipLinks) : null;
+  // (gmgn · axiom · dexscreener · solscan), UM por provedor — o que carrega o CA
+  // —, e jogamos TODO o resto no "+N" (modal). Sem link priorizado, cai no
+  // padrão: primeiros N + overflow. Vale em qualquer coluna: quem manda é o autor.
+  const split = isRick ? splitPriorityLinks(chipLinks, ca) : null;
   const priority = split && split.primary.length > 0 ? split : null;
   const visibleChips: { link: string; label?: string }[] =
     priority?.primary ?? chipLinks.slice(0, MAX_VISIBLE_CHIPS).map((link) => ({ link }));
@@ -222,9 +225,6 @@ function RadarMessageCardBase({
     (isEmbedOnlyText(text, m.embed) || cleanedText.replace(/\s+/g, "").length === 0);
   const showText = text.length > 0 && !isMediaOnly;
   const displayText = mediaUrls.size ? cleanedText : text;
-
-  // CA do token analisado (Rick Bot) — mostrado como chip clicável (copia).
-  const ca = showCa ? extractCa(text, links) : null;
 
   // Identidade = authorTag (presente em 100% das capturas → todo card clicável).
   const selectable = Boolean(onSelectAuthor && m.authorTag);

@@ -40,25 +40,56 @@ function providerIndex(link: string): number {
 }
 
 /**
- * Separa os links em `primary` (provedores priorizados, na ordem de
- * PRIORITY_PROVIDERS) e `rest` (todo o resto, na ordem original — vai para o
- * modal). Sem link priorizado, `primary` volta vazio e o chamador cai no
- * comportamento padrão (primeiros N chips + overflow).
+ * Escolhe UM link do provedor. Capturas do Rick trazem vários do mesmo lugar
+ * (o solscan do token, o da carteira do dev, o da transação…) e só o do token
+ * interessa no card: preferimos o que carrega o CA da mensagem; sem CA (ou sem
+ * casar), fica o primeiro que apareceu.
  */
-export function splitPriorityLinks(links: string[]): {
+function pickOne(list: string[], ca: string | null | undefined): string {
+  if (ca) {
+    const needle = ca.toLowerCase();
+    const withCa = list.find((l) => l.toLowerCase().includes(needle));
+    if (withCa) return withCa;
+  }
+  return list[0];
+}
+
+/**
+ * Separa os links em `primary` (UM por provedor priorizado, na ordem de
+ * PRIORITY_PROVIDERS) e `rest` (todo o resto, na ordem original — vira a
+ * contagem do "+N"). Sem link priorizado, `primary` volta vazio e o chamador cai
+ * no comportamento padrão (primeiros N chips + overflow).
+ *
+ * `ca` (contract address da mensagem) desempata quando o mesmo provedor aparece
+ * mais de uma vez. Links repetidos idênticos entram uma vez só.
+ */
+export function splitPriorityLinks(
+  links: string[],
+  ca?: string | null,
+): {
   primary: PriorityLink[];
   rest: string[];
 } {
-  const primary: (PriorityLink & { rank: number })[] = [];
-  const rest: string[] = [];
-
+  // Agrupa por provedor preservando a ordem da mensagem dentro de cada grupo.
+  const byProvider = new Map<number, string[]>();
   for (const link of links) {
     const i = providerIndex(link);
-    if (i < 0) rest.push(link);
-    else primary.push({ link, label: PRIORITY_PROVIDERS[i].label, rank: i });
+    if (i < 0) continue;
+    const list = byProvider.get(i);
+    if (list) list.push(link);
+    else byProvider.set(i, [link]);
   }
 
-  // Ordem = ordem dos provedores; empate mantém a ordem da mensagem (sort estável).
-  primary.sort((a, b) => a.rank - b.rank);
-  return { primary: primary.map(({ link, label }) => ({ link, label })), rest };
+  const primary: PriorityLink[] = [];
+  const chosen = new Set<string>();
+  // Ordem = ordem dos provedores em PRIORITY_PROVIDERS.
+  for (let i = 0; i < PRIORITY_PROVIDERS.length; i++) {
+    const list = byProvider.get(i);
+    if (!list) continue;
+    const link = pickOne(list, ca);
+    chosen.add(link);
+    primary.push({ link, label: PRIORITY_PROVIDERS[i].label });
+  }
+
+  return { primary, rest: links.filter((l) => !chosen.has(l)) };
 }

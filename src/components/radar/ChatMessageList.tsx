@@ -45,10 +45,6 @@ interface ChatMessageListProps {
   surface?: "card" | "list";
   compact?: boolean;
   nameAccent?: boolean;
-  /** Mostra o chip do CA (copia ao clicar) — capturas do Rick Bot. */
-  showCa?: boolean;
-  /** Chips só dos provedores de análise (ver RadarMessageCard). */
-  prioritizeLinks?: boolean;
   /** Divisores por dia (coluna central). Laterais usam a data no rodapé do card. */
   showDayDividers?: boolean;
   className?: string;
@@ -73,8 +69,6 @@ export function ChatMessageList({
   surface = "list",
   compact = false,
   nameAccent = false,
-  showCa = false,
-  prioritizeLinks = false,
   showDayDividers = false,
   className,
 }: ChatMessageListProps) {
@@ -147,8 +141,6 @@ export function ChatMessageList({
                 surface={surface}
                 compact={compact}
                 nameAccent={nameAccent}
-                showCa={showCa}
-                prioritizeLinks={prioritizeLinks}
                 isNew={newIds?.has(m.id)}
                 onSelectAuthor={onSelectAuthor}
               />
