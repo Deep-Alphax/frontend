@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { KolProfileModal } from "@/components/walletReader/KolProfileModal";
-import { GroupsManagerModal } from "@/components/walletReader/GroupsManagerModal";
+import { SquadsManagerModal } from "@/components/walletReader/SquadsManagerModal";
 import { AddKolModal } from "@/components/walletReader/AddKolModal";
 import { KolCard } from "@/components/walletReader/KolCard";
 import { KOL_TIERS, KOL_TYPES } from "@/lib/walletReader/types";
@@ -183,12 +183,12 @@ function FilterCheck({
 /**
  * KOLs (ex-Wallet Reader) — node Figma 833:16987: app-shell de altura total com
  * Topbar + rail de filtros (203px) + área principal (cabeçalho com contagem,
- * busca e CTA + grade de cards). Índice, edições e grupos continuam 100% locais
- * (`useKolIndex` → localStorage); a rail só recorta o que já está em memória.
+ * busca e CTA + grade de cards). Índice, filtros e contagens vêm paginados do
+ * servidor (`useKolIndex`); a rail só desenha as facetas que ele devolveu.
  */
 export function WalletReaderScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [groupsOpen, setGroupsOpen] = useState(false);
+  const [squadsOpen, setSquadsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selected, setSelected] = useState<Map<string, SelWallet>>(() => new Map());
@@ -207,7 +207,6 @@ export function WalletReaderScreen() {
   const [tiers, setTiers] = useState<Set<string>>(() => new Set());
   const [types, setTypes] = useState<Set<string>>(() => new Set());
   const [squadsF, setSquadsF] = useState<Set<string>>(() => new Set());
-  const [fnfF, setFnfF] = useState<Set<string>>(() => new Set());
 
   // Os filtros viram a CHAVE da query — trocar um refaz a consulta no servidor.
   const params = useMemo<KolIndexParams>(
@@ -218,9 +217,8 @@ export function WalletReaderScreen() {
       tiers: Array.from(tiers).sort(),
       types: Array.from(types).sort(),
       squads: Array.from(squadsF).sort(),
-      groups: Array.from(fnfF).sort(),
     }),
-    [search, view, sort, tiers, types, squadsF, fnfF],
+    [search, view, sort, tiers, types, squadsF],
   );
 
   const index = useKolIndex(params);
@@ -231,7 +229,6 @@ export function WalletReaderScreen() {
     counts,
     viewCounts,
     squads,
-    groups,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -393,8 +390,10 @@ export function WalletReaderScreen() {
             ))}
           </FilterSection>
 
+          {/* Uma faceta só: o servidor já devolve em `squads` tanto os do preset
+              quanto os que o usuário criou na conta dele. */}
           {squads.length > 0 && (
-            <FilterSection title="Squad" defaultOpen={false}>
+            <FilterSection title="Squads" defaultOpen={false}>
               {squads.map((s) => (
                 <FilterCheck
                   key={s}
@@ -402,20 +401,6 @@ export function WalletReaderScreen() {
                   count={counts.bySquad[s] ?? 0}
                   checked={squadsF.has(s)}
                   onChange={() => toggle(squadsF, setSquadsF, s)}
-                />
-              ))}
-            </FilterSection>
-          )}
-
-          {groups.length > 0 && (
-            <FilterSection title="Grupos / FnFs" defaultOpen={false}>
-              {groups.map((g) => (
-                <FilterCheck
-                  key={g.id}
-                  label={g.name}
-                  count={counts.byGroup[g.id] ?? 0}
-                  checked={fnfF.has(g.id)}
-                  onChange={() => toggle(fnfF, setFnfF, g.id)}
                 />
               ))}
             </FilterSection>
@@ -439,10 +424,10 @@ export function WalletReaderScreen() {
             </div>
             <button
               type="button"
-              onClick={() => setGroupsOpen(true)}
+              onClick={() => setSquadsOpen(true)}
               className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-12 transition-colors hover:border-gray-8"
             >
-              <Users className="size-4" strokeWidth={1.75} /> Grupos / FnFs
+              <Users className="size-4" strokeWidth={1.75} /> Squads
             </button>
             <button
               type="button"
@@ -608,12 +593,12 @@ export function WalletReaderScreen() {
           toggleSelect={toggleSelect}
         />
       )}
-      <GroupsManagerModal
-        open={groupsOpen}
-        onClose={() => setGroupsOpen(false)}
+      <SquadsManagerModal
+        open={squadsOpen}
+        onClose={() => setSquadsOpen(false)}
         index={index}
         onOpenProfile={(id) => {
-          setGroupsOpen(false);
+          setSquadsOpen(false);
           setOpenId(id);
         }}
       />

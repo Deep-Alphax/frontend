@@ -23,7 +23,7 @@ import {
   type KolPresetListItem,
   type KolPresetPatch,
 } from "@/lib/api/walletReader";
-import { KOL_INDEX_KEY } from "@/lib/walletReader/useKolIndex";
+import { KOL_DETAIL_KEY, KOL_INDEX_KEY } from "@/lib/walletReader/useKolIndex";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
 import { KOL_TYPES, memeAvatarFor, tierFor, type WalletRef } from "@/lib/walletReader/types";
 import { KolCard } from "@/components/walletReader/KolCard";
@@ -33,6 +33,9 @@ import { cn } from "@/lib/cn";
 
 /** Chave da query do preset visto pelo admin (inclui os removidos). */
 export const KOL_PRESET_ADMIN_KEY = ["kol-preset-admin"] as const;
+
+/** Chave do KOL individual do preset — só o editor consome. */
+export const kolPresetOneKey = (id: string) => ["kol-preset-one", id] as const;
 
 /** Itens por página do preset. */
 const PAGE = 60;
@@ -105,7 +108,8 @@ function KolEditor({
   onSubmit: (patch: KolPresetPatch & { name: string }) => void;
   saving: boolean;
 }) {
-  // `key` no <Modal> reinicia o rascunho a cada KOL aberto.
+  // O rascunho nasce do preset UMA vez e não reage a refetch — por isso
+  // `KolEditorLoader` só monta este form com dado recém-buscado do servidor.
   const [d, setD] = useState<Draft>(() => draftFrom(editing));
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
@@ -368,10 +372,16 @@ export function KolsAdmin() {
   );
   const total = data?.pages[0]?.total ?? 0;
 
-  /** Mudou o preset → o índice que os usuários leem está velho. */
+  /**
+   * Mudou o preset → tudo que os usuários leem por cima dele está velho: o
+   * índice paginado E o detalhe de cada KOL (o mesmo cache alimenta o modal de
+   * /wallet-reader nesta aba). O editor não precisa entrar aqui: ele já abre
+   * sempre do servidor (`gcTime: 0` em `KolEditorLoader`).
+   */
   const afterWrite = () => {
     qc.invalidateQueries({ queryKey: KOL_PRESET_ADMIN_KEY });
     qc.invalidateQueries({ queryKey: KOL_INDEX_KEY });
+    qc.invalidateQueries({ queryKey: KOL_DETAIL_KEY });
   };
 
   const createMut = useMutation({
@@ -592,8 +602,17 @@ function KolEditorLoader({
   onSubmit: (patch: KolPresetPatch & { name: string }) => void;
 }) {
   const { data } = useQuery({
-    queryKey: ["kol-preset-one", id],
+    queryKey: kolPresetOneKey(id),
     queryFn: () => getKolPresetOne(id),
+    // O rascunho do formulário nasce deste dado UMA vez (`useState` em
+    // `KolEditor`), então servir cache aqui é perigoso, não só desatualizado:
+    // reabrir o KOL dentro da janela de cache montava o editor com o estado
+    // ANTERIOR ao último salvamento e o "Salvar preset" — que manda todos os
+    // campos — regravava aquele valor velho por cima do novo. Descartar ao
+    // fechar (`gcTime: 0`) garante que todo editor abre sobre a verdade do
+    // servidor. Custo: um GET de uma linha por abertura.
+    gcTime: 0,
+    staleTime: 0,
   });
 
   if (!data) {

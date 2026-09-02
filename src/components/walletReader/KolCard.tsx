@@ -79,7 +79,10 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
   const tier = tierFor(kol.relevance);
   const shown = kol.types.slice(0, MAX_VISIBLE_TYPES);
   const extra = kol.types.length - shown.length;
-  const squad = kol.squads.length > 0 ? kol.squads.join(" · ") : "Sem squad";
+  // Todos os squads do KOL, na ordem em que vieram: "Squad1, Squad2, Squad3".
+  // A linha tem `truncate`, então o `title` é quem mostra a lista inteira
+  // quando ela não cabe.
+  const squad = kol.squads.length > 0 ? kol.squads.join(", ") : "Sem squad";
 
   return (
     <article
@@ -119,7 +122,12 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
         />
         <div className="flex w-full min-w-0 flex-col items-center gap-3 text-center">
           <p className="w-full truncate text-lg font-semibold leading-[1.1] text-gray-12">{kol.name}</p>
-          <p className="w-full truncate text-sm font-medium leading-[1.3] text-gray-11">{squad}</p>
+          <p
+            className="w-full truncate text-sm font-medium leading-[1.3] text-gray-11"
+            title={squad}
+          >
+            {squad}
+          </p>
         </div>
       </div>
 

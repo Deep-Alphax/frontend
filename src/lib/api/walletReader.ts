@@ -39,7 +39,8 @@ export interface KolOverrideEntry {
   name: string | null;
   relevance: number | null;
   types: string[] | null;
-  fnfGroups: string[] | null;
+  /** Squads da CONTA (nomes). `null` = herda só os do preset. */
+  squads: string[] | null;
   twitter: string | null;
   notes: string | null;
   /** `null` = herda; `""` = o usuário limpou o avatar do preset. */
@@ -52,11 +53,6 @@ export interface KolOverrideEntry {
   updatedAt: number;
 }
 
-export interface KolGroup {
-  id: string;
-  name: string;
-}
-
 /** Item da lista — o estado efetivo SEM as carteiras (o card só usa a contagem). */
 export type KolListItem = Omit<KolState, "wallets">;
 
@@ -67,7 +63,6 @@ export interface KolIndexParams {
   tiers?: string[];
   types?: string[];
   squads?: string[];
-  groups?: string[];
   sort?: "relevance" | "name" | "wallets" | "tier";
   limit?: number;
   offset?: number;
@@ -81,11 +76,10 @@ export interface KolIndexPage {
     byTier: Record<string, number>;
     byType: Record<string, number>;
     bySquad: Record<string, number>;
-    byGroup: Record<string, number>;
   };
   viewCounts: Record<string, number>;
+  /** Todo squad visível ao usuário — do preset e da conta —, ordenado. */
   squads: string[];
-  groups: KolGroup[];
 }
 
 /**
@@ -98,7 +92,7 @@ export type KolOverridePatch = Partial<
     | "name"
     | "relevance"
     | "types"
-    | "fnfGroups"
+    | "squads"
     | "twitter"
     | "notes"
     | "avatar"
@@ -136,7 +130,6 @@ export async function getKolIndex(params: KolIndexParams = {}): Promise<KolIndex
       tiers: listParam(params.tiers),
       types: listParam(params.types),
       squads: listParam(params.squads),
-      groups: listParam(params.groups),
       sort: params.sort,
       limit: params.limit,
       offset: params.offset,
@@ -185,7 +178,6 @@ export async function exportKolBackup(): Promise<{
   exportedAt: string;
   overrides: Record<string, KolOverridePatch>;
   customIds: string[];
-  groups: KolGroup[];
 }> {
   const { data } = await api.get("/api/v1/wallet-reader/kols/backup");
   return data;
@@ -196,35 +188,45 @@ export async function resetKolAccount(): Promise<void> {
   await api.delete("/api/v1/wallet-reader/kols");
 }
 
-/** POST /api/v1/wallet-reader/kols/import — restaura um backup (1 chamada). */
+/**
+ * POST /api/v1/wallet-reader/kols/import — restaura um backup (1 chamada).
+ *
+ * `groups` só existe em arquivos ANTERIORES à unificação squad/grupo; o backend
+ * usa a tabela para traduzir os ids de `fnfGroups` em nomes de squad. Arquivos
+ * novos não trazem nem um nem outro.
+ */
 export async function importKolBackup(input: {
   overrides: (KolOverridePatch & { kolId: string })[];
-  groups: KolGroup[];
-}): Promise<{ imported: number; groups: KolGroup[] }> {
-  const { data } = await api.post<{ imported: number; groups: KolGroup[] }>(
+  groups?: { id: string; name: string }[];
+}): Promise<{ imported: number }> {
+  const { data } = await api.post<{ imported: number }>(
     "/api/v1/wallet-reader/kols/import",
     input,
   );
   return data;
 }
 
-// ── Grupos / FnFs da conta ───────────────────────────────────────────────────
+// ── Squads da conta ──────────────────────────────────────────────────────────
+//
+// Squad não é entidade: é um nome na lista do override. Marcar um KOL num squad
+// é um PATCH nele — não há rota de criação. Aqui ficam só as duas operações que
+// varrem a conta inteira e que o cliente não faria numa requisição só.
 
-/** POST /api/v1/wallet-reader/groups — idempotente por nome. */
-export async function createKolGroup(name: string): Promise<KolGroup> {
-  const { data } = await api.post<KolGroup>("/api/v1/wallet-reader/groups", { name });
+/** PATCH /api/v1/wallet-reader/squads — renomeia em todos os KOLs da conta. */
+export async function renameKolSquad(from: string, to: string): Promise<{ updated: number }> {
+  const { data } = await api.patch<{ updated: number }>("/api/v1/wallet-reader/squads", {
+    from,
+    to,
+  });
   return data;
 }
 
-/** PATCH /api/v1/wallet-reader/groups/:id */
-export async function renameKolGroup(id: string, name: string): Promise<KolGroup> {
-  const { data } = await api.patch<KolGroup>(`/api/v1/wallet-reader/groups/${id}`, { name });
+/** DELETE /api/v1/wallet-reader/squads/:name — tira de todos os KOLs da conta. */
+export async function deleteKolSquad(name: string): Promise<{ updated: number }> {
+  const { data } = await api.delete<{ updated: number }>(
+    `/api/v1/wallet-reader/squads/${encodeURIComponent(name)}`,
+  );
   return data;
-}
-
-/** DELETE /api/v1/wallet-reader/groups/:id — desvincula dos KOLs também. */
-export async function deleteKolGroup(id: string): Promise<void> {
-  await api.delete(`/api/v1/wallet-reader/groups/${id}`);
 }
 
 // ── Preset global (ADMIN) ────────────────────────────────────────────────────

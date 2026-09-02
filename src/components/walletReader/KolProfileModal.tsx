@@ -9,9 +9,10 @@ import { cn } from "@/lib/cn";
 import { Modal } from "@/components/walletReader/Modal";
 import { SidewalletBlock } from "@/components/walletReader/SidewalletBlock";
 import { TierPill, XIcon } from "@/components/walletReader/KolCard";
-import type { useKolIndex } from "@/lib/walletReader/useKolIndex";
+import { kolDetailKey, type useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { getKol, type KolOverridePatch } from "@/lib/api/walletReader";
 import { useKolScans, useScans } from "@/lib/walletReader/useScans";
+import { dedupSquads, squadKey } from "@/lib/walletReader/squads";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
 import {
   KOL_TIERS,
@@ -36,7 +37,12 @@ interface Draft {
   notes: string;
   relevance: number;
   types: string[];
-  fnfGroups: string[];
+  /**
+   * Squads DA CONTA. Os do preset são globais (só o ADMIN escreve) e por isso
+   * não entram no rascunho — aparecem no cabeçalho, mas não são editáveis aqui.
+   * `effectiveSquads` recompõe a lista das duas fontes para exibição.
+   */
+  ownSquads: string[];
   /** Avatar EFETIVO exibido; `null` = sem foto própria (cai no avatar por hash). */
   avatar: string | null;
   wallets: WalletRef[];
@@ -50,7 +56,7 @@ function draftFrom(state: KolState): Draft {
     notes: state.notes,
     relevance: state.relevance,
     types: state.types,
-    fnfGroups: state.fnfGroups,
+    ownSquads: state.ownSquads,
     avatar: state.avatar,
     wallets: state.wallets,
     dismissed: state.dismissedSidewallets,
@@ -66,7 +72,7 @@ function fingerprint(d: Draft): string {
     relevance: d.relevance,
     avatar: d.avatar,
     types: [...d.types].sort(),
-    fnfGroups: [...d.fnfGroups].sort(),
+    ownSquads: [...d.ownSquads].sort(),
     dismissed: [...d.dismissed].sort(),
     wallets: d.wallets.map((w) => `${w.name}|${w.address}`).sort(),
   });
@@ -197,7 +203,7 @@ function EditSection({
   );
 }
 
-/** Chip de escolha (tipo de trader, grupo/FnF) — node 901:20227/20228. */
+/** Chip de escolha (tipo de trader, squad) — node 901:20227/20228. */
 function ChoiceChip({
   label,
   selected,
@@ -246,7 +252,9 @@ interface KolProfileModalProps {
  */
 export function KolProfileModal(props: KolProfileModalProps) {
   const { data: state } = useQuery({
-    queryKey: ["kol", props.id],
+    // `kolDetailKey` para o `invalidate` das mutações alcançar esta query —
+    // sem isso o modal reabre com o estado anterior ao último PATCH.
+    queryKey: kolDetailKey(props.id),
     queryFn: () => getKol(props.id),
   });
 
@@ -271,14 +279,14 @@ function KolProfileForm({
   isSelected,
   toggleSelect,
 }: KolProfileModalProps & { state: KolState }) {
-  const { patchOverride, removeKol, groups, createGroup } = index;
+  const { patchOverride, removeKol, squads: knownSquads } = index;
   const { runScan } = useScans();
   const scans = useKolScans(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
-  const [newGroup, setNewGroup] = useState("");
+  const [newSquad, setNewSquad] = useState("");
   const [saving, setSaving] = useState(false);
   // O modal abre em DETALHES (node 901:18345); "Editar" leva ao formulário.
   const [editing, setEditing] = useState(false);
@@ -300,6 +308,40 @@ function KolProfileForm({
   const tier = tierFor(draft.relevance);
   const twHandle = draft.twitter.trim().replace(/^@/, "");
 
+  /**
+   * Squads do PRESET: o que o servidor mandou como efetivo menos o que é da
+   * conta. São globais, então saem de `state` (não do rascunho) e o usuário não
+   * os edita aqui.
+   */
+  const presetSquads = useMemo(() => {
+    const own = new Set(state.ownSquads.map(squadKey));
+    return state.squads.filter((s) => !own.has(squadKey(s)));
+  }, [state.squads, state.ownSquads]);
+
+  /** O que aparece sob o nome: preset + conta, na ordem, sem repetir. */
+  const effectiveSquads = useMemo(
+    () => dedupSquads([...presetSquads, ...draft.ownSquads]),
+    [presetSquads, draft.ownSquads],
+  );
+
+  /** Squads que o usuário já usa em outros KOLs e que este ainda não tem. */
+  const suggestedSquads = useMemo(() => {
+    const has = new Set(effectiveSquads.map(squadKey));
+    return knownSquads.filter((s) => !has.has(squadKey(s)));
+  }, [knownSquads, effectiveSquads]);
+
+  /** Marca o KOL num squad da conta. Ignora vazio e repetido (sem caixa). */
+  const addSquad = (raw: string) => {
+    const name = raw.trim();
+    if (!name) return;
+    if (effectiveSquads.some((s) => squadKey(s) === squadKey(name))) {
+      setNewSquad("");
+      return;
+    }
+    set("ownSquads", draft.ownSquads.concat([name]));
+    setNewSquad("");
+  };
+
   const onUpload = async (file: File | undefined) => {
     if (!file) return;
     try {
@@ -318,7 +360,7 @@ function KolProfileForm({
     if (draft.notes !== initial.notes) patch.notes = draft.notes;
     if (draft.relevance !== initial.relevance) patch.relevance = draft.relevance;
     if (!sameList(draft.types, initial.types)) patch.types = draft.types;
-    if (!sameList(draft.fnfGroups, initial.fnfGroups)) patch.fnfGroups = draft.fnfGroups;
+    if (!sameList(draft.ownSquads, initial.ownSquads)) patch.squads = draft.ownSquads;
     if (!sameList(draft.dismissed, initial.dismissed)) {
       patch.dismissedSidewallets = draft.dismissed;
     }
@@ -412,8 +454,10 @@ function KolProfileForm({
 
         <div className="relative flex flex-col items-center gap-2 text-center">
           <p className="text-lg font-semibold leading-[1.1] text-gray-12">{draft.name}</p>
+          {/* Todos os squads, do preset e da conta: "Squad1, Squad2, Squad3".
+              Sai do rascunho para acompanhar o que o usuário marca na hora. */}
           <p className="text-sm font-medium leading-[1.3] text-gray-11">
-            {state.squads.length > 0 ? state.squads.join(" · ") : "Sem squad"}
+            {effectiveSquads.length > 0 ? effectiveSquads.join(", ") : "Sem squad"}
           </p>
         </div>
 
@@ -595,49 +639,72 @@ function KolProfileForm({
       </EditSection>
 
       {/*
-       * Grupos/FnFs não aparecem no node, mas ESTE é o único lugar que marca um
-       * KOL num grupo (o gerenciador só lista os membros) — tirar a seção
-       * quebraria o filtro de FnFs da rail. Segue a linguagem dos chips acima.
+       * Squads não aparecem no node, mas ESTE é o único lugar que põe um KOL num
+       * squad (o gerenciador só renomeia/apaga) — tirar a seção quebraria o
+       * filtro de squad da rail. Segue a linguagem dos chips acima.
+       *
+       * Os do PRESET são globais (só o ADMIN escreve): aparecem como etiqueta
+       * fixa, sem clique, porque tirá-los daqui daria a impressão de que sumiram
+       * para todo mundo.
        */}
-      <EditSection label="Grupos / FnFs" count={`${draft.fnfGroups.length} marcado${draft.fnfGroups.length !== 1 ? "s" : ""}`}>
+      <EditSection label="Squads" count={`${effectiveSquads.length} no total`}>
         <div className="flex flex-wrap gap-2">
-          {groups.map((g) => (
+          {presetSquads.map((s) => (
+            <span
+              key={s}
+              title="Squad do preset — vale para todos os usuários"
+              className="rounded-[32px] border border-gray-6 bg-gray-2 p-2 text-xs font-medium leading-[1.3] text-gray-11"
+            >
+              {s}
+            </span>
+          ))}
+          {draft.ownSquads.map((s) => (
             <ChoiceChip
-              key={g.id}
-              label={g.name}
-              selected={draft.fnfGroups.includes(g.id)}
-              onClick={() => {
-                const next = new Set(draft.fnfGroups);
-                if (next.has(g.id)) next.delete(g.id);
-                else next.add(g.id);
-                set("fnfGroups", Array.from(next));
-              }}
+              key={s}
+              label={s}
+              selected
+              onClick={() =>
+                set(
+                  "ownSquads",
+                  draft.ownSquads.filter((x) => x !== s),
+                )
+              }
             />
           ))}
         </div>
+
+        {/* Squads que o usuário já usa em OUTROS KOLs — um clique para reusar
+            em vez de redigitar (e sem criar variação de grafia). */}
+        {suggestedSquads.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {suggestedSquads.map((s) => (
+              <ChoiceChip key={s} label={s} selected={false} onClick={() => addSquad(s)} />
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
           <input
-            value={newGroup}
-            onChange={(e) => setNewGroup(e.target.value)}
-            placeholder="Novo grupo/FnF"
-            aria-label="Novo grupo ou FnF"
+            value={newSquad}
+            onChange={(e) => setNewSquad(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              addSquad(newSquad);
+            }}
+            placeholder="Novo squad"
+            aria-label="Novo squad"
             className="h-10 min-w-0 flex-1 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
           />
           <button
             type="button"
-            onClick={async () => {
-              const n = newGroup.trim();
-              if (!n) return;
-              // O grupo é entidade da conta: nasce no servidor na hora (precisa
-              // de id). Marcar o KOL nele é que entra no rascunho.
-              const g = await createGroup(n);
-              if (!g) return;
-              set("fnfGroups", Array.from(new Set(draft.fnfGroups).add(g.id)));
-              setNewGroup("");
-            }}
+            onClick={() => addSquad(newSquad)}
+            // A seção de carteiras logo abaixo tem outro "Adicionar": sem o
+            // rótulo acessível os dois botões ficam indistinguíveis por nome.
+            aria-label="Adicionar squad"
             className="flex h-10 shrink-0 items-center justify-center rounded-lg border border-gray-6 bg-gray-3 px-4 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
           >
-            Criar e marcar
+            Adicionar
           </button>
         </div>
       </EditSection>

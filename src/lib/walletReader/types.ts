@@ -26,7 +26,7 @@ export interface KolOverride {
   name?: string;
   relevance?: number;
   types?: string[];
-  fnfGroups?: string[];
+  squads?: string[];
   twitter?: string;
   notes?: string;
   avatar?: string | null;
@@ -37,24 +37,23 @@ export interface KolOverride {
   updatedAt?: number;
 }
 
-/** Grupo/FnF criado pelo usuário. */
-export interface KolGroup {
-  id: string;
-  name: string;
-}
-
 /** Estado efetivo de um KOL (base + override aplicados). */
 export interface KolState {
   id: string;
   name: string;
   wallets: WalletRef[];
   walletCount: number;
+  /**
+   * Squads EFETIVOS: os do preset (globais, só o ADMIN escreve) + os da conta.
+   * É esta lista que aparece sob o nome do KOL e que a rail filtra.
+   */
   squads: string[];
+  /** Só os da CONTA — o subconjunto de `squads` que este usuário pode tirar. */
+  ownSquads: string[];
   seedRelevance: number;
   isCustom: boolean;
   relevance: number;
   types: string[];
-  fnfGroups: string[];
   twitter: string;
   notes: string;
   avatar: string | null;
@@ -219,9 +218,9 @@ export function avatarSrc(state: Pick<KolState, "avatar" | "id">): string {
   return state.avatar || memeAvatarFor(state.id);
 }
 
-/** Cor (hsl) determinística de um grupo/FnF, pelo id. */
-export function groupHue(id: string): number {
-  return hashStr(id) % 360;
+/** Cor (hsl) determinística de um squad, pelo nome. */
+export function squadHue(name: string): number {
+  return hashStr(name.trim().toLowerCase()) % 360;
 }
 
 /** Uma carteira sinalizada por um scan de sidewallets/copytraders. */

@@ -11,16 +11,14 @@ import toast from "react-hot-toast";
 import { getApiErrorMessage, isNotFoundError } from "@/lib/api/client";
 import {
   createCustomKol,
-  createKolGroup,
-  deleteKolGroup,
   deleteKolOverride,
+  deleteKolSquad,
   exportKolBackup,
   getKolIndex,
   importKolBackup,
   patchKolOverride,
-  renameKolGroup,
+  renameKolSquad,
   resetKolAccount,
-  type KolGroup,
   type KolIndexPage,
   type KolIndexParams,
   type KolOverridePatch,
@@ -31,16 +29,35 @@ import type { WalletRef } from "@/lib/walletReader/types";
 export const KOL_INDEX_KEY = ["kol-index"] as const;
 export const kolIndexKey = (p: KolIndexParams) => [...KOL_INDEX_KEY, p] as const;
 
+/**
+ * Raiz da chave do KOL individual (`getKol`, o estado efetivo COM as carteiras
+ * que o modal de perfil usa para montar o rascunho).
+ *
+ * Chave SEPARADA da listagem, então invalidar `KOL_INDEX_KEY` não a alcança —
+ * era por isso que uma edição salva só aparecia depois de um F5: a listagem
+ * refazia a busca, mas o detalhe continuava servindo o snapshot de antes do
+ * PATCH (`staleTime` 60s / `gcTime` 5min em `Providers`), e o rascunho do
+ * formulário nasce dele UMA vez (`useState`), sem reagir a refetch posterior.
+ */
+export const KOL_DETAIL_KEY = ["kol"] as const;
+export const kolDetailKey = (kolId: string) => [...KOL_DETAIL_KEY, kolId] as const;
+
 /** Itens por página. O servidor devolve no máximo 200. */
 const PAGE = 60;
 
-/** Backup da conta. Formato mantido compatível com os arquivos antigos. */
+/**
+ * Backup da conta.
+ *
+ * `groups` só aparece em arquivos ANTERIORES à unificação squad/grupo — o
+ * backend ainda os lê para traduzir os ids de `fnfGroups` em nomes de squad, e
+ * é por isso que o campo continua viajando no import.
+ */
 export interface KolBackup {
   version: 1;
   exportedAt: string;
   overrides: Record<string, KolOverridePatch>;
   customIds: string[];
-  groups: KolGroup[];
+  groups?: { id: string; name: string }[];
 }
 
 /**
@@ -81,10 +98,17 @@ export function useKolIndex(params: KolIndexParams) {
       .filter((it) => (seen.has(it.id) ? false : (seen.add(it.id), true)));
   }, [pages]);
 
-  const invalidate = useCallback(
-    () => qc.invalidateQueries({ queryKey: KOL_INDEX_KEY }),
-    [qc],
-  );
+  /**
+   * Toda escrita derruba as DUAS camadas de cache: a listagem paginada e o
+   * detalhe de cada KOL. Invalidar só a listagem deixava o modal reabrir com o
+   * estado anterior ao PATCH — o usuário via a edição sumir e recorria ao F5.
+   */
+  const invalidate = useCallback(async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: KOL_INDEX_KEY }),
+      qc.invalidateQueries({ queryKey: KOL_DETAIL_KEY }),
+    ]);
+  }, [qc]);
 
   const onError = useCallback(
     (error: unknown, fallback: string) => {
@@ -147,30 +171,22 @@ export function useKolIndex(params: KolIndexParams) {
     [removeMut, patchOverride],
   );
 
-  // ── Grupos / FnFs ──────────────────────────────────────────────────────────
+  // ── Squads da conta ────────────────────────────────────────────────────────
+  //
+  // Não há "criar squad": marcar um KOL num squad é um PATCH nele (o nome passa
+  // a existir por consequência). Só renomear e apagar precisam varrer a conta,
+  // e isso o servidor faz numa requisição.
 
-  const createGroupMut = useMutation({
-    mutationFn: createKolGroup,
+  const renameSquadMut = useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) => renameKolSquad(from, to),
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível criar o grupo."),
+    onError: (e) => onError(e, "Não foi possível renomear o squad."),
   });
 
-  const createGroup = useCallback(
-    (name: string): Promise<KolGroup | null> =>
-      createGroupMut.mutateAsync(name).catch(() => null),
-    [createGroupMut],
-  );
-
-  const renameGroupMut = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) => renameKolGroup(id, name),
+  const deleteSquadMut = useMutation({
+    mutationFn: deleteKolSquad,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível renomear o grupo."),
-  });
-
-  const deleteGroupMut = useMutation({
-    mutationFn: deleteKolGroup,
-    onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível remover o grupo."),
+    onError: (e) => onError(e, "Não foi possível remover o squad."),
   });
 
   // ── Backup da conta ────────────────────────────────────────────────────────
@@ -188,7 +204,7 @@ export function useKolIndex(params: KolIndexParams) {
         kolId,
       }));
       const res = await importMut
-        .mutateAsync({ overrides: list, groups: parsed.groups ?? [] })
+        .mutateAsync({ overrides: list, groups: parsed.groups })
         .catch(() => null);
       return res?.imported ?? 0;
     },
@@ -205,19 +221,17 @@ export function useKolIndex(params: KolIndexParams) {
     loaded: !query.isPending,
     items,
     total: head?.total ?? 0,
-    counts: head?.counts ?? { byTier: {}, byType: {}, bySquad: {}, byGroup: {} },
+    counts: head?.counts ?? { byTier: {}, byType: {}, bySquad: {} },
     viewCounts: head?.viewCounts ?? {},
     squads: head?.squads ?? [],
-    groups: head?.groups ?? [],
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
     patchOverride,
     addKol,
     removeKol,
-    createGroup,
-    renameGroup: (id: string, name: string) => renameGroupMut.mutate({ id, name }),
-    deleteGroup: (id: string) => deleteGroupMut.mutate(id),
+    renameSquad: (from: string, to: string) => renameSquadMut.mutate({ from, to }),
+    deleteSquad: (name: string) => deleteSquadMut.mutate(name),
     exportBackup: exportKolBackup,
     importBackup,
     reset: () => resetMut.mutate(),
