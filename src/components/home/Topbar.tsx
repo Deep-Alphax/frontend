@@ -15,6 +15,7 @@ interface NavItem {
 
 // Rotas ainda não construídas apontam para "#"; "My profile" é a Home.
 const NAV_ITEMS: NavItem[] = [
+  { label: "Mentorship", href: "/mentorship" },
   { label: "Radar", href: "/radar" },
   { label: "KOLs", href: "/wallet-reader" },
   { label: "Plans", href: "/plans" },

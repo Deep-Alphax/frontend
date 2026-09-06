@@ -72,8 +72,8 @@ export function Footer() {
             </Link>
 
             <nav className="flex flex-wrap items-center justify-center">
-             {/*  <FooterLink href="#">Aprender</FooterLink>
-              <FooterLink href="#">Mentoria</FooterLink> */}
+             {/*  <FooterLink href="#">Aprender</FooterLink> */}
+              <FooterLink href="/mentorship">Mentorship</FooterLink>
               <FooterLink href="/radar">Radar</FooterLink>
               <FooterLink href="/wallet-reader">Wallet Reader</FooterLink>
               <FooterLink href="/">My profile</FooterLink>

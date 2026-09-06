@@ -22,3 +22,19 @@ if (!("IntersectionObserver" in globalThis)) {
   globalThis.IntersectionObserver =
     IntersectionObserverStub as unknown as typeof IntersectionObserver;
 }
+
+/**
+ * jsdom também não implementa ResizeObserver, usado pela esteira da Mentoria
+ * para decidir se as setas de rolagem ficam habilitadas. Stub inerte pelo mesmo
+ * motivo do anterior: em jsdom `clientWidth`/`scrollWidth` são sempre 0, então
+ * um observer de verdade não teria nada de real para medir.
+ */
+if (!("ResizeObserver" in globalThis)) {
+  class ResizeObserverStub implements ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver =
+    ResizeObserverStub as unknown as typeof ResizeObserver;
+}
