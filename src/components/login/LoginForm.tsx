@@ -49,12 +49,12 @@ export function LoginForm() {
         // 2FA por e-mail: o backend já enviou o OTP. A tela de verificação
         // ainda não faz parte deste escopo — avisamos o usuário sem quebrar.
         // TODO(auth): implementar /login/mfa consumindo result.mfaToken.
-        toast("Enviamos um código de verificação para o seu e-mail.", {
+        toast("We sent a verification code to your email.", {
           icon: "✉️",
         });
         return;
       }
-      toast.success("Login efetuado com sucesso!");
+      toast.success("Signed in successfully!");
       router.replace(POST_LOGIN_REDIRECT);
     },
     onError: (error) => {
@@ -74,36 +74,36 @@ export function LoginForm() {
       <div className="flex w-full flex-col gap-7">
         <div className="flex flex-col items-center gap-4 text-gray-12">
           <h1 className="font-display text-display-24">
-            Entrar
+            Sign in
           </h1>
-          <p className="text-lg">Continue de onde parou</p>
+          <p className="text-lg">Pick up where you left off</p>
         </div>
 
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col gap-6">
             <TextField
-              label="E-mail"
+              label="Email"
               type="email"
               inputMode="email"
               autoComplete="email"
-              placeholder="Digite seu email"
+              placeholder="Enter your email"
               leftIcon={<Mail className="size-5" strokeWidth={1.5} />}
               error={errors.email?.message}
               {...register("email")}
             />
 
             <TextField
-              label="Senha"
+              label="Password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="Digite sua senha"
+              placeholder="Enter your password"
               leftIcon={<Lock className="size-5" strokeWidth={1.5} />}
               error={errors.password?.message}
               rightSlot={
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="flex items-center text-gray-11 transition-colors hover:text-gray-12"
                 >
                   {showPassword ? (
@@ -123,7 +123,7 @@ export function LoginForm() {
               name="remember"
               render={({ field }) => (
                 <Checkbox
-                  label="Lembrar conta"
+                  label="Remember me"
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
@@ -134,7 +134,7 @@ export function LoginForm() {
               href="/forgot-password"
               className="text-base text-gray-11 transition-colors hover:text-gray-12"
             >
-              Esqueci minha senha
+              Forgot my password
             </Link> */}
           </div>
         </div>
@@ -145,7 +145,7 @@ export function LoginForm() {
       {/* Ações */}
       <div className="flex w-full flex-col gap-3">
         <Button type="submit" disabled={isSubmitting || awaitingTurnstile}>
-          {isSubmitting ? "Entrando..." : "Entrar na plataforma"}
+          {isSubmitting ? "Signing in..." : "Sign in to the platform"}
         </Button>
 
         <Button
@@ -159,19 +159,19 @@ export function LoginForm() {
           {/* Ícone monocromático exportado do Figma (fill gray-12). SVG → <img>. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/google.svg" alt="" aria-hidden className="size-6" />
-          Fazer login com o Google
+          Sign in with Google
         </Button>
       </div>
 
       <div className="h-px w-full bg-gray-6" />
 
       <div className="flex items-center justify-center gap-2 text-base">
-        <span className="text-gray-12">Ainda não tem conta?</span>
+        <span className="text-gray-12">Don’t have an account?</span>
         <Link
           href="/register"
           className="font-medium text-secundaria-11 underline underline-offset-2"
         >
-          Criar conta
+          Create account
         </Link>
       </div>
     </form>

@@ -79,9 +79,9 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-          <p className="text-sm font-semibold text-gray-12">Nada do Rick ainda</p>
+          <p className="text-sm font-semibold text-gray-12">Nothing from Rick yet</p>
           <p className="max-w-xs text-xs text-gray-11">
-            As capturas do Rick Bot aparecem aqui em tempo real.
+            Rick Bot captures show up here in real time.
           </p>
         </div>
       ) : (

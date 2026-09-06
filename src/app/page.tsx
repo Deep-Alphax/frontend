@@ -6,7 +6,7 @@ import { HomeScreen } from "@/components/home/HomeScreen";
  * sem sessão, esta rota redireciona para /login.
  */
 export const metadata: Metadata = {
-  title: "Meu perfil",
+  title: "My profile",
 };
 
 export default function Home() {

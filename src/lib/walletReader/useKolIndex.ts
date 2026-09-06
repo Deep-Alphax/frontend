@@ -114,7 +114,7 @@ export function useKolIndex(params: KolIndexParams) {
     (error: unknown, fallback: string) => {
       if (isNotFoundError(error)) {
         void invalidate();
-        toast.error("Este KOL não existe mais. A lista foi atualizada.");
+        toast.error("This KOL no longer exists. The list has been refreshed.");
         return;
       }
       toast.error(getApiErrorMessage(error, fallback));
@@ -126,7 +126,7 @@ export function useKolIndex(params: KolIndexParams) {
     mutationFn: ({ kolId, patch }: { kolId: string; patch: KolOverridePatch }) =>
       patchKolOverride(kolId, patch),
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível salvar a edição."),
+    onError: (e) => onError(e, "Could not save the change."),
   });
 
   /** Salva as edições da conta. `true` = o servidor aceitou. */
@@ -142,7 +142,7 @@ export function useKolIndex(params: KolIndexParams) {
   const addKolMut = useMutation({
     mutationFn: createCustomKol,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível criar o KOL."),
+    onError: (e) => onError(e, "Could not create the KOL."),
   });
 
   const addKol = useCallback(
@@ -156,7 +156,7 @@ export function useKolIndex(params: KolIndexParams) {
   const removeMut = useMutation({
     mutationFn: deleteKolOverride,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível remover o KOL."),
+    onError: (e) => onError(e, "Could not remove the KOL."),
   });
 
   /**
@@ -180,13 +180,13 @@ export function useKolIndex(params: KolIndexParams) {
   const renameSquadMut = useMutation({
     mutationFn: ({ from, to }: { from: string; to: string }) => renameKolSquad(from, to),
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível renomear o squad."),
+    onError: (e) => onError(e, "Could not rename the squad."),
   });
 
   const deleteSquadMut = useMutation({
     mutationFn: deleteKolSquad,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível remover o squad."),
+    onError: (e) => onError(e, "Could not remove the squad."),
   });
 
   // ── Backup da conta ────────────────────────────────────────────────────────
@@ -194,7 +194,7 @@ export function useKolIndex(params: KolIndexParams) {
   const importMut = useMutation({
     mutationFn: importKolBackup,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível importar o backup."),
+    onError: (e) => onError(e, "Could not import the backup."),
   });
 
   const importBackup = useCallback(
@@ -214,7 +214,7 @@ export function useKolIndex(params: KolIndexParams) {
   const resetMut = useMutation({
     mutationFn: resetKolAccount,
     onSuccess: invalidate,
-    onError: (e) => onError(e, "Não foi possível limpar as edições."),
+    onError: (e) => onError(e, "Could not clear the edits."),
   });
 
   return {

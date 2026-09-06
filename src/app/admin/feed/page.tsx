@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FeedAdmin } from "@/components/admin/FeedAdmin";
 
 export const metadata: Metadata = {
-  title: "Admin · Feed do Discord",
+  title: "Admin · Discord feed",
   robots: { index: false, follow: false },
 };
 

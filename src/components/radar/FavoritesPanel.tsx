@@ -64,7 +64,7 @@ export function FavoritesPanel({ onSelectAuthor, dragHandle }: FavoritesPanelPro
       <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 bg-gray-2 border-b border-gray-6 px-3">
         <div className="flex min-w-0 items-center gap-1">
           {dragHandle}
-          <h2 className="text-base font-semibold text-gray-12">Seus favoritos</h2>
+          <h2 className="text-base font-semibold text-gray-12">Your favorites</h2>
         </div>
         {count > 0 && <CountBadge>{count}</CountBadge>}
       </div>
@@ -96,10 +96,10 @@ export function FavoritesPanel({ onSelectAuthor, dragHandle }: FavoritesPanelPro
             className="h-20 w-[76px] object-contain"
           />
           <div className="flex flex-col items-center gap-4">
-            <p className="text-base font-semibold text-gray-12">Nada aqui ainda...</p>
+            <p className="text-base font-semibold text-gray-12">Nothing here yet...</p>
             <p className="text-sm leading-snug text-gray-11">
-              Siga quem você acompanha de perto e as mensagens dessas pessoas
-              aparecem só neste feed
+              Follow the people you watch closely and their messages
+              show up in this feed only
             </p>
           </div>
         </div>

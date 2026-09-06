@@ -55,7 +55,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar"
+            aria-label="Close"
             className="flex size-8 shrink-0 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
           >
             <X className="size-5" strokeWidth={2} />

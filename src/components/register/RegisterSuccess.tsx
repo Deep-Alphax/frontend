@@ -41,11 +41,11 @@ export function RegisterSuccess() {
 
           <div className="flex flex-col items-center gap-5 text-center text-gray-12">
             <h1 className="font-display text-display-24">
-              Cadastro concluído!
+              Account created!
             </h1>
             <p className="text-base">
-              Sua conta está ativa e pronta para uso. O restante você acompanha
-              dentro da plataforma
+              Your account is active and ready to use. You follow the rest
+              inside the platform
             </p>
           </div>
         </div>

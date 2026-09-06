@@ -35,26 +35,26 @@ export function BlacklistManager() {
         reason: form.reason.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Usuário bloqueado");
+      toast.success("User blocked");
       setForm(EMPTY);
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao bloquear")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not block")),
   });
 
   const toggleMutation = useMutation({
     mutationFn: (b: BlacklistedUser) => updateBlacklist(b.id, { isActive: !b.isActive }),
     onSuccess: invalidate,
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao alternar")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not toggle")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteBlacklist(id),
     onSuccess: () => {
-      toast.success("Removido da blacklist");
+      toast.success("Removed from blacklist");
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao remover")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not remove")),
   });
 
   const items = listQuery.data ?? [];
@@ -63,31 +63,31 @@ export function BlacklistManager() {
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-12">Blacklist de usuários</h2>
+        <h2 className="text-lg font-semibold text-gray-12">User blacklist</h2>
         <p className="text-sm text-gray-11">
-          Mensagens desses usuários <b>não</b> vão pro Telegram. Bloqueie por ID do Discord
-          (exato) e/ou username/tag (parte). Vale para todos os canais.
+          Messages from these users <b>do not</b> reach Telegram. Block by Discord ID
+          (exact) and/or username/tag (partial). Applies to every channel.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <TextField
-          label="ID do Discord (opcional)"
+          label="Discord ID (optional)"
           value={form.discordUserId}
           onChange={(e) => setForm({ ...form, discordUserId: e.target.value })}
           placeholder="1537270515381698630"
         />
         <TextField
-          label="Username/tag (opcional)"
+          label="Username/tag (optional)"
           value={form.username}
           onChange={(e) => setForm({ ...form, username: e.target.value })}
-          placeholder="spammer  (ou parte do nome)"
+          placeholder="spammer  (or part of the name)"
         />
         <TextField
-          label="Motivo (opcional)"
+          label="Reason (optional)"
           value={form.reason}
           onChange={(e) => setForm({ ...form, reason: e.target.value })}
-          placeholder="spam, ruído…"
+          placeholder="spam, noise…"
         />
       </div>
       <div>
@@ -96,23 +96,23 @@ export function BlacklistManager() {
           disabled={!canAdd || addMutation.isPending}
           onClick={() => addMutation.mutate()}
         >
-          {addMutation.isPending ? "Bloqueando…" : "Bloquear usuário"}
+          {addMutation.isPending ? "Blocking…" : "Block user"}
         </Button>
       </div>
 
       {listQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Carregando…</p>
+        <p className="text-sm text-gray-11">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-gray-11">Ninguém na blacklist.</p>
+        <p className="text-sm text-gray-11">Nobody on the blacklist.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px] text-left text-sm">
             <thead className="text-gray-11">
               <tr className="border-b border-gray-6">
                 <th className="py-2 pr-4 font-medium">ID / Username</th>
-                <th className="py-2 pr-4 font-medium">Motivo</th>
-                <th className="py-2 pr-4 font-medium">Ativo</th>
-                <th className="py-2 font-medium">Ações</th>
+                <th className="py-2 pr-4 font-medium">Reason</th>
+                <th className="py-2 pr-4 font-medium">Active</th>
+                <th className="py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -135,13 +135,13 @@ export function BlacklistManager() {
                           : "bg-gray-6/40 text-gray-11")
                       }
                     >
-                      {b.isActive ? "bloqueado" : "inativo"}
+                      {b.isActive ? "blocked" : "inactive"}
                     </button>
                   </td>
                   <td className="py-3">
                     <button
                       onClick={() => {
-                        if (confirm("Remover da blacklist?")) deleteMutation.mutate(b.id);
+                        if (confirm("Remove from blacklist?")) deleteMutation.mutate(b.id);
                       }}
                       className="text-danger-11 hover:underline"
                     >

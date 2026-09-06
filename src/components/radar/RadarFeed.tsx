@@ -43,8 +43,8 @@ function FeedSearch({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Buscar mensagem..."
-        aria-label="Buscar mensagem..."
+        placeholder="Search messages..."
+        aria-label="Search messages..."
         className={cn(
           "h-9 w-full rounded-lg border border-gray-6 bg-gray-1 pl-9 pr-14",
           "text-sm text-gray-12 placeholder:text-gray-11 outline-none",
@@ -107,14 +107,14 @@ export function RadarFeed({
       ) : messages.length === 0 ? (
         <div className="mx-4 mb-4 flex flex-col items-center gap-2 rounded-xl border border-gray-6 bg-gray-2 px-6 py-16 text-center">
           <p className="text-sm font-semibold text-gray-12">
-            {searching ? "Nenhum resultado" : "Nenhuma mensagem por aqui"}
+            {searching ? "No results" : "No messages here"}
           </p>
           <p className="max-w-sm text-xs text-gray-11">
             {searching
-              ? `Nada encontrado para "${search.trim()}".`
+              ? `Nothing found for "${search.trim()}".`
               : selectedName
-                ? `Ainda não há capturas de "${selectedName}".`
-                : "As capturas dos grupos monitorados aparecem aqui em tempo real."}
+                ? `No captures yet from "${selectedName}".`
+                : "Captures from monitored groups show up here in real time."}
           </p>
         </div>
       ) : (

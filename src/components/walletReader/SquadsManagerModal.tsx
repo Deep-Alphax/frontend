@@ -52,7 +52,7 @@ export function SquadsManagerModal({
       <div className="flex flex-col gap-4 p-4">
         {squads.length === 0 ? (
           <p className="text-sm text-gray-11">
-            Nenhum squad ainda — abra um perfil e marque o KOL num squad.
+            No squads yet — open a profile and tag the KOL into a squad.
           </p>
         ) : (
           squads.map((name) => (
@@ -99,7 +99,7 @@ function SquadRow({
           // e o campo precisa renascer com ela (defaultValue não reage sozinho).
           key={name}
           defaultValue={name}
-          aria-label={`Nome do squad ${name}`}
+          aria-label={`Squad name ${name}`}
           onBlur={(e) => {
             const v = e.target.value.trim();
             if (v && v !== name) onRename(name, v);
@@ -114,7 +114,7 @@ function SquadRow({
           type="button"
           onClick={() => onDelete(name)}
           className="shrink-0 rounded-md p-1 text-gray-11 transition-colors hover:bg-vermelho-3 hover:text-vermelho-11"
-          aria-label={`Apagar squad ${name}`}
+          aria-label={`Delete squad ${name}`}
         >
           <Trash2 className="size-4" strokeWidth={1.75} />
         </button>
@@ -122,7 +122,7 @@ function SquadRow({
       <div className="flex flex-col gap-1 p-2">
         {members.length === 0 ? (
           <p className="px-1 py-1 text-xs text-gray-11">
-            Nenhum KOL neste squad — abra um perfil e marque em &quot;Squads&quot;.
+            No KOL in this squad — open a profile and tag it under &quot;Squads&quot;.
           </p>
         ) : (
           members.map((m) => {

@@ -42,8 +42,8 @@ export function ColumnDragHandle({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onKeyDown={handleKeyDown}
-      title={`Arrastar para reordenar · ${label}`}
-      aria-label={`Reordenar coluna ${label} (arraste ou use as setas esquerda/direita)`}
+      title={`Drag to reorder · ${label}`}
+      aria-label={`Reorder column ${label} (drag or use the left/right arrows)`}
       className={cn(
         "-ml-1 hidden size-6 shrink-0 items-center justify-center rounded-md text-gray-11 transition-colors lg:flex",
         "cursor-grab hover:bg-gray-4 hover:text-gray-12 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-principal-9",

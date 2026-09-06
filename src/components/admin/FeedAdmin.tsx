@@ -53,14 +53,14 @@ function StatusBar() {
 type TabKey = "regras" | "blacklist" | "feed" | "admins";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "regras", label: "Regras" },
+  { key: "regras", label: "Rules" },
   { key: "blacklist", label: "Blacklist" },
   { key: "feed", label: "Feed" },
   { key: "admins", label: "Admins" },
 ];
 
 /**
- * Tela de admin do Feed do Discord, organizada em ABAS de configuração. Gated por
+ * Tela de admin do Discord feed, organizada em ABAS de configuração. Gated por
  * sessão + role ADMIN (o backend também exige admin — esta checagem é só de UI).
  */
 export function FeedAdmin() {
@@ -71,13 +71,13 @@ export function FeedAdmin() {
     return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
   }
   if (!isAuthenticated) {
-    return <p className="text-gray-11">Faça login para acessar.</p>;
+    return <p className="text-gray-11">Sign in to continue.</p>;
   }
   if (profile?.role !== "ADMIN") {
     return (
       <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">Acesso restrito</h1>
-        <p className="text-sm text-gray-11">Esta área é exclusiva para administradores.</p>
+        <h1 className="text-lg font-semibold text-gray-12">Restricted access</h1>
+        <p className="text-sm text-gray-11">This area is admins only.</p>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export function FeedAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold text-gray-12">Feed do Discord</h1>
+        <h1 className="text-2xl font-semibold text-gray-12">Discord feed</h1>
         <StatusBar />
       </header>
 

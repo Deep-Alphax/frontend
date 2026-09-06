@@ -42,9 +42,9 @@ type SelWallet = { kolId: string; address: string; name: string; squads: string[
 type SortMode = "relevance" | "name" | "wallets" | "tier";
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: "relevance", label: "Relevância ↓" },
-  { value: "name", label: "Nome A–Z" },
-  { value: "wallets", label: "Nº de carteiras ↓" },
+  { value: "relevance", label: "Relevance ↓" },
+  { value: "name", label: "Name A–Z" },
+  { value: "wallets", label: "Wallet count ↓" },
   { value: "tier", label: "Categoria ↓" },
 ];
 
@@ -61,11 +61,11 @@ function XIcon({ className }: { className?: string }) {
 type ViewId = "all" | "unclassified" | "alphaUp" | "noTwitter" | "pendingScan";
 
 const QUICK_VIEWS: { id: ViewId; label: string; Icon: (p: { className?: string }) => React.ReactElement }[] = [
-  { id: "all", label: "Todos", Icon: (p) => <LayoutGrid {...p} strokeWidth={1.75} /> },
+  { id: "all", label: "All", Icon: (p) => <LayoutGrid {...p} strokeWidth={1.75} /> },
   { id: "unclassified", label: "Falta classificar", Icon: (p) => <Pin {...p} strokeWidth={1.75} /> },
   { id: "alphaUp", label: "Alpha e acima", Icon: (p) => <Star {...p} strokeWidth={1.75} /> },
-  { id: "noTwitter", label: "Sem Twitter", Icon: (p) => <XIcon {...p} /> },
-  { id: "pendingScan", label: "Varredura pendente", Icon: (p) => <QrCode {...p} strokeWidth={1.75} /> },
+  { id: "noTwitter", label: "No Twitter", Icon: (p) => <XIcon {...p} /> },
+  { id: "pendingScan", label: "Scan pending", Icon: (p) => <QrCode {...p} strokeWidth={1.75} /> },
 ];
 
 /** Item de recorte rápido da rail (ícone em caixa + rótulo + contagem). */
@@ -328,7 +328,7 @@ export function WalletReaderScreen() {
         {filtersOpen && (
           <button
             type="button"
-            aria-label="Fechar filtros"
+            aria-label="Close filters"
             onClick={() => setFiltersOpen(false)}
             className="fixed inset-0 z-30 bg-gray-1/70 lg:hidden"
           />
@@ -341,11 +341,11 @@ export function WalletReaderScreen() {
           )}
         >
           <div className="flex items-center justify-between border-b border-gray-6 px-3 py-2 lg:hidden">
-            <span className="text-sm text-gray-11">Filtros</span>
+            <span className="text-sm text-gray-11">Filters</span>
             <button
               type="button"
               onClick={() => setFiltersOpen(false)}
-              aria-label="Fechar filtros"
+              aria-label="Close filters"
               className="text-gray-11 transition-colors hover:text-gray-12"
             >
               <X className="size-5" strokeWidth={1.75} />
@@ -366,7 +366,7 @@ export function WalletReaderScreen() {
             ))}
           </div>
 
-          <FilterSection title="Relevância">
+          <FilterSection title="Relevance">
             {KOL_TIERS.slice().reverse().map((t) => (
               <FilterCheck
                 key={t.id}
@@ -378,7 +378,7 @@ export function WalletReaderScreen() {
             ))}
           </FilterSection>
 
-          <FilterSection title="Tipo de trader">
+          <FilterSection title="Trader type">
             {KOL_TYPES.map((t) => (
               <FilterCheck
                 key={t.id}
@@ -408,7 +408,7 @@ export function WalletReaderScreen() {
 
           <div className="mt-auto flex flex-col gap-2 border-t border-gray-6 p-3">
             <div className="flex flex-col gap-1 text-xs text-gray-11">
-              <span id="kols-sort-label">Ordenar por</span>
+              <span id="kols-sort-label">Sort by</span>
               <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
                 <SelectTrigger size="sm" aria-labelledby="kols-sort-label">
                   <SelectValue />
@@ -464,14 +464,14 @@ export function WalletReaderScreen() {
               onClick={() => {
                 if (
                   window.confirm(
-                    "Isso apaga TODAS as edições e grupos da SUA conta (o preset global não é tocado). Exporte um backup antes. Continuar?",
+                    "This erases ALL edits and groups from YOUR account (the global preset is untouched). Export a backup first. Continue?",
                   )
                 )
                   reset();
               }}
               className="rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11 transition-colors hover:border-vermelho-7 hover:text-vermelho-11"
             >
-              Limpar edições
+              Clear edits
             </button>
           </div>
         </aside>
@@ -482,13 +482,13 @@ export function WalletReaderScreen() {
               <button
                 type="button"
                 onClick={() => setFiltersOpen(true)}
-                aria-label="Abrir filtros"
+                aria-label="Open filters"
                 className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12 lg:hidden"
               >
                 <SlidersHorizontal className="size-4" strokeWidth={1.75} /> Filtros
               </button>
               <h1 className="text-base text-gray-11 tabular-nums">
-                {total.toLocaleString("pt-BR")} KOLs
+                {total.toLocaleString("en-US")} KOLs
               </h1>
             </div>
 
@@ -502,8 +502,8 @@ export function WalletReaderScreen() {
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Busque aqui..."
-                  aria-label="Buscar KOL"
+                  placeholder="Search here..."
+                  aria-label="Search KOL"
                   className="h-10 w-full max-w-[345px] rounded-lg border border-gray-6 bg-transparent pl-10 pr-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60 sm:w-[345px]"
                 />
               </div>
@@ -513,7 +513,7 @@ export function WalletReaderScreen() {
                 className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-principal-9 px-5 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10"
               >
                 <Plus className="size-5" strokeWidth={2} />
-                <span className="max-sm:sr-only">Adicionar KOL</span>
+                <span className="max-sm:sr-only">Add KOL</span>
               </button>
             </div>
           </header>
@@ -527,8 +527,8 @@ export function WalletReaderScreen() {
               </div>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-lg border border-gray-6 bg-gray-2 px-6 py-16 text-center">
-                <p className="text-sm font-semibold text-gray-12">Nenhum KOL encontrado</p>
-                <p className="max-w-sm text-xs text-gray-11">Ajuste a busca ou os filtros.</p>
+                <p className="text-sm font-semibold text-gray-12">No KOL found</p>
+                <p className="max-w-sm text-xs text-gray-11">Adjust the search or the filters.</p>
               </div>
             ) : (
               <>
@@ -541,7 +541,7 @@ export function WalletReaderScreen() {
                 {hasNextPage && (
                   <div ref={sentinel} className="flex justify-center py-6">
                     <span className="text-xs text-gray-11">
-                      {isFetchingNextPage ? "Carregando mais…" : " "}
+                      {isFetchingNextPage ? "Loading more…" : " "}
                     </span>
                   </div>
                 )}

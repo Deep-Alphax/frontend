@@ -100,7 +100,7 @@ function Harness() {
   return (
     <>
       <button type="button" onClick={() => setOpenId("k1")}>
-        abrir kol
+        open kol
       </button>
       {openId && (
         <KolProfileModal
@@ -120,13 +120,13 @@ function Harness() {
 
 /** Abre o modal e entra no modo de edição. */
 async function openEditing(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "abrir kol" }));
-  await user.click(await screen.findByRole("button", { name: "Editar" }));
-  return await screen.findByRole("textbox", { name: /notas do kol/i });
+  await user.click(screen.getByRole("button", { name: "open kol" }));
+  await user.click(await screen.findByRole("button", { name: "Edit" }));
+  return await screen.findByRole("textbox", { name: /kol notes/i });
 }
 
 const save = (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(screen.getByRole("button", { name: "Salvar alteração" }));
+  user.click(screen.getByRole("button", { name: "Save change" }));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -161,12 +161,12 @@ describe("KolProfileModal — salvar edições da conta", () => {
     await save(user);
     await waitFor(() => expect(api.patchKolOverride).toHaveBeenCalled());
 
-    await user.click(screen.getByRole("button", { name: "Fechar" }));
+    await user.click(screen.getByRole("button", { name: "Close" }));
 
     // Regressão: `invalidate` só derrubava a listagem; o detalhe (`["kol", id]`)
     // continuava no cache com o estado anterior ao PATCH — reabrir mostrava a
     // versão velha e só o F5 corrigia.
-    await user.click(screen.getByRole("button", { name: "abrir kol" }));
+    await user.click(screen.getByRole("button", { name: "open kol" }));
     expect(await screen.findByText("nota nova")).toBeInTheDocument();
     expect(screen.queryByText("nota antiga")).toBeNull();
   });
@@ -184,7 +184,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
     await user.type(screen.getByRole("textbox", { name: /twitter/i }), "@handlenovo");
 
     // Nível: grava a relevância no meio da faixa escolhida.
-    await user.click(screen.getByRole("button", { name: "Nível Bronze" }));
+    await user.click(screen.getByRole("button", { name: "Tier Bronze" }));
 
     // Tipos: troca Alpha Caller por Whale.
     await user.click(screen.getByRole("button", { name: "Alpha Caller" }));
@@ -195,13 +195,13 @@ describe("KolProfileModal — salvar edições da conta", () => {
     await user.click(screen.getByRole("button", { name: "Outro Squad" }));
 
     // Carteiras: remove a que veio do preset e adiciona outra.
-    await user.click(screen.getByRole("button", { name: "Remover carteira main" }));
-    await user.type(screen.getByRole("textbox", { name: /apelido da carteira/i }), "cold");
+    await user.click(screen.getByRole("button", { name: "Remove wallet main" }));
+    await user.type(screen.getByRole("textbox", { name: /wallet nickname/i }), "cold");
     await user.type(
-      screen.getByRole("textbox", { name: /endereço da carteira/i }),
+      screen.getByRole("textbox", { name: /wallet address/i }),
       "So1ana222",
     );
-    await user.click(screen.getByRole("button", { name: "Adicionar" }));
+    await user.click(screen.getByRole("button", { name: "Add" }));
 
     await save(user);
 
@@ -217,8 +217,8 @@ describe("KolProfileModal — salvar edições da conta", () => {
     });
 
     // Reabre e confere que a UI parte do estado do servidor, não do cache velho.
-    await user.click(screen.getByRole("button", { name: "Fechar" }));
-    await user.click(screen.getByRole("button", { name: "abrir kol" }));
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "open kol" }));
 
     expect(await screen.findByText("nota nova")).toBeInTheDocument();
     expect(screen.getByText("@handlenovo")).toBeInTheDocument();
@@ -238,7 +238,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
       new File(["x"], "foto.png", { type: "image/png" }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Salvar alteração" })).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Save change" })).toBeEnabled(),
     );
     await save(user);
 
@@ -253,8 +253,8 @@ describe("KolProfileModal — salvar edições da conta", () => {
     renderWithQuery(<Harness />);
 
     await openEditing(user);
-    await user.type(screen.getByRole("textbox", { name: /novo squad/i }), "Squad X");
-    await user.click(screen.getByRole("button", { name: "Adicionar squad" }));
+    await user.type(screen.getByRole("textbox", { name: /new squad/i }), "Squad X");
+    await user.click(screen.getByRole("button", { name: "Add squad" }));
 
     // Squad não é entidade: nasce junto com o PATCH do KOL, sem chamada própria.
     await save(user);
@@ -272,7 +272,7 @@ describe("KolProfileModal — squads", () => {
     const user = userEvent.setup();
     renderWithQuery(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "abrir kol" }));
+    await user.click(screen.getByRole("button", { name: "open kol" }));
     // Preset + conta na mesma linha, na ordem: "Squad1, Squad2, Squad3".
     expect(await screen.findByText("Lair, Meu FnF")).toBeInTheDocument();
   });
@@ -294,7 +294,7 @@ describe("KolProfileModal — squads", () => {
     await openEditing(user);
     // "Lair" é global: aparece como etiqueta, não como chip clicável.
     expect(screen.queryByRole("button", { name: "Lair" })).toBeNull();
-    expect(screen.getByTitle("Squad do preset — vale para todos os usuários")).toHaveTextContent(
+    expect(screen.getByTitle("Preset squad — applies to all users")).toHaveTextContent(
       "Lair",
     );
   });
@@ -304,16 +304,16 @@ describe("KolProfileModal — squads", () => {
     renderWithQuery(<Harness />);
 
     await openEditing(user);
-    const input = screen.getByRole("textbox", { name: /novo squad/i });
+    const input = screen.getByRole("textbox", { name: /new squad/i });
 
     for (const attempt of ["  lair  ", "MEU FNF", "   "]) {
       await user.clear(input);
       await user.type(input, attempt);
-      await user.click(screen.getByRole("button", { name: "Adicionar squad" }));
+      await user.click(screen.getByRole("button", { name: "Add squad" }));
     }
 
     expect(screen.getByText("Lair, Meu FnF")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Salvar alteração" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save change" })).toBeDisabled();
   });
 
   it("sem squad nenhum, diz isso em vez de deixar a linha vazia", async () => {
@@ -322,8 +322,8 @@ describe("KolProfileModal — squads", () => {
     server.kol.ownSquads = [];
     renderWithQuery(<Harness />);
 
-    await user.click(screen.getByRole("button", { name: "abrir kol" }));
-    expect(await screen.findByText("Sem squad")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "open kol" }));
+    expect(await screen.findByText("No squad")).toBeInTheDocument();
   });
 });
 
@@ -333,8 +333,8 @@ describe("KolProfileModal — rascunho", () => {
     renderWithQuery(<Harness />);
 
     await openEditing(user);
-    expect(screen.getByRole("button", { name: "Salvar alteração" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Descartar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save change" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Discard" })).toBeDisabled();
   });
 
   it("Descartar volta ao estado carregado do servidor", async () => {
@@ -346,7 +346,7 @@ describe("KolProfileModal — rascunho", () => {
     await user.type(notes, "rascunho");
     expect(notes).toHaveValue("rascunho");
 
-    await user.click(screen.getByRole("button", { name: "Descartar" }));
+    await user.click(screen.getByRole("button", { name: "Discard" }));
     expect(notes).toHaveValue("nota antiga");
     expect(api.patchKolOverride).not.toHaveBeenCalled();
   });
@@ -358,11 +358,11 @@ describe("KolProfileModal — rascunho", () => {
 
     const notes = await openEditing(user);
     await user.type(notes, " editado");
-    await user.click(screen.getByRole("button", { name: "Fechar" }));
+    await user.click(screen.getByRole("button", { name: "Close" }));
 
     expect(confirm).toHaveBeenCalled();
     // Recusou descartar → o modal continua aberto com o rascunho.
-    expect(screen.getByRole("textbox", { name: /notas do kol/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /kol notes/i })).toBeInTheDocument();
   });
 
   it("não sobe PATCH quando o rascunho volta ao valor original", async () => {
@@ -373,7 +373,7 @@ describe("KolProfileModal — rascunho", () => {
     await user.type(notes, "x");
     await user.type(notes, "{backspace}");
 
-    expect(screen.getByRole("button", { name: "Salvar alteração" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save change" })).toBeDisabled();
     expect(api.patchKolOverride).not.toHaveBeenCalled();
   });
 });
@@ -385,7 +385,7 @@ describe("KolProfileModal — remoção", () => {
     renderWithQuery(<Harness />);
 
     await openEditing(user);
-    await user.click(screen.getByRole("button", { name: "Remover KOL" }));
+    await user.click(screen.getByRole("button", { name: "Remove KOL" }));
 
     // KOL do preset é global: o usuário só o esconde na conta dele.
     await waitFor(() =>
@@ -401,7 +401,7 @@ describe("KolProfileModal — remoção", () => {
     renderWithQuery(<Harness />);
 
     await openEditing(user);
-    await user.click(screen.getByRole("button", { name: "Remover KOL" }));
+    await user.click(screen.getByRole("button", { name: "Remove KOL" }));
 
     // mutationFn direto: o React Query passa (variáveis, contexto).
     await waitFor(() =>

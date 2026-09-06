@@ -6,16 +6,16 @@ import { formatUsd, formatSignedUsd } from "@/lib/format";
 const DAY_SHORT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
 const DAY_FULL = [
   "Segunda-feira",
-  "Terça-feira",
+  "Tuesday",
   "Quarta-feira",
   "Quinta-feira",
   "Sexta-feira",
-  "Sábado",
+  "Saturday",
   "Domingo",
 ];
 const BLOCK_LABELS = ["00–04h", "04–08h", "08–12h", "12–16h", "16–20h", "20–24h"];
 
-/** Faixas do PnL por trade → cor de fundo (espelha a legenda do design). */
+/** Faixas do PnL per trade → cor de fundo (espelha a legenda do design). */
 const SCALE: { max: number; bg: string }[] = [
   { max: -150, bg: "#5b1a20" },
   { max: -50, bg: "#7d2530" },
@@ -58,7 +58,7 @@ function HeatCell({ cell }: { cell: WeekdayBlockCell }) {
         </p>
         <div className="mt-3 flex flex-col gap-1 border-t border-gray-6 pt-3 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-11">PnL por trade</span>
+            <span className="text-gray-11">PnL per trade</span>
             <span className={avg > 0 ? "text-green-11" : avg < 0 ? "text-danger-11" : "text-gray-12"}>
               {formatSignedUsd(cell.avgPnlPerTradeUsd)}
             </span>
@@ -68,7 +68,7 @@ function HeatCell({ cell }: { cell: WeekdayBlockCell }) {
             <span className="text-gray-12">{cell.trades}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-11">PnL da janela</span>
+            <span className="text-gray-11">PnL for the window</span>
             <span
               className={
                 Number(cell.realizedPnlUsd) > 0
@@ -102,7 +102,7 @@ export function WhenWhereTab({ weekdayBlocks }: { weekdayBlocks: WeekdayBlockCel
   return (
     <section className="rounded-lg border border-gray-6 bg-gray-2">
       <div className="border-b border-gray-6 px-6 py-4">
-        <h3 className="text-base font-semibold text-gray-12">Dia da semana × bloco do dia</h3>
+        <h3 className="text-base font-semibold text-gray-12">Day of week × time block</h3>
       </div>
 
       <div className="p-6">
@@ -128,7 +128,7 @@ export function WhenWhereTab({ weekdayBlocks }: { weekdayBlocks: WeekdayBlockCel
 
         {/* Legenda */}
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-11">
-          <span className="font-medium text-gray-12">US$ por trade</span>
+          <span className="font-medium text-gray-12">$ per trade</span>
           {LEGEND.map((l) => (
             <span key={l.label} className="flex items-center gap-1.5">
               <span className="size-3 rounded-sm" style={{ backgroundColor: l.bg }} />

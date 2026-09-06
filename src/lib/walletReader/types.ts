@@ -60,7 +60,7 @@ export interface KolState {
   dismissedSidewallets: string[];
 }
 
-/** Tipos de trader (etiquetas). `hue` mantém a cor original do app. */
+/** Trader types (etiquetas). `hue` mantém a cor original do app. */
 export const KOL_TYPES = [
   { id: "trencher", label: "Trencher", hue: 340 },
   { id: "whale", label: "Whale", hue: 200 },

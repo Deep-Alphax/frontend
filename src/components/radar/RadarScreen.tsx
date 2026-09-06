@@ -20,20 +20,20 @@ import {
   shiftColumn,
   type RadarColumnKey,
 } from "@/components/radar/columnOrder";
+import {
+  COL_DEFAULT,
+  clampColumn,
+  fitPair,
+  parseStoredWidth,
+  roomFor,
+} from "@/components/radar/columnWidth";
 import { cn } from "@/lib/cn";
-
-/** Largura das colunas laterais 2/4 (px) — limites de arraste + default. */
-const COL_MIN = 260;
-const COL_MAX = 620;
-const COL_DEFAULT = 340;
-const clampCol = (w: number) => Math.min(COL_MAX, Math.max(COL_MIN, w));
 
 /** Lê a largura persistida (guardado p/ SSR e localStorage bloqueado). */
 function readCol(key: string): number {
   if (typeof window === "undefined") return COL_DEFAULT;
   try {
-    const v = Number(window.localStorage.getItem(key));
-    return Number.isFinite(v) && v > 0 ? clampCol(v) : COL_DEFAULT;
+    return parseStoredWidth(window.localStorage.getItem(key));
   } catch {
     return COL_DEFAULT;
   }
@@ -46,7 +46,7 @@ function readCol(key: string): number {
  *  1) rail de "Fontes" (servidores) → seleciona a fonte ativa (controla o centro);
  *  2) "Rick Bot" — feed FIXO do usuário Rick#9725 (query própria por autor);
  *  3) "Feed principal" — a FONTE SELECIONADA na rail (recorte do pool por guildName);
- *  4) "Seus favoritos" (autores seguidos) / detalhes do perfil.
+ *  4) "Your favorites" (autores seguidos) / detalhes do perfil.
  *
  * As colunas 2–4 são reordenáveis pelo usuário (alça no header de cada painel):
  * a ordem é só a posição no grid — largura e divisórias seguem o SLOT, não o
@@ -86,6 +86,24 @@ export function RadarScreen() {
   const [leftW, setLeftW] = useState(() => readCol("radar:leftW"));
   const [rightW, setRightW] = useState(() => readCol("radar:rightW"));
   const dragStart = useRef(0); // largura no início do arraste (um por vez)
+
+  // Largura da linha de colunas. É ela que define o teto do arraste: sem medir,
+  // o único jeito de ter teto seria um número fixo — foi o que limitava o
+  // usuário antes. `0` até a primeira medição = "sem teto conhecido".
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const [rowW, setRowW] = useState(0);
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entry]) => setRowW(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // O estado guarda a ESCOLHA; o clamp é só de exibição, então encolher a janela
+  // não apaga a largura escolhida — voltando a caber, ela reaparece.
+  const room = roomFor(rowW);
+  const shown = fitPair(leftW, rightW, room);
 
   // Persiste o tamanho escolhido (só escrita → sem setState no effect).
   useEffect(() => {
@@ -204,12 +222,12 @@ export function RadarScreen() {
         author={selectedAuthor.id}
         authorName={selectedAuthor.name}
         onBack={() => setSelectedAuthor(null)}
-        dragHandle={dragHandle("favorites", "Detalhes do perfil")}
+        dragHandle={dragHandle("favorites", "Profile details")}
       />
     ) : (
       <FavoritesPanel
         onSelectAuthor={onSelectAuthor}
-        dragHandle={dragHandle("favorites", "Seus favoritos")}
+        dragHandle={dragHandle("favorites", "Your favorites")}
       />
     ),
   };
@@ -224,9 +242,15 @@ export function RadarScreen() {
             grid-cols-1 vence e as vars ficam inertes). Slots fixos: o do meio é o
             `1fr`; quem ocupa cada slot é a ordem escolhida pelo usuário. */}
         <div
+          ref={rowRef}
           suppressHydrationWarning
           className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[69px_var(--left-w)_minmax(0,1fr)_var(--right-w)] lg:overflow-hidden"
-          style={{ "--left-w": `${leftW}px`, "--right-w": `${rightW}px` } as React.CSSProperties}
+          style={
+            {
+              "--left-w": `${shown.left}px`,
+              "--right-w": `${shown.right}px`,
+            } as React.CSSProperties
+          }
         >
           {/* 1 — Fontes (agrupadas por servidor) — fixa, fora da reordenação */}
           <SourcesRail groups={feed.groups} selection={selection} onSelect={setSelection} />
@@ -241,20 +265,32 @@ export function RadarScreen() {
               }}
               onDrop={(e) => e.preventDefault()}
               className={cn(
-                "relative min-h-0 lg:h-full",
+                // `min-w-0`: item de grid nasce com `min-width: auto`, ou seja,
+                // se recusa a ficar menor que o conteúdo — a faixa encolhia e o
+                // painel continuava do tamanho antigo, passando por cima do
+                // vizinho. É o que impedia estreitar de verdade.
+                "relative min-h-0 min-w-0 lg:h-full",
                 slot < 2 && "border-b border-gray-6 lg:border-b-0 lg:border-r",
                 draggingKey === key && "opacity-60",
               )}
             >
-              {columns[key]}
+              {/* Clipe do conteúdo. Fica DENTRO da alça, que mora meio passo
+                  fora da borda direita — clipar no item comeria metade dela. */}
+              <div className="min-w-0 overflow-hidden lg:h-full">{columns[key]}</div>
               {slot < 2 && (
                 <ColumnResizer
-                  onStart={() => (dragStart.current = slot === 0 ? leftW : rightW)}
+                  onStart={() => (dragStart.current = slot === 0 ? shown.left : shown.right)}
+                  // Sem piso nem teto arbitrários: vai de 0 (coluna escondida)
+                  // até todo o espaço que a outra lateral não estiver usando —
+                  // a central pode ser espremida até sumir, se for o que se quer.
                   onMove={(dx) =>
                     slot === 0
-                      ? setLeftW(clampCol(dragStart.current + dx))
-                      : setRightW(clampCol(dragStart.current - dx))
+                      ? setLeftW(clampColumn(dragStart.current + dx, room - shown.right))
+                      : setRightW(clampColumn(dragStart.current - dx, room - shown.left))
                   }
+                  // Escape hatch: com liberdade total dá para esconder uma coluna
+                  // sem querer, e o duplo-clique devolve a largura padrão.
+                  onReset={() => (slot === 0 ? setLeftW(COL_DEFAULT) : setRightW(COL_DEFAULT))}
                 />
               )}
             </div>

@@ -25,7 +25,7 @@ const workSans = Work_Sans({
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const SITE_DESCRIPTION =
-  "PnL real, topo × saída e feed de alpha para carteiras Solana.";
+  "Real PnL, peak vs. exit and an alpha feed for Solana wallets.";
 
 export const metadata: Metadata = {
   // Base para resolver URLs absolutas (og:image, canônicas). Vem do ambiente:
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   // App Router) preenchem o favicon e as imagens de preview automaticamente.
   openGraph: {
     type: "website",
-    locale: "pt_BR",
+    locale: "en_US",
     siteName: "Deep Alpha",
     url: "/",
     title: "Deep Alpha — Wallet Analytics",
@@ -64,7 +64,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="pt-BR"
+      lang="en"
       className={`${unbounded.variable} ${workSans.variable}`}
       suppressHydrationWarning
     >

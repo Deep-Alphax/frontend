@@ -17,11 +17,11 @@ export function HomeScreen() {
           {/* Cabeçalho da seção */}
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <h1 className="font-display text-display-24 text-gray-12">
-              Meu perfil
+              My profile
             </h1>
             <p className="text-base text-gray-11 md:text-right">
-              Todo número aqui vem das suas transações on-chain, já descontadas
-              taxas, gas, tip e slippage.
+              Every number here comes from your on-chain transactions, already net of
+              fees, gas, tip and slippage.
             </p>
           </div>
 

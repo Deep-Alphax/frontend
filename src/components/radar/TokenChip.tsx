@@ -43,10 +43,10 @@ export function TokenChip({
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
-      toast.success("Link copiado");
+      toast.success("Link copied");
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("Não foi possível copiar");
+      toast.error("Could not copy");
     }
   };
 
@@ -70,7 +70,7 @@ export function TokenChip({
         <button
           type="button"
           onClick={copy}
-          aria-label="Copiar link"
+          aria-label="Copy link"
           className="flex size-6 items-center justify-center rounded border border-gray-6 bg-gray-3 text-gray-11 transition-colors hover:text-gray-12"
         >
           {copied ? (
@@ -83,7 +83,7 @@ export function TokenChip({
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Abrir link"
+          aria-label="Open link"
           className="flex size-6 items-center justify-center rounded border border-gray-6 bg-gray-3 text-gray-11 transition-colors hover:text-gray-12"
         >
           <ExternalLink className="size-4" strokeWidth={2} />

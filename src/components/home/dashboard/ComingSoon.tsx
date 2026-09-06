@@ -13,7 +13,7 @@ export function NoDataBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      sem dado
+      no data
     </span>
   );
 }
@@ -21,7 +21,7 @@ export function NoDataBadge({ className }: { className?: string }) {
 /** Valor esmaecido "—" para métricas sem cobertura de preço. */
 export function NoDataValue() {
   return (
-    <span className="text-gray-6" aria-label="sem dado">
+    <span className="text-gray-6" aria-label="no data">
       —
     </span>
   );

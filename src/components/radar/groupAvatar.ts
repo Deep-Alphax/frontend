@@ -44,5 +44,5 @@ export function sourceInitial(name: string): string {
 
 /** Formata contagens grandes: 1423 → "1.423" (pt-BR). */
 export function fmtCount(n: number): string {
-  return n.toLocaleString("pt-BR");
+  return n.toLocaleString("en-US");
 }

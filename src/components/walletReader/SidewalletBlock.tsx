@@ -57,7 +57,7 @@ export function SidewalletBlock({
     try {
       await onRun(target);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha na varredura.");
+      setError(e instanceof Error ? e.message : "Scan failed.");
     } finally {
       setRunning(false);
     }
@@ -68,10 +68,10 @@ export function SidewalletBlock({
       {/* Escolha da carteira + disparo. */}
       <div className="mb-2 flex items-end gap-2">
         <label className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-xs text-gray-11">Carteira a varrer</span>
+          <span className="text-xs text-gray-11">Wallet to scan</span>
           <Select value={target} onValueChange={setTarget}>
-            <SelectTrigger size="sm" aria-label="Carteira a varrer">
-              <SelectValue placeholder="Escolha uma carteira" />
+            <SelectTrigger size="sm" aria-label="Wallet to scan">
+              <SelectValue placeholder="Choose a wallet" />
             </SelectTrigger>
             <SelectContent>
               {wallets.map((w) => (
@@ -91,27 +91,27 @@ export function SidewalletBlock({
         >
           {pending
             ? scan?.status === "queued"
-              ? "Na fila…"
+              ? "Queued…"
               : "Escaneando…"
             : scan
-              ? "Rodar nova varredura"
-              : "Rodar varredura"}
+              ? "Run a new scan"
+              : "Run scan"}
         </button>
       </div>
 
       <p className="mb-2 text-xs text-gray-11">
         {scan && scan.status === "complete"
-          ? "Última varredura desta carteira: " +
-            new Date(scan.scannedAt).toLocaleString("pt-BR")
+          ? "Last scan of this wallet: " +
+            new Date(scan.scannedAt).toLocaleString("en-US")
           : pending
-            ? "Varredura em andamento — o resultado aparece aqui sozinho."
-            : "Esta carteira ainda não foi varrida."}
+            ? "Scan in progress — the result shows up here on its own."
+            : "This wallet has not been scanned yet."}
       </p>
 
       <p className="mb-3 text-xs leading-relaxed text-gray-11">
-        Cruza dados on-chain dos últimos 5 tokens da carteira escolhida contra quem transacionou com
-        ela. Descobre endereços que ainda não estão no índice e só confirma com evidência forte
-        (link direto ou padrão repetido).
+        Cross-checks on-chain data from the last 5 tokens of the chosen wallet against who transacted with
+        it. Finds addresses not yet in the index and only confirms with strong evidence
+        (direct link or repeated pattern).
       </p>
 
       {error && (
@@ -148,7 +148,7 @@ export function SidewalletBlock({
                     </span>
                     {f.role === "sidewallet" && (
                       <span className="rounded-full border border-gray-6 px-2 py-0.5 text-xs text-gray-11">
-                        {f.confidence === "high" ? "Link direto" : "Padrão repetido"}
+                        {f.confidence === "high" ? "Link direto" : "Repeated pattern"}
                       </span>
                     )}
                     {f.recognizedElsewhere && (
@@ -167,7 +167,7 @@ export function SidewalletBlock({
                         onClick={() => onOpenKol(f.ownerKolId as string)}
                         className="shrink-0 text-xs text-secundaria-11 underline underline-offset-2 hover:text-secundaria-12"
                       >
-                        abrir perfil →
+                        open profile →
                       </button>
                     )}
                     <button

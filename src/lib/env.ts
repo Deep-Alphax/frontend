@@ -15,15 +15,3 @@ export const API_URL = (
 export const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
-/**
- * Project ID do WalletConnect Cloud / Reown (https://cloud.reown.com). Necessário
- * para o modal de conexão de carteira (EVM + Solana). Vazio = wallet connect
- * desabilitado (o botão avisa em vez de abrir). Público por natureza (é um id de
- * app, não um segredo).
- */
-export const REOWN_PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "";
-
-/** Origem pública do app (metadata do WalletConnect). Default: dev local. */
-export const APP_URL = (
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-).replace(/\/$/, "");

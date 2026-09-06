@@ -21,7 +21,7 @@ import { PeakVsExitCard } from "@/components/home/dashboard/PeakVsExitCard";
 import { SourcesTabContainer } from "@/components/home/dashboard/SourcesTabContainer";
 import { WhenWhereTab } from "@/components/home/dashboard/WhenWhereTab";
 
-const TABS = ["Como os trades terminaram", "Fontes", "Quando e onde"] as const;
+const TABS = ["How trades ended", "Sources", "When and where"] as const;
 type Tab = (typeof TABS)[number];
 
 export function ProfileDashboard({
@@ -41,18 +41,18 @@ export function ProfileDashboard({
         <div className="md:pr-8">
           <KpiItem
             icon={CircleDollarSign}
-            label="Saldo atual"
-            info="Saldo de SOL da carteira × preço do SOL agora. Considera só o SOL (ativo líquido)"
-            hint="SOL nativo a preço de agora"
+            label="Current balance"
+            info="Wallet SOL balance × current SOL price. Counts SOL only (liquid asset)"
+            hint="Native SOL at current price"
             value={balanceUsd != null ? formatUsd(balanceUsd) : <NoDataValue />}
           />
         </div>
         <div className="md:px-8">
           <KpiItem
             icon={Gauge}
-            label="Aproveitamento do topo"
-            info="Quanto do topo pós-entrada você capturou, em média (ponderado por tamanho)."
-            hint="Acima de 50% é bom, acima de 70% é raro"
+            label="Peak capture"
+            info="How much of the post-entry peak you captured, on average (size-weighted)."
+            hint="Above 50% is good, above 70% is rare"
             value={
               data.peaks.available && data.peaks.topCapturePct != null ? (
                 formatPct(data.peaks.topCapturePct)
@@ -65,9 +65,9 @@ export function ProfileDashboard({
         <div className="md:pl-8">
           <KpiItem
             icon={Undo2}
-            label="Posições que devolveram"
-            info="Posições que subiram (≥+50%) e devolveram mais da metade do ganho antes da saída."
-            hint="Saudável abaixo de 10% dos trades"
+            label="Positions that gave it back"
+            info="Positions that ran up (≥+50%) and gave back more than half the gain before exit."
+            hint="Healthy below 10% of trades"
             value={data.peaks.available ? data.peaks.gaveBackCount : <NoDataValue />}
           />
         </div>
@@ -79,9 +79,9 @@ export function ProfileDashboard({
           <KpiItem
             layout="inline"
             icon={Activity}
-            label="Sobrevida das suas escolhas"
-            info="% dos seus tokens ainda vivos (com preço/liquidez atuais)."
-            hint="Média do mercado perto de 12%"
+            label="Survival of your picks"
+            info="% of your tokens still alive (with current price/liquidity)."
+            hint="Market average around 12%"
             value={
               data.survival.available && data.survival.alivePct != null ? (
                 formatPct(data.survival.alivePct)
@@ -95,8 +95,8 @@ export function ProfileDashboard({
           <KpiItem
             layout="inline"
             icon={PieChart}
-            label="Concentração do lucro"
-            info="Fatia do lucro que vem dos seus 3 melhores trades."
+            label="Profit concentration"
+            info="Share of profit coming from your top 3 trades."
             hint="Consistente abaixo de 40%"
             value={formatPct(data.profitConcentration.top3.pct)}
           />
@@ -106,8 +106,8 @@ export function ProfileDashboard({
             layout="inline"
             icon={Target}
             label="Taxa de acerto"
-            info="Trades vencedores sobre o total de posições fechadas."
-            hint="Entre 25% e 40% é normal"
+            info="Winning trades over all closed positions."
+            hint="Between 25% and 40% is normal"
             value={formatPct(data.winRate.winRatePct, 1)}
           />
         </div>
@@ -132,7 +132,7 @@ export function ProfileDashboard({
         ))}
       </div>
 
-      {tab === "Como os trades terminaram" ? (
+      {tab === "How trades ended" ? (
         <div className="flex flex-col gap-8">
           <CapitalEvolutionCard data={data} />
 
@@ -143,7 +143,7 @@ export function ProfileDashboard({
 
           <PeakVsExitCard peaks={data.peaks} />
         </div>
-      ) : tab === "Fontes" ? (
+      ) : tab === "Sources" ? (
         <SourcesTabContainer />
       ) : (
         <WhenWhereTab weekdayBlocks={data.weekdayBlocks} />

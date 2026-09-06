@@ -52,7 +52,7 @@ export function MediaModal({ item, onClose }: MediaModalProps) {
           {/* Scrim */}
           <button
             type="button"
-            aria-label="Fechar"
+            aria-label="Close"
             onClick={onClose}
             className="absolute inset-0 cursor-default bg-gray-1/80 backdrop-blur-sm"
           />
@@ -61,7 +61,7 @@ export function MediaModal({ item, onClose }: MediaModalProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar"
+            aria-label="Close"
             className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-gray-6 bg-gray-2/80 text-gray-11 transition-colors hover:text-gray-12"
           >
             <X className="size-5" strokeWidth={2} />
@@ -71,7 +71,7 @@ export function MediaModal({ item, onClose }: MediaModalProps) {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Mídia"
+            aria-label="Media"
             className="relative flex max-h-[90vh] max-w-[92vw] items-center justify-center"
             initial={reduce ? false : { opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}

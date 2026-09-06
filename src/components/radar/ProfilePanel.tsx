@@ -36,7 +36,7 @@ function compactAge(iso: string | undefined): string {
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
   if (d < 30) return `${d}d`;
-  return `${Math.floor(d / 30)}mes`;
+  return `${Math.floor(d / 30)}mo`;
 }
 
 /** Caixa de estatística (valor + rótulo). */
@@ -64,7 +64,7 @@ function flattenUnique(pages: { items: CapturedMessage[] }[] | undefined): Captu
 }
 
 /**
- * "Detalhes do perfil" (node Figma 491:7664) — abre no lugar dos favoritos ao
+ * "Profile details" (node Figma 491:7664) — abre no lugar dos favoritos ao
  * clicar numa mensagem. Cabeçalho + stats + seguir + posts do autor (buscados
  * por `authorId`, paginados e virtualizados).
  */
@@ -94,7 +94,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
   });
 
   const stats = {
-    messages: (statsQuery.data?.messages ?? 0).toLocaleString("pt-BR"),
+    messages: (statsQuery.data?.messages ?? 0).toLocaleString("en-US"),
     tokens: String(statsQuery.data?.tokens ?? 0),
     radar: statsQuery.data ? compactAge(statsQuery.data.firstSeenAt ?? undefined) : "—",
   };
@@ -107,12 +107,12 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
         <button
           type="button"
           onClick={onBack}
-          aria-label="Voltar aos favoritos"
+          aria-label="Back to favorites"
           className="flex size-6 items-center justify-center rounded-full border border-gray-6 bg-gray-3 text-gray-11 transition-colors hover:text-gray-12"
         >
           <ArrowLeft className="size-4" strokeWidth={2} />
         </button>
-        <h2 className="text-base font-semibold text-gray-12">Detalhes do perfil</h2>
+        <h2 className="text-base font-semibold text-gray-12">Profile details</h2>
       </div>
 
       {/* Bloco do usuário */}
@@ -138,7 +138,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
         </div>
 
         <div className="flex items-stretch gap-1 px-3 py-1">
-          <Stat value={stats.messages} label="Mensagens" />
+          <Stat value={stats.messages} label="Messages" />
           <Stat value={stats.tokens} label="tokens" />
           <Stat value={stats.radar} label="no radar" />
         </div>
@@ -189,7 +189,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
           ))}
         </div>
       ) : messages.length === 0 ? (
-        <p className="p-4 text-sm text-gray-11">Nenhuma mensagem recente.</p>
+        <p className="p-4 text-sm text-gray-11">No recent messages.</p>
       ) : (
         <ChatMessageList
           messages={messages}

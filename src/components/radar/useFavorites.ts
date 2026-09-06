@@ -21,7 +21,7 @@ export const FAVORITE_MESSAGES_KEY = ["radar-favorites-messages"] as const;
  * Autores seguidos E personalizados, sincronizados com o backend (react-query).
  * A query traz as duas coisas na mesma linha (ver `FavoriteAuthor.followed`):
  * personalizar NÃO segue, então `favorites` (tudo, p/ pintar os cards) e
- * `followed` (o painel "Seus favoritos") são listas diferentes.
+ * `followed` (o painel "Your favorites") são listas diferentes.
  *
  * Mutações otimistas: o botão de seguir responde na hora e reconcilia com o
  * servidor no settle; erro faz rollback. Fonte da verdade é a conta, não o device.
@@ -75,7 +75,7 @@ export function useFavorites() {
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(FAVORITES_KEY, ctx.prev);
-      toast.error("Não foi possível seguir");
+      toast.error("Could not follow");
     },
     onSettled: invalidate,
   });
@@ -98,7 +98,7 @@ export function useFavorites() {
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(FAVORITES_KEY, ctx.prev);
-      toast.error("Não foi possível deixar de seguir");
+      toast.error("Could not unfollow");
     },
     onSettled: invalidate,
   });
@@ -147,7 +147,7 @@ export function useFavorites() {
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(FAVORITES_KEY, ctx.prev);
-      toast.error("Não foi possível salvar");
+      toast.error("Could not save");
     },
     onSuccess: (fav) => upsertCache(fav),
     onSettled: invalidate,
@@ -157,7 +157,7 @@ export function useFavorites() {
   const uploadPhoto = useMutation({
     mutationFn: ({ authorId, file }: { authorId: string; file: File }) =>
       uploadFavoritePhoto(authorId, file),
-    onError: () => toast.error("Não foi possível enviar a foto"),
+    onError: () => toast.error("Could not upload the photo"),
     onSuccess: (fav) => upsertCache(fav),
     onSettled: invalidate,
   });
@@ -165,7 +165,7 @@ export function useFavorites() {
   return {
     /** Tudo (seguidos + só personalizados) — usado para pintar os cards. */
     favorites: rows,
-    /** Só os seguidos — o painel "Seus favoritos". */
+    /** Só os seguidos — o painel "Your favorites". */
     followed,
     count: followed.length,
     isLoading: query.isLoading,

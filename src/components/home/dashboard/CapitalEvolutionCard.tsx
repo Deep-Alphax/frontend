@@ -102,8 +102,8 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
       const name = t.symbol ?? `${t.mint.slice(0, 4)}…`;
       noteByDate.set(
         day,
-        `Um dos 3 maiores trades: ${name}, saída de ${t.exitMultiple.toLocaleString(
-          "pt-BR",
+        `One of the top 3 trades: ${name}, exit at ${t.exitMultiple.toLocaleString(
+          "en-US",
           { maximumFractionDigits: 1 },
         )}x e ${formatSignedUsd(t.tradingPnlUsd)}.`,
       );
@@ -156,7 +156,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
 
     const datasets: ChartDataset<"line", (number | null)[]>[] = [
       {
-        label: "Capital em dólar",
+        label: "Capital in USD",
         data: usd,
         borderColor: GREEN,
         backgroundColor: "rgba(85, 180, 103, 0.15)",
@@ -219,22 +219,22 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   const resultTooltip = (
     <RichInfoHint
       title="PNL Total"
-      description="Realizado (fechado) + não-realizado (em carteira)"
+      description="Realized (closed) + unrealized (held)"
       rows={[
         { label: "Realizado", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
         {
-          label: "Não-realizado",
+          label: "Unrealized",
           value: unrealized.available ? formatSignedUsd(unrealizedUsd) : "—",
           tone: unrealized.available ? toneOf(unrealizedUsd) : "default",
         },
         { label: "Total", value: formatSignedUsd(totalPnlUsd), tone: toneOf(totalPnlUsd) },
         {
-          label: "Variação",
+          label: "Change",
           value: bankroll.pnlPctOfBankroll != null ? formatSignedPct(bankroll.pnlPctOfBankroll) : "—",
           tone: bankroll.pnlPctOfBankroll != null ? toneOf(bankroll.pnlPctOfBankroll) : "default",
         },
       ]}
-      footer="Realizado já líquido de taxa/gas/tip; não-realizado a preço atual"
+      footer="Realized is already net of fees/gas/tip; unrealized at current price"
     />
   );
 
@@ -242,11 +242,11 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   const drawdownTooltip = (
     <RichInfoHint
       title="Maior Drawdown"
-      description="Mede quanto o capital recuou do ponto mais alto antes de voltar a subir"
+      description="Measures how far capital fell from its high before climbing again"
       rows={[
-        { label: "Topo em", value: dw ? formatShortDate(dw.peakDate) : "—" },
+        { label: "Peak on", value: dw ? formatShortDate(dw.peakDate) : "—" },
         { label: "Fundo em", value: dw ? formatShortDate(dw.troughDate) : "—" },
-        { label: "Duração", value: dw ? `${dw.durationDays} dias` : "—" },
+        { label: "Duration", value: dw ? `${dw.durationDays} days` : "—" },
         {
           label: "Queda",
           value: bankroll.maxDrawdownPct != null ? formatPct(-bankroll.maxDrawdownPct, 1) : "—",
@@ -261,19 +261,19 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   const daysTooltip = (
     <RichInfoHint
       align="right"
-      title="Dias no verde"
-      description="Distribuição dos dias operados na janela"
+      title="Days in the green"
+      description="Distribution of traded days in the window"
       rows={[
-        { label: "Dias positivos", value: String(capital.daysInGreen), tone: "positive" },
-        { label: "Dias negativos", value: String(daysNegative), tone: "negative" },
-        { label: "Dias sem operar", value: String(capital.inactiveDays) },
+        { label: "Positive days", value: String(capital.daysInGreen), tone: "positive" },
+        { label: "Negative days", value: String(daysNegative), tone: "negative" },
+        { label: "Days without trading", value: String(capital.inactiveDays) },
         {
-          label: "Melhor do dia",
+          label: "Best day",
           value: perDay.bestDay ? formatSignedUsd(perDay.bestDay.realizedPnlUsd) : "—",
           tone: "positive",
         },
         {
-          label: "Pior dia",
+          label: "Worst day",
           value: perDay.worstDay ? formatSignedUsd(perDay.worstDay.realizedPnlUsd) : "—",
           tone: "negative",
         },
@@ -283,23 +283,23 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
 
   const unrealizedTooltip = (
     <RichInfoHint
-      title="PNL não-realizado"
-      description="Posições em carteira a valor realizável — o que dá pra sacar de fato"
+      title="Unrealized PnL"
+      description="Held positions at realizable value — what you could actually cash out"
       rows={[
-        { label: "Posições em carteira", value: String(unrealized.openPositions) },
+        { label: "Held positions", value: String(unrealized.openPositions) },
         {
-          label: "Com mercado",
+          label: "With market",
           value: unrealized.openPositions > 0
             ? `${unrealized.pricedPositions}/${unrealized.openPositions} · ${liquidPct}%`
             : "—",
         },
         {
-          label: "Não-realizado",
+          label: "Unrealized",
           value: unrealized.available ? formatSignedUsd(unrealizedUsd) : "—",
           tone: unrealized.available ? toneOf(unrealizedUsd) : "default",
         },
       ]}
-      footer="Quantidade real on-chain × preço de mercado, menos a base de custo. Token sem liquidez (rugado) vale 0."
+      footer="Real on-chain amount × market price, minus cost basis. A token with no liquidity (rugged) is worth 0."
     />
   );
 
@@ -311,9 +311,9 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   return (
     <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
       <div className="flex items-center justify-between border-b border-gray-6 px-6 py-4">
-        <h3 className="text-base font-semibold text-gray-12">Evolução do capital</h3>
+        <h3 className="text-base font-semibold text-gray-12">Capital growth</h3>
         <span className="text-sm text-gray-11">
-          em dólar {benchmark.available ? "vs. medido em SOL" : ""}
+          in USD {benchmark.available ? "vs. measured in SOL" : ""}
         </span>
       </div>
 
@@ -323,8 +323,8 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
           hint={resultTooltip}
           footer={
             bankroll.pnlPctOfBankroll != null
-              ? `${formatSignedPct(bankroll.pnlPctOfBankroll)} sobre o bankroll`
-              : "Realizado + não-realizado"
+              ? `${formatSignedPct(bankroll.pnlPctOfBankroll)} of bankroll`
+              : "Realized + unrealized"
           }
         >
           <span
@@ -341,12 +341,12 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
         </MiniKpi>
 
         <MiniKpi
-          label="PNL não-realizado"
+          label="Unrealized PnL"
           hint={unrealizedTooltip}
           footer={
             unrealized.available
-              ? `${unrealized.openPositions} ${unrealized.openPositions === 1 ? "posição" : "posições"} · ${liquidPct}% com mercado`
-              : "Nada em carteira"
+              ? `${unrealized.openPositions} ${unrealized.openPositions === 1 ? "position" : "positions"} · ${liquidPct}% with market`
+              : "Nothing held"
           }
         >
           <span
@@ -367,15 +367,15 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
         <MiniKpi
           label="Maior drawdown"
           hint={drawdownTooltip}
-          footer={`−${formatUsd(capital.maxDrawdownUsd)} no período`}
+          footer={`−${formatUsd(capital.maxDrawdownUsd)} in the period`}
         >
           <span className="text-danger-11">{drawdownDisplay}</span>
         </MiniKpi>
 
         <MiniKpi
-          label="Dias no verde"
+          label="Days in the green"
           hint={daysTooltip}
-          footer={`${capital.inactiveDays} dias sem operar`}
+          footer={`${capital.inactiveDays} days without trading`}
         >
           {capital.daysInGreen}
         </MiniKpi>
@@ -384,7 +384,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
       <div className="p-6">
         <div className="mb-4 flex items-center gap-4 text-sm text-gray-11">
           <span className="flex items-center gap-2">
-            <span className="size-3 rounded-sm bg-green-10" /> Capital em dólar
+            <span className="size-3 rounded-sm bg-green-10" /> Capital in USD
           </span>
           {benchmark.available ? (
             <span className="flex items-center gap-2">
@@ -404,7 +404,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
             <Line data={chartData} options={options} />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-gray-11">
-              Sem operações no período.
+              No trades in the period.
             </div>
           )}
           {tip && capital.points[tip.index]
@@ -455,7 +455,7 @@ function ChartTooltip({
   const cumUsd = point.cumulativePnlUsd;
   const peak = Number(peakDeployedUsd);
   const bankrollPct = peak > 0 ? (Number(cumUsd) / peak) * 100 : null;
-  const dateLabel = new Date(`${point.date}T00:00:00`).toLocaleDateString("pt-BR", {
+  const dateLabel = new Date(`${point.date}T00:00:00`).toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
   });
@@ -465,7 +465,7 @@ function ChartTooltip({
   ];
   if (bankrollPct != null) {
     rows.push({
-      label: "Sobre o bankroll",
+      label: "Of bankroll",
       value: formatSignedPct(bankrollPct),
       tone: toneClass(bankrollPct),
     });
@@ -473,7 +473,7 @@ function ChartTooltip({
   if (solCum != null) {
     rows.push({
       label: "Medida em SOL",
-      value: `${solCum >= 0 ? "+" : "−"}${Math.abs(solCum).toLocaleString("pt-BR", {
+      value: `${solCum >= 0 ? "+" : "−"}${Math.abs(solCum).toLocaleString("en-US", {
         maximumFractionDigits: 2,
       })} SOL`,
       tone: toneClass(solCum),
@@ -481,11 +481,11 @@ function ChartTooltip({
   }
   if (day) {
     rows.push({
-      label: "Resultado do dia",
+      label: "Day result",
       value: formatSignedUsd(day.realizedPnlUsd),
       tone: toneClass(day.realizedPnlUsd),
     });
-    rows.push({ label: "Trades do dia", value: String(day.trades), tone: "text-gray-12" });
+    rows.push({ label: "Trades that day", value: String(day.trades), tone: "text-gray-12" });
   }
 
   return (

@@ -78,18 +78,18 @@ export function WalletSyncingState({
 
       <div className="flex max-w-[400px] flex-col items-center gap-3 text-center">
         <h2 className="text-2xl font-semibold leading-[1.1] text-gray-12">
-          Sincronizando sua carteira
+          Syncing your wallet
         </h2>
         <p className="text-base text-gray-11">
           {label ? (
             <>
-              Estamos lendo o histórico de <span className="text-gray-12">{label}</span>.{" "}
+              We’re reading the history of <span className="text-gray-12">{label}</span>.{" "}
             </>
           ) : (
-            "Estamos lendo o histórico on-chain dessa carteira. "
+            "We’re reading this wallet’s on-chain history. "
           )}
-          Leva alguns instantes — o painel abre sozinho quando terminar de importar
-          todo o histórico.
+          It takes a moment — the dashboard opens on its own once it finishes importing
+          the whole history.
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export function WalletSyncingState({
         <div
           className="relative h-1.5 w-full overflow-hidden rounded-full bg-gray-5"
           role="progressbar"
-          aria-label="Sincronizando dados da carteira"
+          aria-label="Syncing wallet data"
         >
           <span className="animate-indeterminate absolute inset-y-0 rounded-full bg-principal-9" />
         </div>

@@ -16,9 +16,9 @@ function dayLabel(iso: string): string {
   const today = new Date();
   const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diffDays = Math.round((startOf(today) - startOf(d)) / 86_400_000);
-  if (diffDays <= 0) return "Hoje";
-  if (diffDays === 1) return "Ontem";
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  if (diffDays <= 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return d.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" });
 }
 
 function DayDivider({ label }: { label: string }) {
@@ -121,7 +121,7 @@ export function ChatMessageList({
           <div ref={topSentinelRef} />
           {isLoadingOlder && (
             <div className="flex items-center justify-center gap-2 py-3 text-sm text-gray-11">
-              <span>Carregando mais</span>
+              <span>Loading more</span>
               <span className="flex gap-1">
                 <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
                 <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
@@ -130,7 +130,7 @@ export function ChatMessageList({
             </div>
           )}
           {!hasOlder && chrono.length > 0 && (
-            <p className="py-3 text-center text-xs text-gray-11">Início do histórico.</p>
+            <p className="py-3 text-center text-xs text-gray-11">Start of history.</p>
           )}
 
           {rows.map(({ m, label, showDivider }) => (
@@ -185,8 +185,8 @@ function ScrollToBottomButton({
           onClick={onClick}
           aria-label={
             hasUnread
-              ? `Ir para as ${unread} mensagens novas`
-              : "Ir para as mensagens mais recentes"
+              ? `Jump to the ${unread} new messages`
+              : "Jump to the latest messages"
           }
           initial={reduce ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

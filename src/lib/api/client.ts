@@ -55,12 +55,12 @@ export function isNotFoundError(error: unknown): boolean {
 }
 
 /**
- * Extrai uma mensagem amigável (pt-BR) de um erro do axios, sem vazar detalhes
+ * Extrai uma mensagem amigável (en-US) de um erro do axios, sem vazar detalhes
  * internos. Mapeia os status mais comuns do fluxo de auth para textos claros.
  */
 export function getApiErrorMessage(
   error: unknown,
-  fallback = "Algo deu errado. Tente novamente.",
+  fallback = "Something went wrong. Please try again.",
 ): string {
   if (!(error instanceof AxiosError)) return fallback;
 
@@ -68,12 +68,12 @@ export function getApiErrorMessage(
   const body = error.response?.data as ApiErrorBody | undefined;
 
   // Mapeamento por status (mais estável que depender do texto do backend).
-  if (status === 401) return "E-mail ou senha inválidos.";
-  if (status === 409) return "Este e-mail já está cadastrado.";
+  if (status === 401) return "Invalid email or password.";
+  if (status === 409) return "This email is already registered.";
   if (status === 429)
-    return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    return "Too many attempts. Wait a few minutes and try again.";
   if (status === 0 || error.code === "ERR_NETWORK")
-    return "Não foi possível conectar ao servidor. Verifique sua conexão.";
+    return "Could not reach the server. Check your connection.";
 
   // Mensagem específica retornada pelo backend, quando houver.
   if (Array.isArray(body?.errors) && body.errors.length > 0) return body.errors[0];

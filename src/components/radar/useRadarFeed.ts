@@ -52,7 +52,7 @@ export interface RadarSource {
 
 /**
  * Seleção da rail de Fontes:
- * - `null` → "Todas as fontes" (feed central sem filtro).
+ * - `null` → "All sources" (feed central sem filtro).
  * - guild → todas as capturas do servidor (por `guildName`).
  * - channel → um canal específico (por `channelId`).
  */
@@ -91,7 +91,7 @@ export interface RadarFeed {
 /** Teto do conjunto de IDs "novos" (evita crescer sem limite numa sessão longa). */
 const MAX_NEW_IDS = 300;
 
-const GROUP_FALLBACK = "Sem grupo";
+const GROUP_FALLBACK = "No group";
 
 /**
  * Fonte única de dados da tela de Radar. Acumula as páginas do feed (infinite
@@ -178,7 +178,7 @@ export function useRadarFeed(
         });
       }
 
-      // "Seus favoritos" é um feed de quem você SEGUE → tempo real também.
+      // "Your favorites" é um feed de quem você SEGUE → tempo real também.
       // Identidade = authorTag (a chave de follow guardada no favorito). O
       // `followed` é obrigatório: a mesma lista traz autores que o usuário só
       // personalizou, e esses NÃO entram no feed (o backend também os exclui).

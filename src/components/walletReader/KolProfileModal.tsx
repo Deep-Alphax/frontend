@@ -155,7 +155,7 @@ function WalletRow({
         <button
           type="button"
           onClick={copy}
-          aria-label="Copiar endereço"
+          aria-label="Copy address"
           className="flex size-8 items-center justify-center rounded text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
         >
           {copied ? (
@@ -168,7 +168,7 @@ function WalletRow({
           <button
             type="button"
             onClick={onRemove}
-            aria-label={`Remover carteira ${name}`}
+            aria-label={`Remove wallet ${name}`}
             className="flex size-8 items-center justify-center rounded text-gray-11 transition-colors hover:bg-vermelho-3 hover:text-vermelho-11"
           >
             <Trash2 className="size-5" strokeWidth={1.75} />
@@ -260,7 +260,7 @@ export function KolProfileModal(props: KolProfileModalProps) {
 
   if (!state) {
     return (
-      <Modal open onClose={props.onClose} title="Carregando…">
+      <Modal open onClose={props.onClose} title="Loading…">
         <div className="h-64 animate-pulse bg-gray-2" aria-hidden />
       </Modal>
     );
@@ -288,7 +288,7 @@ function KolProfileForm({
   const [wAddr, setWAddr] = useState("");
   const [newSquad, setNewSquad] = useState("");
   const [saving, setSaving] = useState(false);
-  // O modal abre em DETALHES (node 901:18345); "Editar" leva ao formulário.
+  // O modal abre em DETALHES (node 901:18345); "Edit" leva ao formulário.
   const [editing, setEditing] = useState(false);
 
   // O modal remonta a cada KOL (`key={openId}` na tela), então o rascunho nasce
@@ -347,7 +347,7 @@ function KolProfileForm({
     try {
       set("avatar", await fileToAvatar(file));
     } catch {
-      toast.error("Não foi possível ler a imagem.");
+      toast.error("Could not read the image.");
     }
   };
 
@@ -385,13 +385,13 @@ function KolProfileForm({
     // Só considera limpo se o servidor aceitou — o erro já virou toast + rollback.
     if (ok) {
       setInitial(draft);
-      toast.success("Alterações salvas na sua conta.");
+      toast.success("Changes saved to your account.");
     }
   };
 
   /** Fechar/navegar com rascunho sujo perderia a edição — pergunta antes. */
   const canLeave = () =>
-    !dirty || window.confirm("Você tem alterações não salvas neste KOL. Descartar?");
+    !dirty || window.confirm("You have unsaved changes on this KOL. Discard?");
   const guardedClose = () => {
     if (canLeave()) onClose();
   };
@@ -433,7 +433,7 @@ function KolProfileForm({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                aria-label="Trocar foto"
+                aria-label="Change photo"
                 className="absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-[14px] border border-violeta-8 bg-gray-3 text-gray-11 transition-colors hover:text-gray-12"
               >
                 <Camera className="size-4" strokeWidth={1.75} />
@@ -457,7 +457,7 @@ function KolProfileForm({
           {/* Todos os squads, do preset e da conta: "Squad1, Squad2, Squad3".
               Sai do rascunho para acompanhar o que o usuário marca na hora. */}
           <p className="text-sm font-medium leading-[1.3] text-gray-11">
-            {effectiveSquads.length > 0 ? effectiveSquads.join(", ") : "Sem squad"}
+            {effectiveSquads.length > 0 ? effectiveSquads.join(", ") : "No squad"}
           </p>
         </div>
 
@@ -483,7 +483,7 @@ function KolProfileForm({
 
       {editing && (
         <div className="flex flex-col gap-4 border-b border-gray-6 px-4 py-5">
-          <p className="text-sm leading-[1.3] text-gray-11">Nível deste usuário</p>
+          <p className="text-sm leading-[1.3] text-gray-11">This user’s tier</p>
           <div className="flex flex-wrap gap-2">
             {KOL_TIERS.slice().reverse().map((t) => {
               const on = t.id === tier.id;
@@ -492,7 +492,7 @@ function KolProfileForm({
                   key={t.id}
                   type="button"
                   aria-pressed={on}
-                  aria-label={`Nível ${t.label}`}
+                  aria-label={`Tier ${t.label}`}
                   // Escolher o nível grava a relevância no MEIO da faixa; se já
                   // está dentro dela, o valor fino do usuário é preservado.
                   onClick={() =>
@@ -525,7 +525,7 @@ function KolProfileForm({
               value={draft.twitter}
               onChange={(e) => set("twitter", e.target.value)}
               placeholder="@handle"
-              aria-label="Twitter / X do KOL"
+              aria-label="KOL Twitter / X"
               className="min-w-0 flex-1 bg-transparent text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11"
             />
           </div>
@@ -540,7 +540,7 @@ function KolProfileForm({
             <span className="min-w-0 truncate">@{twHandle}</span>
           </a>
         ) : (
-          <p className="text-sm leading-[1.3] text-gray-11">Sem Twitter cadastrado.</p>
+          <p className="text-sm leading-[1.3] text-gray-11">No Twitter on file.</p>
         )}
       </div>
     </aside>
@@ -566,15 +566,15 @@ function KolProfileForm({
   const mainView = (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
       <div className="flex flex-col gap-3 border-b border-gray-6 px-4 py-5">
-        <p className="text-sm leading-[1.3] text-gray-11">Sobre este trader</p>
+        <p className="text-sm leading-[1.3] text-gray-11">About this trader</p>
         <p className="whitespace-pre-wrap text-base leading-[1.3] text-gray-12">
-          {draft.notes.trim() || "Sem notas ainda — use Editar para escrever."}
+          {draft.notes.trim() || "No notes yet — use Edit to write."}
         </p>
       </div>
 
-      <EditSection label="Carteiras" count={`${draft.wallets.length} no total`}>
+      <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
         {draft.wallets.length === 0 ? (
-          <p className="text-sm text-gray-11">Nenhuma carteira cadastrada.</p>
+          <p className="text-sm text-gray-11">No wallets on file.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {draft.wallets.map((w) => (
@@ -600,14 +600,14 @@ function KolProfileForm({
   const mainEdit = (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
       <section className="flex flex-col gap-2 border-b border-gray-6 px-4 py-5">
-        <p className="text-base leading-[1.3] text-gray-12">Notas</p>
+        <p className="text-base leading-[1.3] text-gray-12">Notes</p>
         <textarea
           value={draft.notes}
           onChange={(e) => set("notes", e.target.value)}
           maxLength={NOTES_MAX}
           rows={5}
           placeholder="Ex: Costuma comprar cedo em runner de baixo mcap…"
-          aria-label="Notas do KOL"
+          aria-label="KOL notes"
           className="w-full resize-y rounded-lg border border-gray-6 bg-gray-2 px-3 py-4 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
         />
         <p
@@ -620,7 +620,7 @@ function KolProfileForm({
         </p>
       </section>
 
-      <EditSection label="Tipo de trader" count={`${draft.types.length} no total`}>
+      <EditSection label="Trader type" count={`${draft.types.length} total`}>
         <div className="flex flex-wrap gap-2">
           {KOL_TYPES.map((t) => (
             <ChoiceChip
@@ -647,12 +647,12 @@ function KolProfileForm({
        * fixa, sem clique, porque tirá-los daqui daria a impressão de que sumiram
        * para todo mundo.
        */}
-      <EditSection label="Squads" count={`${effectiveSquads.length} no total`}>
+      <EditSection label="Squads" count={`${effectiveSquads.length} total`}>
         <div className="flex flex-wrap gap-2">
           {presetSquads.map((s) => (
             <span
               key={s}
-              title="Squad do preset — vale para todos os usuários"
+              title="Preset squad — applies to all users"
               className="rounded-[32px] border border-gray-6 bg-gray-2 p-2 text-xs font-medium leading-[1.3] text-gray-11"
             >
               {s}
@@ -692,8 +692,8 @@ function KolProfileForm({
               e.preventDefault();
               addSquad(newSquad);
             }}
-            placeholder="Novo squad"
-            aria-label="Novo squad"
+            placeholder="New squad"
+            aria-label="New squad"
             className="h-10 min-w-0 flex-1 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
           />
           <button
@@ -701,15 +701,15 @@ function KolProfileForm({
             onClick={() => addSquad(newSquad)}
             // A seção de carteiras logo abaixo tem outro "Adicionar": sem o
             // rótulo acessível os dois botões ficam indistinguíveis por nome.
-            aria-label="Adicionar squad"
+            aria-label="Add squad"
             className="flex h-10 shrink-0 items-center justify-center rounded-lg border border-gray-6 bg-gray-3 px-4 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
           >
-            Adicionar
+            Add
           </button>
         </div>
       </EditSection>
 
-      <EditSection label="Carteiras" count={`${draft.wallets.length} no total`}>
+      <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
         {draft.wallets.length > 0 && (
           <div className="flex flex-col gap-2">
             {draft.wallets.map((w) => (
@@ -728,15 +728,15 @@ function KolProfileForm({
           <input
             value={wName}
             onChange={(e) => setWName(e.target.value)}
-            placeholder="Apelido"
-            aria-label="Apelido da carteira"
+            placeholder="Nickname"
+            aria-label="Wallet nickname"
             className="h-10 w-[165px] shrink-0 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
           />
           <input
             value={wAddr}
             onChange={(e) => setWAddr(e.target.value)}
-            placeholder="Endereço da carteira"
-            aria-label="Endereço da carteira"
+            placeholder="Wallet address"
+            aria-label="Wallet address"
             className="h-10 min-w-0 flex-1 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
           />
           <button
@@ -746,14 +746,14 @@ function KolProfileForm({
               if (!addr || draft.wallets.some((w) => w.address === addr)) return;
               set(
                 "wallets",
-                draft.wallets.concat([{ name: wName.trim() || "Carteira", address: addr }]),
+                draft.wallets.concat([{ name: wName.trim() || "Wallet", address: addr }]),
               );
               setWName("");
               setWAddr("");
             }}
             className="flex h-10 shrink-0 items-center justify-center rounded-lg bg-principal-9 px-6 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
           >
-            Adicionar
+            Add
           </button>
         </div>
       </EditSection>
@@ -763,21 +763,21 @@ function KolProfileForm({
       <section className="px-4 py-5">
         <div className="flex items-center justify-between gap-4 rounded-lg border border-vermelho-5 bg-vermelho-5/10 p-4">
           <div className="flex min-w-0 flex-col gap-2">
-            <p className="text-base font-semibold leading-[1.1] text-gray-12">Remover</p>
+            <p className="text-base font-semibold leading-[1.1] text-gray-12">Remove</p>
             <p className="text-[13px] text-gray-11">
-              Você perde as notas, a classificação e as carteiras vinculadas a este KOL
+              You lose the notes, the rating and the wallets linked to this KOL
             </p>
           </div>
           <button
             type="button"
             onClick={() => {
-              if (!window.confirm("Remover este KOL da sua coleção?")) return;
+              if (!window.confirm("Remove this KOL from your collection?")) return;
               removeKol(id, state.isCustom);
               onClose();
             }}
             className="flex h-10 shrink-0 items-center justify-center rounded-lg bg-vermelho-9 px-5 text-sm font-semibold text-gray-12 transition-colors hover:bg-vermelho-10"
           >
-            Remover KOL
+            Remove KOL
           </button>
         </div>
       </section>
@@ -806,7 +806,7 @@ function KolProfileForm({
               onClick={() => setDraft(initial)}
               className="flex h-12 items-center justify-center rounded-lg border border-gray-6 bg-gray-3 px-5 text-base font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Descartar
+              Discard
             </button>
             <button
               type="button"
@@ -814,12 +814,12 @@ function KolProfileForm({
               onClick={save}
               className="flex h-12 items-center justify-center rounded-lg bg-principal-9 px-5 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? "Salvando…" : "Salvar alteração"}
+              {saving ? "Saving…" : "Save change"}
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-end gap-2">
-            {dirty && <span className="mr-auto text-xs text-gray-11">Alterações não salvas.</span>}
+            {dirty && <span className="mr-auto text-xs text-gray-11">Unsaved changes.</span>}
             <button
               type="button"
               onClick={guardedClose}
@@ -833,7 +833,7 @@ function KolProfileForm({
               className="flex h-12 items-center justify-center gap-2 rounded-lg bg-principal-9 px-5 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10"
             >
               <Pencil className="size-5" strokeWidth={2} />
-              Editar
+              Edit
             </button>
           </div>
         )
@@ -841,7 +841,7 @@ function KolProfileForm({
       title={
         editing ? (
           <span className="truncate text-lg font-semibold leading-[1.1] text-gray-12">
-            Editando perfil
+            Editing profile
           </span>
         ) : (
           <div className="flex items-center gap-2">
@@ -849,7 +849,7 @@ function KolProfileForm({
               <button
                 type="button"
                 onClick={() => canLeave() && onStep(-1)}
-                aria-label="Anterior"
+                aria-label="Previous"
                 className="flex size-8 items-center justify-center rounded text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
               >
                 <ChevronLeft className="size-6" strokeWidth={2} />
@@ -857,14 +857,14 @@ function KolProfileForm({
               <button
                 type="button"
                 onClick={() => canLeave() && onStep(1)}
-                aria-label="Próximo"
+                aria-label="Next"
                 className="flex size-8 items-center justify-center rounded text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
               >
                 <ChevronRight className="size-6" strokeWidth={2} />
               </button>
             </div>
             <span className="truncate text-lg font-semibold leading-[1.1] text-gray-12">
-              Detalhes do perfil
+              Profile details
             </span>
           </div>
         )

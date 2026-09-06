@@ -65,10 +65,10 @@ function LinkRow({ link, index }: { link: string; index: number }) {
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
-      toast.success("Link copiado");
+      toast.success("Link copied");
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("Não foi possível copiar");
+      toast.error("Could not copy");
     }
   };
 
@@ -85,14 +85,14 @@ function LinkRow({ link, index }: { link: string; index: number }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <IconButton label="Copiar link" onClick={copy}>
+        <IconButton label="Copy link" onClick={copy}>
           {copied ? (
             <Check className="size-4 text-green-11" strokeWidth={2} />
           ) : (
             <Copy className="size-4" strokeWidth={2} />
           )}
         </IconButton>
-        <IconButton label="Abrir link" href={link}>
+        <IconButton label="Open link" href={link}>
           <ExternalLink className="size-4" strokeWidth={2} />
         </IconButton>
       </div>
@@ -107,7 +107,7 @@ interface LinksModalProps {
 }
 
 /**
- * Modal "Todos os links" (node Figma 422:8440). Portal em document.body,
+ * Modal "All links" (node Figma 422:8440). Portal em document.body,
  * fecha por Esc / clique no scrim, com trava de scroll do body. Leve e sem
  * dependência de dialog — foco inicial no botão de fechar.
  */
@@ -145,7 +145,7 @@ export function LinksModal({ open, links, onClose }: LinksModalProps) {
           {/* Scrim */}
           <button
             type="button"
-            aria-label="Fechar"
+            aria-label="Close"
             onClick={onClose}
             className="absolute inset-0 cursor-default bg-gray-1/70 backdrop-blur-sm"
           />
@@ -154,7 +154,7 @@ export function LinksModal({ open, links, onClose }: LinksModalProps) {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Todos os links"
+            aria-label="All links"
             className="relative flex max-h-[80vh] w-full max-w-[605px] flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2 shadow-2xl"
             initial={reduce ? false : { opacity: 0, scale: 0.98, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -163,11 +163,11 @@ export function LinksModal({ open, links, onClose }: LinksModalProps) {
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-gray-6 px-4 py-3">
-              <h2 className="text-lg font-semibold text-gray-12">Todos os links</h2>
+              <h2 className="text-lg font-semibold text-gray-12">All links</h2>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Fechar"
+                aria-label="Close"
                 className={cn(
                   "flex size-8 items-center justify-center rounded text-gray-11",
                   "transition-colors hover:bg-gray-3 hover:text-gray-12",
@@ -180,7 +180,7 @@ export function LinksModal({ open, links, onClose }: LinksModalProps) {
             {/* Lista */}
             <div className="min-h-0 flex-1 overflow-y-auto">
               {links.length === 0 ? (
-                <p className="p-6 text-center text-sm text-gray-11">Nenhum link.</p>
+                <p className="p-6 text-center text-sm text-gray-11">No links.</p>
               ) : (
                 links.map((l, i) => <LinkRow key={l + i} link={l} index={i + 1} />)
               )}

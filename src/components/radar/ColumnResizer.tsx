@@ -7,6 +7,8 @@ interface ColumnResizerProps {
   onStart: () => void;
   /** Delta horizontal (px) desde o início do arraste. */
   onMove: (dx: number) => void;
+  /** Duplo-clique: volta a coluna à largura padrão. */
+  onReset: () => void;
 }
 
 /**
@@ -20,8 +22,12 @@ interface ColumnResizerProps {
  * Do lado de fora não há scrollbar (em LTR), então os dois gestos convivem.
  *
  * Só em desktop (`lg`); a faixa acende no hover para dizer onde pegar.
+ *
+ * Duplo-clique devolve a largura padrão: como a coluna pode ser encolhida até
+ * sumir, é preciso um caminho de volta que não dependa de acertar uma alça de
+ * 8px numa coluna de largura zero.
  */
-export function ColumnResizer({ onStart, onMove }: ColumnResizerProps) {
+export function ColumnResizer({ onStart, onMove, onReset }: ColumnResizerProps) {
   const startX = useRef(0);
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -46,8 +52,9 @@ export function ColumnResizer({ onStart, onMove }: ColumnResizerProps) {
     <div
       role="separator"
       aria-orientation="vertical"
-      aria-label="Redimensionar coluna"
+      aria-label="Resize column (double-click restores the default width)"
       onPointerDown={handlePointerDown}
+      onDoubleClick={onReset}
       className="absolute right-0 top-0 z-20 hidden h-full w-2 translate-x-1/2 cursor-col-resize touch-none bg-transparent transition-colors hover:bg-gray-6/60 lg:block"
     />
   );

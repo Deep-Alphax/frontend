@@ -40,7 +40,7 @@ export function LoginScreen() {
           </a>{" "}
           e a{" "}
           <a href="#" className="underline underline-offset-2">
-            Política de privacidade
+            Privacy policy
           </a>
           . */}
         </p>

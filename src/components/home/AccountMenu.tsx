@@ -52,15 +52,15 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
   });
 
   const handleDelete = async (id: string, label: string) => {
-    if (!window.confirm(`Remover a carteira ${label}? Os dados dela saem do painel.`)) return;
+    if (!window.confirm(`Remove wallet ${label}? Its data leaves the dashboard.`)) return;
     try {
       await deleteWallet(id);
       if (selectedWalletId === id) select(null); // caiu a selecionada → ProfileContent escolhe outra
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
-      toast.success("Carteira removida.");
+      toast.success("Wallet removed.");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Não foi possível remover a carteira."));
+      toast.error(getApiErrorMessage(err, "Could not remove the wallet."));
     }
   };
 
@@ -104,7 +104,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
           </div>
 
           {wallets.length === 0 ? (
-            <div className="px-2 py-2 text-sm text-gray-11">Nenhuma carteira ainda.</div>
+            <div className="px-2 py-2 text-sm text-gray-11">No wallets yet.</div>
           ) : null}
 
           {/* Uma carteira por linha (selecionar + remover) */}
@@ -134,12 +134,12 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
                       Sincronizando…
                     </span>
                   ) : w.syncStatus === "ERROR" ? (
-                    <span className="text-[11px] text-danger-11">Erro ao sincronizar</span>
+                    <span className="text-[11px] text-danger-11">Sync error</span>
                   ) : null}
                 </DropdownMenu.Item>
                 <button
                   type="button"
-                  aria-label={`Remover ${label}`}
+                  aria-label={`Remove ${label}`}
                   onClick={() => handleDelete(w.id, label)}
                   className="flex size-8 shrink-0 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-danger-11"
                 >
@@ -153,7 +153,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
 
           <DropdownMenu.Item className={itemClass} onSelect={() => setAddOpen(true)}>
             <Plus className="size-4 text-gray-11" />
-            <span>Adicionar carteira</span>
+            <span>Add wallet</span>
           </DropdownMenu.Item>
 
           {isAdmin ? (
@@ -162,7 +162,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
               <DropdownMenu.Item asChild className={itemClass}>
                 <Link href="/admin/feed">
                   <Shield className="size-4 text-gray-11" />
-                  <span>Admin · Feed do Discord</span>
+                  <span>Admin · Discord feed</span>
                 </Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild className={itemClass}>
@@ -180,7 +180,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
             onSelect={handleLogout}
           >
             <LogOut className="size-4" />
-            <span>Sair</span>
+            <span>Sign out</span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

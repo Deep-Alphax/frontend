@@ -44,7 +44,7 @@ function DashboardError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-lg border border-gray-6 bg-gray-2 px-6 py-16 text-center">
       <p className="text-base text-gray-11">
-        Não foi possível carregar as métricas agora. Verifique sua conexão e tente de novo.
+        Could not load the metrics right now. Check your connection and try again.
       </p>
       <button
         type="button"

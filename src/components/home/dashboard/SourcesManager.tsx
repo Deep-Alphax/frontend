@@ -49,24 +49,24 @@ function SourceCard({ source }: { source: Source }) {
     onSuccess: () => {
       setAddress("");
       invalidate();
-      toast.success("Carteira da fonte adicionada.");
+      toast.success("Source wallet added.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível adicionar a carteira.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the wallet.")),
   });
 
   const removeWallet = useMutation({
     mutationFn: (walletId: string) => removeSourceWallet(source.id, walletId),
     onSuccess: invalidate,
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível remover a carteira.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove the wallet.")),
   });
 
   const removeSource = useMutation({
     mutationFn: () => deleteSource(source.id),
     onSuccess: () => {
       invalidate();
-      toast.success("Fonte removida.");
+      toast.success("Source removed.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível remover a fonte.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove the source.")),
   });
 
   return (
@@ -75,9 +75,9 @@ function SourceCard({ source }: { source: Source }) {
         <span className="text-sm font-semibold text-gray-12">{source.name}</span>
         <button
           type="button"
-          aria-label={`Remover fonte ${source.name}`}
+          aria-label={`Remove source ${source.name}`}
           onClick={() => {
-            if (window.confirm(`Remover a fonte "${source.name}"?`)) removeSource.mutate();
+            if (window.confirm(`Remove the source "${source.name}"?`)) removeSource.mutate();
           }}
           className="flex size-8 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-danger-11"
         >
@@ -99,7 +99,7 @@ function SourceCard({ source }: { source: Source }) {
               ) : null}
               <button
                 type="button"
-                aria-label="Remover carteira"
+                aria-label="Remove wallet"
                 onClick={() => removeWallet.mutate(w.id)}
                 className="text-gray-11 transition-colors hover:text-danger-11"
               >
@@ -109,7 +109,7 @@ function SourceCard({ source }: { source: Source }) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-gray-11">Nenhuma carteira — adicione o endereço on-chain da fonte.</p>
+        <p className="text-xs text-gray-11">No wallet — add the source’s on-chain address.</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -127,7 +127,7 @@ function SourceCard({ source }: { source: Source }) {
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Endereço da carteira da fonte"
+          placeholder="Source wallet address"
           className={cn(inputClass, "min-w-0 flex-1")}
         />
         <button
@@ -137,7 +137,7 @@ function SourceCard({ source }: { source: Source }) {
           className={primaryBtn}
         >
           {addWallet.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          Carteira
+          Wallet
         </button>
       </div>
     </div>
@@ -174,12 +174,12 @@ export function SourcesManager() {
       setAddress("");
       queryClient.invalidateQueries({ queryKey: ["sources"] });
       queryClient.invalidateQueries({ queryKey: ["sources-analytics"] });
-      toast.success("Fonte adicionada.");
+      toast.success("Source added.");
     },
     onError: (e) => {
       // A fonte pode ter sido criada mas a carteira falhado → atualiza mesmo assim.
       queryClient.invalidateQueries({ queryKey: ["sources"] });
-      toast.error(getApiErrorMessage(e, "Não foi possível criar a fonte."));
+      toast.error(getApiErrorMessage(e, "Could not create the source."));
     },
   });
 
@@ -189,10 +189,10 @@ export function SourcesManager() {
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div className="flex flex-col gap-1">
-        <h3 className="text-base font-semibold text-gray-12">Fontes de alpha</h3>
+        <h3 className="text-base font-semibold text-gray-12">Alpha sources</h3>
         <p className="text-sm text-gray-11">
-          Cadastre as carteiras dos desks/grupos que você segue. Seus trades são
-          atribuídos a elas quando você compra o mesmo token logo depois.
+          Register the wallets of the desks/groups you follow. Your trades get
+          attributed to them when you buy the same token right after.
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export function SourcesManager() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Nome da fonte (ex.: Obsidian Desk)"
+          placeholder="Source name (e.g. Obsidian Desk)"
           className={cn(inputClass, "w-56")}
         />
         <select
@@ -218,7 +218,7 @@ export function SourcesManager() {
         <input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Endereço da carteira da fonte"
+          placeholder="Source wallet address"
           className={cn(inputClass, "min-w-0 flex-1")}
         />
         <button
@@ -228,7 +228,7 @@ export function SourcesManager() {
           className={primaryBtn}
         >
           {create.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          Adicionar fonte
+          Add source
         </button>
       </div>
 

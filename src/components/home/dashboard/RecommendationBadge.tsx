@@ -10,10 +10,10 @@ interface RecMeta {
 
 /** Rótulo + cor de cada recomendação (ordem = a dos chips de filtro do design). */
 export const RECOMMENDATIONS: { key: RecommendationKey; meta: RecMeta }[] = [
-  { key: "usar_mais", meta: { label: "Usar mais", tone: "green" } },
+  { key: "usar_mais", meta: { label: "Use more", tone: "green" } },
   { key: "manter", meta: { label: "Manter", tone: "green" } },
   { key: "reduzir_size", meta: { label: "Reduzir size", tone: "amber" } },
-  { key: "revisar_entrada", meta: { label: "Revisar entrada", tone: "amber" } },
+  { key: "revisar_entrada", meta: { label: "Review entry", tone: "amber" } },
   { key: "observar", meta: { label: "Observar", tone: "neutral" } },
   { key: "cortar", meta: { label: "Cortar", tone: "red" } },
   { key: "aposta_curta", meta: { label: "Aposta curta", tone: "blue" } },

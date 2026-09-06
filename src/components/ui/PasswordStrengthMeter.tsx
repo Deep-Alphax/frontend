@@ -14,9 +14,9 @@ const LEVEL_STYLES: Record<
   Exclude<PasswordStrengthLevel, "empty">,
   { bar: string; text: string; label: string }
 > = {
-  weak: { bar: "bg-danger-10", text: "text-danger-11", label: "Senha fraca" },
-  medium: { bar: "bg-amber-10", text: "text-amber-11", label: "Senha média" },
-  strong: { bar: "bg-green-10", text: "text-green-11", label: "Senha forte" },
+  weak: { bar: "bg-danger-10", text: "text-danger-11", label: "Weak password" },
+  medium: { bar: "bg-amber-10", text: "text-amber-11", label: "Medium password" },
+  strong: { bar: "bg-green-10", text: "text-green-11", label: "Strong password" },
 };
 
 interface PasswordStrengthMeterProps {

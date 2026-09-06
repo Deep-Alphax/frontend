@@ -63,26 +63,26 @@ export function MonitorsManager() {
       return f.id ? updateMonitor(f.id, payload) : createMonitor(payload);
     },
     onSuccess: (_, f) => {
-      toast.success(f.id ? "Regra atualizada" : "Regra criada");
+      toast.success(f.id ? "Rule updated" : "Rule created");
       setForm(null);
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao salvar a regra")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not save the rule")),
   });
 
   const toggleMutation = useMutation({
     mutationFn: (m: FeedMonitor) => updateMonitor(m.id, { isActive: !m.isActive }),
     onSuccess: invalidate,
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao alternar")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not toggle")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteMonitor(id),
     onSuccess: () => {
-      toast.success("Regra removida");
+      toast.success("Rule removed");
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao remover")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not remove")),
   });
 
   const monitors = monitorsQuery.data ?? [];
@@ -93,10 +93,10 @@ export function MonitorsManager() {
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-12">Regras de monitoramento</h2>
+          <h2 className="text-lg font-semibold text-gray-12">Monitoring rules</h2>
           <p className="text-sm text-gray-11">
-            Canal do Discord → Telegram. Sem padrão = <b>espelha tudo</b>; com padrão
-            (regex <code>/corpo/flags</code> ou texto) = filtra.
+            Discord channel → Telegram. No pattern = <b>mirrors everything</b>; with a pattern
+            (regex <code>/body/flags</code> or plain text) = filters.
           </p>
         </div>
         {!form && (
@@ -111,31 +111,31 @@ export function MonitorsManager() {
         <div className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-1 p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextField
-              label="Nome (opcional)"
+              label="Name (optional)"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ex.: Alpha calls #1"
             />
             <TextField
-              label="ID do canal (ou use o servidor →)"
+              label="Channel ID (or use the server →)"
               value={form.channelId}
               onChange={(e) => setForm({ ...form, channelId: e.target.value })}
               placeholder="1013855610871226480"
             />
             <TextField
-              label="ID do servidor (canal vazio = servidor todo)"
+              label="Server ID (empty channel = whole server)"
               value={form.guildId}
               onChange={(e) => setForm({ ...form, guildId: e.target.value })}
               placeholder="guild id (opcional)"
             />
             <TextField
-              label="Padrão — vazio = espelha TUDO"
+              label="Pattern — empty = mirrors EVERYTHING"
               value={form.pattern}
               onChange={(e) => setForm({ ...form, pattern: e.target.value })}
-              placeholder="deixe vazio p/ espelhar tudo (ou /0x…/i)"
+              placeholder="leave empty to mirror everything (or /0x…/i)"
             />
             <TextField
-              label="Telegram chat/canal ID"
+              label="Telegram chat/channel ID"
               value={form.telegramChatId}
               onChange={(e) => setForm({ ...form, telegramChatId: e.target.value })}
               placeholder="-1004299449661"
@@ -150,7 +150,7 @@ export function MonitorsManager() {
                 onChange={(e) => setForm({ ...form, waitForBotReply: e.target.checked })}
                 className="size-4 accent-principal-9"
               />
-              Esperar resposta do bot (dados ricos)
+              Wait for the bot reply (rich data)
             </label>
             <label className="flex items-center gap-2 text-sm text-gray-12">
               <input
@@ -169,7 +169,7 @@ export function MonitorsManager() {
               disabled={!canSave || saveMutation.isPending}
               onClick={() => form && saveMutation.mutate(form)}
             >
-              {saveMutation.isPending ? "Salvando…" : form.id ? "Salvar" : "Criar regra"}
+              {saveMutation.isPending ? "Saving…" : form.id ? "Save" : "Create rule"}
             </Button>
             <Button variant="secondary" className="w-auto" onClick={() => setForm(null)}>
               Cancelar
@@ -180,19 +180,19 @@ export function MonitorsManager() {
 
       {/* Tabela de regras */}
       {monitorsQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Carregando…</p>
+        <p className="text-sm text-gray-11">Loading…</p>
       ) : monitors.length === 0 ? (
-        <p className="text-sm text-gray-11">Nenhuma regra ainda. Crie a primeira.</p>
+        <p className="text-sm text-gray-11">No rules yet. Create the first one.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="text-gray-11">
               <tr className="border-b border-gray-6">
-                <th className="py-2 pr-4 font-medium">Regra</th>
-                <th className="py-2 pr-4 font-medium">Canal</th>
+                <th className="py-2 pr-4 font-medium">Rule</th>
+                <th className="py-2 pr-4 font-medium">Channel</th>
                 <th className="py-2 pr-4 font-medium">Telegram</th>
-                <th className="py-2 pr-4 font-medium">Ativa</th>
-                <th className="py-2 font-medium">Ações</th>
+                <th className="py-2 pr-4 font-medium">Active</th>
+                <th className="py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -248,7 +248,7 @@ export function MonitorsManager() {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Remover a regra "${m.name || m.pattern}"?`)) {
+                          if (confirm(`Remove the rule "${m.name || m.pattern}"?`)) {
                             deleteMutation.mutate(m.id);
                           }
                         }}

@@ -77,20 +77,20 @@ export function ConnectWalletEmptyState() {
 
           <div className="flex flex-col items-center gap-4 text-center">
             <h2 className="text-2xl font-semibold leading-[1.1] text-gray-12">
-              Adicione uma carteira
+              Add a wallet
             </h2>
             <p className="text-base text-gray-11">
-              Para visualizar as informações do perfil, cole o endereço de uma
-              carteira e a gente lê o histórico dela.
+              To see your profile data, paste a wallet address and we’ll read
+              its history.
             </p>
           </div>
         </div>
 
         {isAuthenticated ? (
-          <Button onClick={() => setAddOpen(true)}>Buscar carteira</Button>
+          <Button onClick={() => setAddOpen(true)}>Search wallet</Button>
         ) : (
           <Button asChild>
-            <Link href="/login">Acessar plataforma</Link>
+            <Link href="/login">Access platform</Link>
           </Button>
         )}
       </div>

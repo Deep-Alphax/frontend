@@ -57,7 +57,7 @@ export function Footer() {
         <div className="flex flex-col gap-8">
           {/* Linha 1: logo + navegação */}
           <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between md:gap-4">
-            <Link href="/" aria-label="Deep Alpha — início" className="flex flex-col items-center gap-1">
+            <Link href="/" aria-label="Deep Alpha — home" className="flex flex-col items-center gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/deep-alpha-logo.svg"
@@ -76,7 +76,7 @@ export function Footer() {
               <FooterLink href="#">Mentoria</FooterLink> */}
               <FooterLink href="/radar">Radar</FooterLink>
               <FooterLink href="/wallet-reader">Wallet Reader</FooterLink>
-              <FooterLink href="/">Meu perfil</FooterLink>
+              <FooterLink href="/">My profile</FooterLink>
              {/*  <FooterLink href="#">Copiloto</FooterLink> */}
             </nav>
           </div>
@@ -94,7 +94,7 @@ export function Footer() {
                 className="pointer-events-none absolute inset-0 size-full object-cover"
               />
               <p className="font-display relative w-[204px] text-lg font-semibold leading-tight tracking-wide text-gray-12">
-                Junte-se à comunidade
+                Join the community
               </p>
               <a
                 href="#"
@@ -115,8 +115,8 @@ export function Footer() {
                 </SocialButton>
               </div>
               {/* <nav className="flex flex-wrap items-center justify-center">
-                <FooterLink href="#">Política de privacidade</FooterLink>
-                <FooterLink href="#">Termos e condições</FooterLink>
+                <FooterLink href="#">Privacy policy</FooterLink>
+                <FooterLink href="#">Terms and conditions</FooterLink>
               </nav> */}
             </div>
           </div>
@@ -124,7 +124,7 @@ export function Footer() {
 
         {/* Copyright */}
         <p className="text-center text-base text-gray-11">
-          Copyright Deep Alpha - 2026. Todos os direitos reservados.
+          Copyright Deep Alpha - 2026. All rights reserved.
         </p>
       </div>
     </footer>

@@ -67,7 +67,7 @@ export default function OpengraphImage() {
 
         {/* Tagline */}
         <div style={{ marginTop: "30px", fontSize: "36px", color: "#a0a3ad", maxWidth: "900px" }}>
-          PnL real, topo × saída e feed de alpha — para carteiras Solana.
+          Real PnL, peak vs. exit and an alpha feed — for Solana wallets.
         </div>
       </div>
     ),

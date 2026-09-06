@@ -121,7 +121,7 @@ function KolEditor({
     try {
       set("avatar", await fileToAvatar(file));
     } catch {
-      toast.error("Não foi possível ler a imagem.");
+      toast.error("Could not read the image.");
     }
   };
 
@@ -129,12 +129,12 @@ function KolEditor({
     <Modal
       open={open}
       onClose={onClose}
-      title={editing ? `Editar ${editing.name}` : "Adicionar KOL ao preset"}
+      title={editing ? `Edit ${editing.name}` : "Add KOL to preset"}
       className="max-w-2xl"
       footer={
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-gray-11">
-            O que você salvar aqui aparece para <b className="text-gray-12">todos</b> os usuários.
+            What you save here shows up for <b className="text-gray-12">everyone</b>.
           </p>
           <div className="flex gap-2">
             <button
@@ -150,7 +150,7 @@ function KolEditor({
               onClick={() => onSubmit(draftToPatch(d))}
               className="rounded-lg bg-principal-9 px-4 py-2 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? "Salvando…" : "Salvar preset"}
+              {saving ? "Saving…" : "Save preset"}
             </button>
           </div>
         </div>
@@ -168,12 +168,12 @@ function KolEditor({
             className="size-18 shrink-0 rounded-full border border-gray-6 object-cover"
           />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <Field label="Nome">
+            <Field label="Name">
               <input
                 className={inputCls}
                 value={d.name}
                 onChange={(e) => set("name", e.target.value)}
-                placeholder="Nome do KOL"
+                placeholder="KOL name"
               />
             </Field>
             <div className="flex items-center gap-3 text-xs">
@@ -195,7 +195,7 @@ function KolEditor({
                   onClick={() => set("avatar", null)}
                   className="text-gray-11 underline underline-offset-2 hover:text-gray-12"
                 >
-                  remover foto
+                  remove photo
                 </button>
               )}
             </div>
@@ -203,7 +203,7 @@ function KolEditor({
         </div>
 
         {/* Relevância */}
-        <Field label={`Relevância — ${d.relevance}/100 · ${tierFor(d.relevance).label}`}>
+        <Field label={`Relevance — ${d.relevance}/100 · ${tierFor(d.relevance).label}`}>
           <input
             type="range"
             min={0}
@@ -215,7 +215,7 @@ function KolEditor({
         </Field>
 
         {/* Tipos */}
-        <Field label="Tipos de trader">
+        <Field label="Trader types">
           <div className="flex flex-wrap gap-1.5">
             {KOL_TYPES.map((t) => {
               const on = d.types.includes(t.id);
@@ -246,10 +246,10 @@ function KolEditor({
               className={inputCls}
               value={d.twitter}
               onChange={(e) => set("twitter", e.target.value)}
-              placeholder="handle sem @"
+              placeholder="handle without @"
             />
           </Field>
-          <Field label="Squads (separados por vírgula)">
+          <Field label="Squads (comma-separated)">
             <input
               className={inputCls}
               value={d.squads}
@@ -259,18 +259,18 @@ function KolEditor({
           </Field>
         </div>
 
-        <Field label="Notas">
+        <Field label="Notes">
           <textarea
             rows={3}
             className="w-full resize-y rounded-lg border border-gray-6 bg-gray-1 p-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60"
             value={d.notes}
             onChange={(e) => set("notes", e.target.value)}
-            placeholder="Contexto do KOL — visível para todos."
+            placeholder="KOL context — visible to everyone."
           />
         </Field>
 
         {/* Carteiras */}
-        <Field label={`Carteiras (${d.wallets.length})`}>
+        <Field label={`Wallets (${d.wallets.length})`}>
           <div className="flex flex-col gap-1.5">
             {d.wallets.map((w, i) => (
               <div
@@ -283,7 +283,7 @@ function KolEditor({
                 </span>
                 <button
                   type="button"
-                  aria-label={`Remover ${w.address}`}
+                  aria-label={`Remove ${w.address}`}
                   onClick={() => set("wallets", d.wallets.filter((_, j) => j !== i))}
                   className="shrink-0 text-gray-11 transition-colors hover:text-vermelho-11"
                 >
@@ -302,20 +302,20 @@ function KolEditor({
                 className={cn(inputCls, "h-9 min-w-0 flex-1 font-mono text-xs")}
                 value={wAddr}
                 onChange={(e) => setWAddr(e.target.value)}
-                placeholder="endereço on-chain"
+                placeholder="on-chain address"
               />
               <button
                 type="button"
                 onClick={() => {
                   const addr = wAddr.trim();
                   if (!addr || d.wallets.some((w) => w.address === addr)) return;
-                  set("wallets", d.wallets.concat([{ name: wName.trim() || "Carteira", address: addr }]));
+                  set("wallets", d.wallets.concat([{ name: wName.trim() || "Wallet", address: addr }]));
                   setWName("");
                   setWAddr("");
                 }}
                 className="h-9 shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
               >
-                Adicionar
+                Add
               </button>
             </div>
           </div>
@@ -389,9 +389,9 @@ export function KolsAdmin() {
     onSuccess: () => {
       setCreating(false);
       afterWrite();
-      toast.success("KOL adicionado ao preset.");
+      toast.success("KOL added to the preset.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível criar o KOL.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not create the KOL.")),
   });
 
   const updateMut = useMutation({
@@ -400,21 +400,21 @@ export function KolsAdmin() {
     onSuccess: () => {
       setEditing(null);
       afterWrite();
-      toast.success("Preset atualizado para todos.");
+      toast.success("Preset updated for everyone.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível salvar.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not save.")),
   });
 
   const removeMut = useMutation({
     mutationFn: deleteKolPreset,
     onSuccess: afterWrite,
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível remover.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove.")),
   });
 
   const restoreMut = useMutation({
     mutationFn: restoreKolPreset,
     onSuccess: afterWrite,
-    onError: (e) => toast.error(getApiErrorMessage(e, "Não foi possível restaurar.")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not restore.")),
   });
 
   // Próxima página por sentinela no fim da grade (mesmo padrão do /wallet-reader).
@@ -438,13 +438,13 @@ export function KolsAdmin() {
     return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
   }
   if (!isAuthenticated) {
-    return <p className="text-gray-11">Faça login para acessar.</p>;
+    return <p className="text-gray-11">Sign in to continue.</p>;
   }
   if (profile?.role !== "ADMIN") {
     return (
       <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">Acesso restrito</h1>
-        <p className="text-sm text-gray-11">Esta área é exclusiva para administradores.</p>
+        <h1 className="text-lg font-semibold text-gray-12">Restricted access</h1>
+        <p className="text-sm text-gray-11">This area is admins only.</p>
       </div>
     );
   }
@@ -454,8 +454,8 @@ export function KolsAdmin() {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-gray-12">Preset de KOLs</h1>
         <p className="text-sm text-gray-11">
-          Esta é a lista que <b className="text-gray-12">todos</b> os usuários veem. Cada usuário
-          pode editar um KOL na conta dele — essa edição vence o preset só para ele.
+          This is the list <b className="text-gray-12">every</b> user sees. Each user
+          can edit a KOL on their own account — that edit beats the preset for them only.
         </p>
       </header>
 
@@ -468,8 +468,8 @@ export function KolsAdmin() {
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar por nome, squad ou endereço…"
-            aria-label="Buscar KOL no preset"
+            placeholder="Search by name, squad or address…"
+            aria-label="Search KOL in preset"
             className={cn(inputCls, "pl-10")}
           />
         </div>
@@ -478,12 +478,12 @@ export function KolsAdmin() {
           onClick={() => setCreating(true)}
           className="flex h-10 shrink-0 items-center gap-2 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
         >
-          <Plus className="size-4" strokeWidth={2} /> Adicionar KOL
+          <Plus className="size-4" strokeWidth={2} /> Add KOL
         </button>
       </div>
 
       <p className="text-xs text-gray-11 tabular-nums">
-        {total.toLocaleString("pt-BR")} KOLs no preset
+        {total.toLocaleString("en-US")} KOLs no preset
         {filtered.length < total && ` · ${filtered.length} carregados`}
       </p>
 
@@ -511,7 +511,7 @@ export function KolsAdmin() {
                         onClick={() => setEditing(k)}
                         className="rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-xs font-medium text-gray-12 transition-colors hover:bg-gray-4"
                       >
-                        Editar
+                        Edit
                       </button>
                       <span className="text-xs tabular-nums text-gray-11">{k.relevance}/100</span>
                       {removed && (
@@ -521,7 +521,7 @@ export function KolsAdmin() {
                       {removed ? (
                         <button
                           type="button"
-                          aria-label={`Restaurar ${k.name}`}
+                          aria-label={`Restore ${k.name}`}
                           onClick={() => restoreMut.mutate(k.id)}
                           className="shrink-0 text-gray-11 transition-colors hover:text-green-11"
                         >
@@ -530,11 +530,11 @@ export function KolsAdmin() {
                       ) : (
                         <button
                           type="button"
-                          aria-label={`Remover ${k.name} do preset`}
+                          aria-label={`Remove ${k.name} from preset`}
                           onClick={() => {
                             if (
                               window.confirm(
-                                `Remover "${k.name}" do preset? Ele some para TODOS os usuários (as edições de conta são preservadas).`,
+                                `Remove "${k.name}" from the preset? It disappears for ALL users (per-account edits are preserved).`,
                               )
                             )
                               removeMut.mutate(k.id);
@@ -555,7 +555,7 @@ export function KolsAdmin() {
           {hasNextPage && (
             <div ref={sentinel} className="flex justify-center py-2">
               <span className="text-xs text-gray-11">
-                {isFetchingNextPage ? "Carregando mais…" : " "}
+                {isFetchingNextPage ? "Loading more…" : " "}
               </span>
             </div>
           )}
@@ -607,7 +607,7 @@ function KolEditorLoader({
     // O rascunho do formulário nasce deste dado UMA vez (`useState` em
     // `KolEditor`), então servir cache aqui é perigoso, não só desatualizado:
     // reabrir o KOL dentro da janela de cache montava o editor com o estado
-    // ANTERIOR ao último salvamento e o "Salvar preset" — que manda todos os
+    // ANTERIOR ao último salvamento e o "Save preset" — que manda todos os
     // campos — regravava aquele valor velho por cima do novo. Descartar ao
     // fechar (`gcTime: 0`) garante que todo editor abre sobre a verdade do
     // servidor. Custo: um GET de uma linha por abertura.
@@ -617,7 +617,7 @@ function KolEditorLoader({
 
   if (!data) {
     return (
-      <Modal open onClose={onClose} title="Carregando…" className="max-w-2xl">
+      <Modal open onClose={onClose} title="Loading…" className="max-w-2xl">
         <div className="h-64 animate-pulse bg-gray-2" aria-hidden />
       </Modal>
     );

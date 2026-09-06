@@ -116,7 +116,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "net",
       icon: CircleDollarSign,
-      title: "Resultado líquido",
+      title: "Net result",
       value: formatSignedUsd(a.netPnlUsd),
       tone: signOf(a.netPnlUsd) < 0 ? "red" : "green",
       grip: true,
@@ -134,7 +134,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "top",
       icon: Crosshair,
-      title: "Aproveitamento do topo",
+      title: "Peak capture",
       value:
         a.peaks.available && a.peaks.topCapturePct != null
           ? formatPct(a.peaks.topCapturePct)
@@ -167,7 +167,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "src",
       icon: LineChart,
-      title: "Fonte mais lucrativa",
+      title: "Most profitable source",
       value: topSourceName ?? "—",
       tone: "green",
       grip: true,
@@ -225,8 +225,8 @@ function WalletMenu({
     <div className="w-64 overflow-hidden rounded-lg rounded-bl-sm border border-gray-6 bg-gray-2 py-1 shadow-2xl shadow-black/40">
       <div className="max-h-72 overflow-y-auto">
         <WalletMenuItem
-          label="Todas as carteiras"
-          sub={`${wallets.length} ${wallets.length === 1 ? "carteira" : "comparadas"}`}
+          label="All wallets"
+          sub={`${wallets.length} ${wallets.length === 1 ? "wallet" : "compared"}`}
           selected={selectedId === null}
           onSelect={() => onSelect(null)}
         />
@@ -371,7 +371,7 @@ export function RadarModuleBar() {
   const selector: ModuleChip = {
     key: "wallets",
     icon: Wallet,
-    title: selectedWallet ? selectedWallet.label?.trim() || shortAddr(selectedWallet.address) : "Todas as carteiras",
+    title: selectedWallet ? selectedWallet.label?.trim() || shortAddr(selectedWallet.address) : "All wallets",
     value: selectedWallet
       ? selectedWallet.chain.toLowerCase()
       : `${walletCount} ${walletCount === 1 ? "comparada" : "comparadas"}`,

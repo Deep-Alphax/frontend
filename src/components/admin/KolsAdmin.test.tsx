@@ -99,8 +99,8 @@ function wireApi() {
 
 /** Abre o editor de um KOL do preset (clique no card) e espera o form montar. */
 async function openEditor(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(await screen.findByRole("button", { name: `Abrir ${name}` }));
-  return await screen.findByRole("textbox", { name: /notas/i });
+  await user.click(await screen.findByRole("button", { name: `Open ${name}` }));
+  return await screen.findByRole("textbox", { name: /notes/i });
 }
 
 beforeEach(() => {
@@ -123,7 +123,7 @@ describe("KolsAdmin — acesso", () => {
       isLoading: false,
     });
     renderWithQuery(<KolsAdmin />);
-    expect(screen.getByText("Faça login para acessar.")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to continue.")).toBeInTheDocument();
     expect(api.getKolPresetAdmin).not.toHaveBeenCalled();
   });
 
@@ -134,7 +134,7 @@ describe("KolsAdmin — acesso", () => {
       isLoading: false,
     });
     renderWithQuery(<KolsAdmin />);
-    expect(screen.getByText("Acesso restrito")).toBeInTheDocument();
+    expect(screen.getByText("Restricted access")).toBeInTheDocument();
     expect(api.getKolPresetAdmin).not.toHaveBeenCalled();
   });
 });
@@ -147,7 +147,7 @@ describe("KolsAdmin — salvar", () => {
     const notes = await openEditor(user, "Ansem");
     await user.clear(notes);
     await user.type(notes, "descrição nova");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     await waitFor(() =>
       expect(api.updateKolPreset).toHaveBeenCalledWith(
@@ -164,11 +164,11 @@ describe("KolsAdmin — salvar", () => {
     const notes = await openEditor(user, "Ansem");
     await user.clear(notes);
     await user.type(notes, "descrição nova");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     // O editor fecha sozinho no sucesso.
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Salvar preset" })).toBeNull(),
+      expect(screen.queryByRole("button", { name: "Save preset" })).toBeNull(),
     );
 
     // Regressão: o cache do KOL individual (`staleTime` 60s) servia o snapshot
@@ -185,18 +185,18 @@ describe("KolsAdmin — salvar", () => {
     const notes = await openEditor(user, "Ansem");
     await user.clear(notes);
     await user.type(notes, "descrição nova");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Salvar preset" })).toBeNull(),
+      expect(screen.queryByRole("button", { name: "Save preset" })).toBeNull(),
     );
 
     // Segunda edição mexendo SÓ no nome. `draftToPatch` manda todos os campos,
     // então um rascunho semeado com cache velho apagaria a descrição recém-salva.
     await openEditor(user, "Ansem");
-    const name = screen.getByRole("textbox", { name: /nome/i });
+    const name = screen.getByRole("textbox", { name: /name/i });
     await user.clear(name);
     await user.type(name, "Ansem 2");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     await waitFor(() => expect(api.updateKolPreset).toHaveBeenCalledTimes(2));
     expect(api.updateKolPreset).toHaveBeenLastCalledWith(
@@ -211,10 +211,10 @@ describe("KolsAdmin — salvar", () => {
     renderWithQuery(<KolsAdmin />);
 
     await openEditor(user, "Ansem");
-    const name = screen.getByRole("textbox", { name: /nome/i });
+    const name = screen.getByRole("textbox", { name: /name/i });
     await user.clear(name);
     await user.type(name, "Ansem renomeado");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     expect(await screen.findByText("Ansem renomeado")).toBeInTheDocument();
   });
@@ -224,9 +224,9 @@ describe("KolsAdmin — salvar", () => {
     renderWithQuery(<KolsAdmin />);
 
     await openEditor(user, "Ansem");
-    await user.clear(screen.getByRole("textbox", { name: /nome/i }));
+    await user.clear(screen.getByRole("textbox", { name: /name/i }));
 
-    expect(screen.getByRole("button", { name: "Salvar preset" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save preset" })).toBeDisabled();
   });
 });
 
@@ -244,11 +244,11 @@ describe("KolsAdmin — remover e restaurar", () => {
     renderWithQuery(<KolsAdmin />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Remover Ansem do preset" }),
+      await screen.findByRole("button", { name: "Remove Ansem from preset" }),
     );
     expect(await screen.findByText("removido")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Restaurar Ansem" }));
+    await user.click(screen.getByRole("button", { name: "Restore Ansem" }));
     await waitFor(() => expect(screen.queryByText("removido")).toBeNull());
   });
 
@@ -258,7 +258,7 @@ describe("KolsAdmin — remover e restaurar", () => {
     renderWithQuery(<KolsAdmin />);
 
     await user.click(
-      await screen.findByRole("button", { name: "Remover Ansem do preset" }),
+      await screen.findByRole("button", { name: "Remove Ansem from preset" }),
     );
     expect(api.deleteKolPreset).not.toHaveBeenCalled();
   });
@@ -269,8 +269,8 @@ describe("KolsAdmin — todos os campos do KOL", () => {
   async function editEveryField(user: ReturnType<typeof userEvent.setup>) {
     const notes = await openEditor(user, "Ansem");
 
-    await user.clear(screen.getByRole("textbox", { name: /nome/i }));
-    await user.type(screen.getByRole("textbox", { name: /nome/i }), "Ansem Novo");
+    await user.clear(screen.getByRole("textbox", { name: /name/i }));
+    await user.type(screen.getByRole("textbox", { name: /name/i }), "Ansem Novo");
 
     await user.clear(notes);
     await user.type(notes, "descrição nova");
@@ -291,10 +291,10 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     await user.click(screen.getByRole("button", { name: "Whale" }));
 
     // Carteiras: remove a que existia e adiciona outra.
-    await user.click(screen.getByRole("button", { name: "Remover So1ana111" }));
+    await user.click(screen.getByRole("button", { name: "Remove So1ana111" }));
     await user.type(screen.getByPlaceholderText("apelido"), "cold");
-    await user.type(screen.getByPlaceholderText("endereço on-chain"), "So1ana222");
-    await user.click(screen.getByRole("button", { name: "Adicionar" }));
+    await user.type(screen.getByPlaceholderText("on-chain address"), "So1ana222");
+    await user.click(screen.getByRole("button", { name: "Add" }));
 
     return {
       name: "Ansem Novo",
@@ -313,7 +313,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     renderWithQuery(<KolsAdmin />);
 
     const expected = await editEveryField(user);
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     await waitFor(() => expect(api.updateKolPreset).toHaveBeenCalledTimes(1));
     expect(api.updateKolPreset).toHaveBeenCalledWith("k1", expected);
@@ -324,15 +324,15 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     renderWithQuery(<KolsAdmin />);
 
     const expected = await editEveryField(user);
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Salvar preset" })).toBeNull(),
+      expect(screen.queryByRole("button", { name: "Save preset" })).toBeNull(),
     );
 
     await openEditor(user, "Ansem Novo");
 
-    expect(screen.getByRole("textbox", { name: /nome/i })).toHaveValue(expected.name);
-    expect(screen.getByRole("textbox", { name: /notas/i })).toHaveValue(expected.notes);
+    expect(screen.getByRole("textbox", { name: /name/i })).toHaveValue(expected.name);
+    expect(screen.getByRole("textbox", { name: /notes/i })).toHaveValue(expected.notes);
     expect(screen.getByRole("textbox", { name: /twitter/i })).toHaveValue(expected.twitter);
     expect(screen.getByRole("textbox", { name: /squads/i })).toHaveValue("Lair, Pastel Alpha");
     expect(screen.getByRole("slider")).toHaveValue("42");
@@ -349,7 +349,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     renderWithQuery(<KolsAdmin />);
 
     await editEveryField(user);
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     expect(await screen.findByText("Ansem Novo")).toBeInTheDocument();
     expect(screen.getByText("42/100")).toBeInTheDocument();
@@ -367,7 +367,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
       document.querySelector<HTMLInputElement>('input[type="file"]')!,
       new File(["x"], "foto.png", { type: "image/png" }),
     );
-    await user.click(await screen.findByRole("button", { name: "Salvar preset" }));
+    await user.click(await screen.findByRole("button", { name: "Save preset" }));
 
     await waitFor(() =>
       expect(api.updateKolPreset).toHaveBeenCalledWith(
@@ -377,8 +377,8 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     );
 
     await openEditor(user, "Ansem");
-    await user.click(screen.getByRole("button", { name: "remover foto" }));
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "remove photo" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     await waitFor(() =>
       expect(api.updateKolPreset).toHaveBeenLastCalledWith(
@@ -396,27 +396,27 @@ describe("KolsAdmin — todos os campos do KOL", () => {
 
     // Sem endereço: nada é adicionado.
     await user.type(screen.getByPlaceholderText("apelido"), "vazia");
-    await user.click(screen.getByRole("button", { name: "Adicionar" }));
-    expect(screen.getByText("Carteiras (1)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByText("Wallets (1)")).toBeInTheDocument();
 
     // Endereço repetido: nada é adicionado.
-    await user.type(screen.getByPlaceholderText("endereço on-chain"), "So1ana111");
-    await user.click(screen.getByRole("button", { name: "Adicionar" }));
-    expect(screen.getByText("Carteiras (1)")).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText("on-chain address"), "So1ana111");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByText("Wallets (1)")).toBeInTheDocument();
   });
 
   it("cria um KOL novo no preset com os campos preenchidos", async () => {
     const user = userEvent.setup();
     renderWithQuery(<KolsAdmin />);
 
-    await user.click(await screen.findByRole("button", { name: /adicionar kol/i }));
+    await user.click(await screen.findByRole("button", { name: /add kol/i }));
     await user.type(
-      await screen.findByRole("textbox", { name: /nome/i }),
+      await screen.findByRole("textbox", { name: /name/i }),
       "Novo KOL",
     );
-    await user.type(screen.getByRole("textbox", { name: /notas/i }), "primeira nota");
+    await user.type(screen.getByRole("textbox", { name: /notes/i }), "primeira nota");
     await user.type(screen.getByRole("textbox", { name: /twitter/i }), "novo");
-    await user.click(screen.getByRole("button", { name: "Salvar preset" }));
+    await user.click(screen.getByRole("button", { name: "Save preset" }));
 
     await waitFor(() =>
       // `createKolPreset` é o mutationFn direto: o React Query passa

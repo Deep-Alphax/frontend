@@ -32,7 +32,7 @@ import { useCustomizeAuthor, useFavoriteFor } from "@/components/radar/favorites
 
 /** Máximo de chips exibidos antes do overflow "+N" (espelha o Figma: 4 + "+N"). */
 const MAX_VISIBLE_CHIPS = 4;
-/** Acima disto o texto ganha "Ler mais" (heurística: evita medir o DOM). */
+/** Acima disto o texto ganha "Read more" (heurística: evita medir o DOM). */
 const CLAMP_THRESHOLD = 220;
 
 /** Formata ISO → { date: "13/08", time: "23:30" } (curto, pt-BR). */
@@ -40,8 +40,8 @@ function fmt(iso: string): { date: string; time: string } {
   try {
     const d = new Date(iso);
     return {
-      date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      date: d.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" }),
+      time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
     };
   } catch {
     return { date: iso, time: "" };
@@ -94,8 +94,8 @@ function CaChip({ ca }: { ca: string }) {
     <button
       type="button"
       onClick={copy}
-      title={copied ? "Copiado!" : `Copiar CA: ${ca}`}
-      aria-label={`Copiar contract address ${ca}`}
+      title={copied ? "Copied!" : `Copy CA: ${ca}`}
+      aria-label={`Copy contract address ${ca}`}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 font-mono text-xs transition-colors",
         copied
@@ -108,7 +108,7 @@ function CaChip({ ca }: { ca: string }) {
       ) : (
         <Copy className="size-3.5 shrink-0 text-gray-11" strokeWidth={2} />
       )}
-      <span>{copied ? "Copiado" : shortenCa(ca)}</span>
+      <span>{copied ? "Copied" : shortenCa(ca)}</span>
     </button>
   );
 }
@@ -232,7 +232,7 @@ function RadarMessageCardBase({
     if (m.authorTag) onSelectAuthor?.(m.authorTag, displayName);
   };
   // Clique no card abre o perfil — exceto quando o alvo é um controle (link,
-  // botão, "Ler mais", chips, "+N"), que mantêm seu próprio comportamento.
+  // botão, "Read more", chips, "+N"), que mantêm seu próprio comportamento.
   const onCardClick = (e: React.MouseEvent) => {
     if (!selectable) return;
     if ((e.target as HTMLElement).closest("a,button")) return;
@@ -338,7 +338,7 @@ function RadarMessageCardBase({
               onClick={() =>
                 openCustomize({ authorTag, name: displayName, group: m.guildName ?? null })
               }
-              title="Personalizar usuário"
+              title="Customize user"
               aria-label={`Personalizar ${displayName}`}
               className={cn(
                 "flex size-6 items-center justify-center rounded-md text-gray-11",
@@ -361,7 +361,7 @@ function RadarMessageCardBase({
         </div>
       )}
 
-      {/* Corpo: texto renderizado como o Discord (links inline) + "Ler mais" */}
+      {/* Corpo: texto renderizado como o Discord (links inline) + "Read more" */}
       {showText && (
         <div className={cn("flex w-full min-w-0 flex-col items-start gap-1 pt-1", padX, hasChips || media.length > 0 || compact ? "pb-2" : "pb-4")}>
           <p
@@ -381,7 +381,7 @@ function RadarMessageCardBase({
               onClick={() => setExpanded((v) => !v)}
               className="text-sm text-gray-11 underline underline-offset-2 hover:text-gray-12"
             >
-              {expanded ? "Ver menos" : "Ler mais"}
+              {expanded ? "Show less" : "Read more"}
             </button>
           )}
         </div>
@@ -395,7 +395,7 @@ function RadarMessageCardBase({
               key={mi.src + i}
               type="button"
               onClick={() => setLightbox(mi)}
-              aria-label="Abrir mídia"
+              aria-label="Open media"
               className="block overflow-hidden rounded-lg border border-gray-6 bg-gray-1 transition-opacity hover:opacity-90"
             >
               {mi.kind === "video" ? (

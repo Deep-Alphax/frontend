@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { LoginScreen } from "@/components/login/LoginScreen";
 
 export const metadata: Metadata = {
-  title: "Entrar",
-  description: "Acesse a plataforma Deep Alpha.",
+  title: "Sign in",
+  description: "Access the Deep Alpha platform.",
 };
 
 export default function LoginPage() {

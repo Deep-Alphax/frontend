@@ -18,7 +18,7 @@ function axisPos(multiple: number): number {
 
 /** Múltiplo → "8,6x" / "2x" (pt-BR). */
 function fmtX(m: number): string {
-  return `${m.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}x`;
+  return `${m.toLocaleString("en-US", { maximumFractionDigits: 1 })}x`;
 }
 
 /**
@@ -61,11 +61,11 @@ function Column({ trade }: { trade: PerTradePeak }) {
         <div className="my-2.5 h-px w-full rounded-full bg-gray-6" />
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-11">Topo depois da entrada</span>
+            <span className="text-gray-11">Peak after entry</span>
             <span className="font-medium text-gray-12">{fmtX(trade.peakMultiple)}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-gray-11">Sua saída</span>
+            <span className="text-gray-11">Your exit</span>
             <span className="font-medium text-gray-12">{fmtX(trade.exitMultiple)}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
@@ -94,7 +94,7 @@ interface PeakVsExitCardProps {
 }
 
 /**
- * "Topo × saída, trade a trade" (node Figma 46:1827). Cada coluna é um trade: a
+ * "Peak vs. exit, trade by trade" (node Figma 46:1827). Cada coluna é um trade: a
  * barra clara vai até o pico após a compra; a sólida é onde você vendeu. Escala log
  * de múltiplos (0,5x→20x) com faixa vermelha na zona de prejuízo (<1x). Requer
  * histórico de preço — mostra "sem dado" quando não há cobertura.
@@ -113,11 +113,11 @@ export function PeakVsExitCard({ peaks }: PeakVsExitCardProps) {
       <div className="flex items-start justify-between gap-4 border-b border-gray-6 p-4">
         <div className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold text-gray-12">
-            Topo × saída, trade a trade
+            Peak vs. exit, trade by trade
           </h3>
           <p className="text-sm text-gray-11">
-            Cada coluna é um trade. A barra clara vai até o topo que o token atingiu
-            depois da sua compra; a barra sólida é onde você vendeu.
+            Each column is a trade. The light bar reaches the peak the token hit
+            after your buy; the solid bar is where you sold.
           </p>
         </div>
         {peaks.available ? (
@@ -171,7 +171,7 @@ export function PeakVsExitCard({ peaks }: PeakVsExitCardProps) {
         </div>
       ) : (
         <div className="m-4 flex h-40 items-center justify-center rounded-md border border-dashed border-gray-6 text-center text-sm text-gray-11">
-          Sem histórico de preço para os tokens deste período.
+          No price history for the tokens in this period.
         </div>
       )}
     </section>

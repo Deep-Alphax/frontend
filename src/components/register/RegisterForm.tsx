@@ -70,10 +70,10 @@ export function RegisterForm() {
         {/* Título */}
         <div className="flex w-full flex-col gap-5 text-gray-12">
           <h1 className="font-display text-display-24">
-            Criar conta
+            Create account
           </h1>
           <p className="text-base">
-            Preencha os campos abaixo para concluir seu acesso
+            Fill in the fields below to finish setting up your access
           </p>
         </div>
 
@@ -81,38 +81,38 @@ export function RegisterForm() {
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col gap-6">
             <TextField
-              label="Como podemos te chamar"
+              label="What should we call you"
               type="text"
               autoComplete="name"
-              placeholder="Seu nome ou apelido"
+              placeholder="Your name or nickname"
               leftIcon={<User className="size-5" strokeWidth={1.5} />}
               error={errors.name?.message}
               {...register("name")}
             />
 
             <TextField
-              label="E-mail"
+              label="Email"
               type="email"
               inputMode="email"
               autoComplete="email"
-              placeholder="Digite seu email"
+              placeholder="Enter your email"
               leftIcon={<Mail className="size-5" strokeWidth={1.5} />}
               error={errors.email?.message}
               {...register("email")}
             />
 
             <TextField
-              label="Senha"
+              label="Password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="Digite sua senha"
+              placeholder="Enter your password"
               leftIcon={<Lock className="size-5" strokeWidth={1.5} />}
               error={errors.password?.message}
               rightSlot={
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="flex items-center text-gray-11 transition-colors hover:text-gray-12"
                 >
                   {showPassword ? (
@@ -139,7 +139,7 @@ export function RegisterForm() {
           disabled={isSubmitting || awaitingTurnstile}
           className="w-auto"
         >
-          {isSubmitting ? "Criando conta..." : "Continuar"}
+          {isSubmitting ? "Creating account..." : "Continuar"}
         </Button>
       </div>
     </form>

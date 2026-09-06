@@ -30,7 +30,7 @@ interface Flyout {
 /**
  * Rail vertical de "Fontes" (node Figma 748:25276), por SERVIDOR: cada servidor é
  * um avatar (foto do Discord ou inicial). Clicar ABRE um flyout à direita com os
- * subgrupos (canais) POR NOME — "Todo o servidor" + cada canal. O 1º item ("Todas
+ * subgrupos (canais) POR NOME — "Whole server" + cada canal. O 1º item ("Todas
  * as fontes") junta tudo. Item ativo ganha barra de acento.
  */
 export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
@@ -71,7 +71,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
   return (
     <aside className="flex min-h-0 flex-col bg-gray-2 lg:h-full lg:border-r lg:border-gray-6">
       <div className="flex h-[46px] shrink-0 items-center justify-center">
-        <h2 className="text-[12px] font-medium uppercase text-gray-11">Fontes</h2>
+        <h2 className="text-[12px] font-medium uppercase text-gray-11">Sources</h2>
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-3">
@@ -80,8 +80,8 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
           type="button"
           onClick={() => pick(null)}
           aria-current={allActive ? "true" : undefined}
-          aria-label="Todas as fontes"
-          title="Todas as fontes"
+          aria-label="All sources"
+          title="All sources"
           className={cn(
             "relative flex items-center justify-center px-2 py-2.5 transition-colors",
             allActive ? "bg-gray-3" : "hover:bg-gray-3/50",
@@ -151,7 +151,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
             <p className="truncate text-sm font-semibold text-gray-12">{flyout.group.name}</p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto py-1">
-            {/* Todo o servidor */}
+            {/* Whole server */}
             {(() => {
               const active =
                 selection?.kind === "guild" && selection.guild === flyout.group.key;
@@ -161,7 +161,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
                   onClick={() => pick({ kind: "guild", guild: flyout.group.key })}
                   className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-gray-3"
                 >
-                  <span className="truncate text-sm font-medium text-gray-12">Todo o servidor</span>
+                  <span className="truncate text-sm font-medium text-gray-12">Whole server</span>
                   {active ? (
                     <Check className="size-4 shrink-0 text-principal-11" strokeWidth={2} />
                   ) : (

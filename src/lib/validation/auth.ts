@@ -9,11 +9,11 @@ export const loginSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, "Informe seu e-mail")
-    .email("E-mail inválido"),
+    .min(1, "Enter your email")
+    .email("Invalid email"),
   password: z
     .string()
-    .min(8, "A senha deve ter no mínimo 8 caracteres"),
+    .min(8, "Password must be at least 8 characters"),
   remember: z.boolean(),
 });
 
@@ -31,15 +31,15 @@ export const registerSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Informe como podemos te chamar")
-    .max(120, "Nome muito longo"),
-  email: z.string().trim().min(1, "Informe seu e-mail").email("E-mail inválido"),
+    .min(1, "Tell us what to call you")
+    .max(120, "Name is too long"),
+  email: z.string().trim().min(1, "Enter your email").email("Invalid email"),
   password: z
     .string()
-    .min(8, "A senha deve ter no mínimo 8 caracteres")
+    .min(8, "Password must be at least 8 characters")
     .regex(
       PASSWORD_REGEX,
-      "Use ao menos uma letra maiúscula, uma minúscula e um número",
+      "Use at least one uppercase letter, one lowercase letter and one number",
     ),
 });
 

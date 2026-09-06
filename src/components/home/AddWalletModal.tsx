@@ -29,7 +29,7 @@ interface AddWalletModalProps {
 }
 
 /**
- * Modal "Buscar carteira": cataloga um endereço público na conta (SEM assinatura).
+ * Modal "Search wallet": cataloga um endereço público na conta (SEM assinatura).
  * Ao concluir, a carteira vira a selecionada no dashboard e a ingestão dispara — se
  * outra pessoa já a acompanha, os dados são reusados na hora. Gate de montagem: só
  * renderiza o formulário quando aberto (assim o estado nasce limpo a cada abertura).
@@ -61,7 +61,7 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
     // Aceita URL colada (GMGN/Solscan/Birdeye/Axiom…) — extrai o endereço.
     const trimmed = extractWalletAddress(address);
     if (!trimmed) {
-      setError("Informe o endereço da carteira.");
+      setError("Enter the wallet address.");
       return;
     }
     if (trimmed !== address.trim()) setAddress(trimmed); // mostra o que foi usado
@@ -72,10 +72,10 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
       select(wallet.id); // passa a mostrar a carteira recém-catalogada
-      toast.success("Carteira adicionada — lendo o histórico.");
+      toast.success("Wallet added — reading its history.");
       onClose();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Não foi possível adicionar a carteira."));
+      setError(getApiErrorMessage(err, "Could not add the wallet."));
     } finally {
       setSubmitting(false);
     }
@@ -89,14 +89,14 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
       }}
       role="dialog"
       aria-modal="true"
-      aria-label="Buscar carteira"
+      aria-label="Search wallet"
     >
       <div className="w-full max-w-md rounded-lg border border-gray-6 bg-gray-2 p-6 shadow-xl">
         <div className="mb-1 flex items-start justify-between">
-          <h2 className="text-xl font-semibold text-gray-12">Buscar carteira</h2>
+          <h2 className="text-xl font-semibold text-gray-12">Search wallet</h2>
           <button
             type="button"
-            aria-label="Fechar"
+            aria-label="Close"
             onClick={onClose}
             className="flex size-8 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
           >
@@ -104,8 +104,8 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <p className="mb-5 text-sm text-gray-11">
-          Cole um endereço público para acompanhar o histórico dele. Não é preciso ser
-          o dono — é só uma busca salva na sua conta.
+          Paste a public address to follow its history. You don’t have to be
+          the owner — it’s just a search saved to your account.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -128,8 +128,8 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
           </div>
 
           <TextField
-            label="Endereço"
-            placeholder="0x… (EVM) ou base58 (Solana)"
+            label="Address"
+            placeholder="0x… (EVM) or base58 (Solana)"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             leftIcon={<Search className="size-4" />}
@@ -140,7 +140,7 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
           />
 
           <Button type="submit" disabled={submitting} className="mt-1">
-            {submitting ? "Adicionando…" : "Adicionar carteira"}
+            {submitting ? "Adicionando…" : "Add wallet"}
           </Button>
         </form>
       </div>

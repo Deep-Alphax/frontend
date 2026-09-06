@@ -38,7 +38,7 @@ interface UserCustomizeModalProps {
 }
 
 /**
- * Modal "Personalizar usuário" (node Figma 536:8082). Portal em document.body,
+ * Modal "Customize user" (node Figma 536:8082). Portal em document.body,
  * fecha por Esc / clique no scrim, com trava de scroll do body — mesmo padrão do
  * `LinksModal`. O formulário vive em `<CustomizeForm>`, montado só quando aberto,
  * para inicializar o estado a partir do favorito sem `setState` em efeito.
@@ -76,7 +76,7 @@ export function UserCustomizeModal({ open, onClose, ...rest }: UserCustomizeModa
           {/* Scrim */}
           <button
             type="button"
-            aria-label="Fechar"
+            aria-label="Close"
             onClick={onClose}
             className="absolute inset-0 cursor-default bg-gray-1/70 backdrop-blur-sm"
           />
@@ -85,7 +85,7 @@ export function UserCustomizeModal({ open, onClose, ...rest }: UserCustomizeModa
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Personalizar usuário"
+            aria-label="Customize user"
             className="relative flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2 shadow-2xl"
             initial={reduce ? false : { opacity: 0, scale: 0.98, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -135,11 +135,11 @@ function CustomizeForm({
     e.target.value = ""; // permite re-selecionar o mesmo arquivo
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Selecione um arquivo de imagem");
+      toast.error("Select an image file");
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      toast.error("Imagem muito grande (máx. 5MB)");
+      toast.error("Image too large (max. 5MB)");
       return;
     }
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -154,7 +154,7 @@ function CustomizeForm({
       // devolve a URL já hospedada; o PATCH seguinte só completa apelido/cor.
       if (picked) await onUploadPhoto(picked.file);
       await onSave({ nickname: nickname.trim() || null, color });
-      toast.success("Alterações salvas");
+      toast.success("Changes saved");
       onClose();
     } catch {
       // Erros já exibem toast nas mutações; mantém o modal aberto p/ nova tentativa.
@@ -168,11 +168,11 @@ function CustomizeForm({
     <>
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-gray-6 px-4 py-2">
-        <h2 className="text-lg font-semibold text-gray-12">Personalizar usuário</h2>
+        <h2 className="text-lg font-semibold text-gray-12">Customize user</h2>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label="Close"
           className="flex size-8 items-center justify-center rounded text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
         >
           <X className="size-6" strokeWidth={2} />
@@ -226,7 +226,7 @@ function CustomizeForm({
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={60}
-            placeholder="Digite um apelido para este usuário"
+            placeholder="Type a nickname for this user"
             className={cn(
               "h-12 w-full rounded-lg border border-gray-6 bg-gray-2 px-3",
               "text-base text-gray-12 placeholder:text-gray-11 outline-none",
@@ -277,7 +277,7 @@ function CustomizeForm({
           disabled={isSaving}
           className="h-10 flex-1 rounded-lg bg-principal-9 px-8 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:opacity-60"
         >
-          {isSaving ? "Salvando..." : "Salvar"}
+          {isSaving ? "Saving..." : "Save"}
         </button>
       </div>
     </>

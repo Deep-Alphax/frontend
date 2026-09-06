@@ -15,7 +15,7 @@ export function RegisterScreen() {
         <div className="flex w-full items-center justify-between">
           <Link
             href="/login"
-            aria-label="Voltar para o login"
+            aria-label="Back to sign in"
             className="flex size-8 items-center justify-center rounded border-[1.5px] border-gray-6 bg-gray-3 text-gray-12 transition-colors hover:bg-gray-6"
           >
             <ArrowLeft className="size-5" strokeWidth={1.5} />
@@ -53,7 +53,7 @@ export function RegisterScreen() {
           </a>{" "}
           e a{" "}
           <a href="#" className="underline underline-offset-2">
-            Política de privacidade
+            Privacy policy
           </a>
           . */}
         </p>

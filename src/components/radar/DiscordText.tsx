@@ -41,7 +41,7 @@ const MENTION_CLASS =
 function mentionLabel(prefix: string): string {
   if (prefix === "#") return "#canal";
   if (prefix === "@&") return "@cargo";
-  return "@usuário";
+  return "@user";
 }
 
 /** Tokeniza uma string em nós React, tratando o mais próximo primeiro (recursivo). */

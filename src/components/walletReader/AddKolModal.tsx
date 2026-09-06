@@ -28,7 +28,7 @@ export function AddKolModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Adicionar KOL"
+      title="Add KOL"
       className="max-w-md"
       footer={
         <div className="flex justify-end gap-2">
@@ -57,7 +57,7 @@ export function AddKolModal({
     >
       <div className="flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-11">Nome</span>
+          <span className="text-xs font-medium text-gray-11">Name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -67,7 +67,7 @@ export function AddKolModal({
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-11">Apelido da carteira (opcional)</span>
+          <span className="text-xs font-medium text-gray-11">Wallet nickname (optional)</span>
           <input
             value={wName}
             onChange={(e) => setWName(e.target.value)}
@@ -76,11 +76,11 @@ export function AddKolModal({
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-11">Endereço da carteira (opcional)</span>
+          <span className="text-xs font-medium text-gray-11">Wallet address (optional)</span>
           <input
             value={wAddr}
             onChange={(e) => setWAddr(e.target.value)}
-            placeholder="cole o endereço on-chain"
+            placeholder="paste the on-chain address"
             className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 font-mono text-xs text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
           />
         </label>

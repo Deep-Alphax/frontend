@@ -10,7 +10,7 @@ import { TextField } from "@/components/ui/TextField";
 /** Formata ISO → local curto. */
 function fmt(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    return new Date(iso).toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
   } catch {
     return iso;
   }
@@ -113,7 +113,7 @@ export function FeedList() {
       <div className="flex items-end gap-3">
         <div className="flex-1">
           <TextField
-            label="Buscar no texto"
+            label="Search text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applySearch()}
@@ -126,9 +126,9 @@ export function FeedList() {
       </div>
 
       {feedQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Carregando…</p>
+        <p className="text-sm text-gray-11">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-gray-11">Nenhuma captura ainda.</p>
+        <p className="text-sm text-gray-11">No captures yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((m) => (
@@ -156,7 +156,7 @@ export function FeedList() {
             disabled={page >= data.totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            Próxima
+            Next
           </Button>
         </div>
       )}

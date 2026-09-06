@@ -44,7 +44,7 @@ describe("formatSquads", () => {
   });
 
   it("sem squad, avisa em vez de deixar o espaço vazio", () => {
-    expect(formatSquads([])).toBe("Sem squad");
+    expect(formatSquads([])).toBe("No squad");
     expect(formatSquads([], "—")).toBe("—");
   });
 

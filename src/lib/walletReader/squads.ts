@@ -37,7 +37,7 @@ export function dedupSquads(names: string[]): string[] {
  * Como os squads aparecem sob o nome do KOL: "Squad1, Squad2, Squad3".
  * Sem nenhum, o card não fica com um buraco — diz que não há.
  */
-export function formatSquads(names: string[], empty = "Sem squad"): string {
+export function formatSquads(names: string[], empty = "No squad"): string {
   const list = dedupSquads(names);
   return list.length > 0 ? list.join(", ") : empty;
 }

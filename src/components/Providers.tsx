@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import { WalletProvider } from "@/lib/wallet/WalletProvider";
 
 /**
  * Providers globais do client (React Query + toasts).
@@ -29,8 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* WalletProvider precisa do QueryClient acima (wagmi usa React Query). */}
-      <WalletProvider>{children}</WalletProvider>
+      {children}
       <Toaster
         position="top-center"
         toastOptions={{

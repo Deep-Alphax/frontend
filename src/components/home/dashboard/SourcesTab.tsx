@@ -24,7 +24,7 @@ function SourceRow({ source }: { source: TradeSource }) {
       <td className="px-4 py-4 text-gray-12">{formatPct(source.winRatePct)}</td>
       <td className="px-4 py-4 text-gray-12">
         {source.medianExitMultiple != null
-          ? `${source.medianExitMultiple.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}x`
+          ? `${source.medianExitMultiple.toLocaleString("en-US", { maximumFractionDigits: 1 })}x`
           : "—"}
       </td>
       <td className="px-4 py-4 text-gray-12">
@@ -55,7 +55,7 @@ function Pagination({
     <div className="flex items-center gap-1">
       <button
         type="button"
-        aria-label="Página anterior"
+        aria-label="Previous page"
         disabled={page === 1}
         onClick={() => onPage(page - 1)}
         className={arrow}
@@ -80,7 +80,7 @@ function Pagination({
       ))}
       <button
         type="button"
-        aria-label="Próxima página"
+        aria-label="Next page"
         disabled={page === total}
         onClick={() => onPage(page + 1)}
         className={arrow}
@@ -92,7 +92,7 @@ function Pagination({
 }
 
 /**
- * Tab "Fontes" — tabela "De onde vieram os trades" com chips de filtro por
+ * Tab "Fontes" — tabela "Where the trades came from" com chips de filtro por
  * recomendação e paginação. A origem vem do cruzamento dos trades com as calls dos
  * grupos do Discord (atribuição por servidor); "Triagem própria" = sem call anterior.
  */
@@ -128,7 +128,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
     <section className="rounded-lg border border-gray-6 bg-gray-2">
       <div className="flex flex-col gap-4 border-b border-gray-6 p-6 xl:flex-row xl:items-center xl:justify-between">
         <h3 className="shrink-0 text-base font-semibold text-gray-12">
-          De onde vieram os trades
+          Where the trades came from
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           {RECOMMENDATIONS.map(({ key, meta }) => (
@@ -161,20 +161,20 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
         <table className="w-full min-w-[880px] text-left">
           <thead>
             <tr className="border-b border-gray-6 text-sm text-gray-11">
-              <th className="px-6 py-3 font-normal">Fonte</th>
+              <th className="px-6 py-3 font-normal">Source</th>
               <th className="px-4 py-3 font-normal">Trades</th>
               <th className="px-4 py-3 font-normal">Winrate</th>
-              <th className="px-4 py-3 font-normal">Saída mediana</th>
+              <th className="px-4 py-3 font-normal">Median exit</th>
               <th className="px-4 py-3 font-normal">Capture</th>
               <th className="px-4 py-3 font-normal">PNL</th>
-              <th className="px-6 py-3 text-right font-normal">Recomendação</th>
+              <th className="px-6 py-3 text-right font-normal">Recommendation</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-16 text-center text-sm text-gray-11">
-                  Nenhum trade cruzado com calls de grupos ainda.
+                  No trades matched against group calls yet.
                 </td>
               </tr>
             ) : (

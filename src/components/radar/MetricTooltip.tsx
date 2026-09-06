@@ -36,7 +36,7 @@ function median(nums: number[]): number | null {
 
 function multipleLabel(n: number | null): string {
   if (n == null) return "—";
-  return `${n.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}x`;
+  return `${n.toLocaleString("en-US", { maximumFractionDigits: 1 })}x`;
 }
 
 // ─────────────────────────── Peças compartilhadas ───────────────────────────
@@ -58,7 +58,7 @@ function Shell({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label="Close"
           className="text-gray-11 transition-colors hover:text-gray-12"
         >
           <X className="size-5" strokeWidth={2} />
@@ -142,13 +142,13 @@ function Sparkline({ points, color = "auto" }: { points: number[]; color?: "auto
 
 // ─────────────────────────── Corpos por métrica ───────────────────────────
 
-/** Resultado líquido (node 684:14377). Líquido = bruto de trading − gas/tip. */
+/** Net result (node 684:14377). Líquido = bruto de trading − gas/tip. */
 function NetBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => void }) {
   const netSign = signOf(data.netPnlUsd);
   const points = data.capital.points.map((p) => Number(p.cumulativePnlUsd));
   const fees = Math.abs(Number(data.feesUsd));
   return (
-    <Shell title="Resultado líquido" onClose={onClose}>
+    <Shell title="Net result" onClose={onClose}>
       <ValueRow
         value={formatSignedUsd(data.netPnlUsd)}
         sub={
@@ -186,7 +186,7 @@ function WinBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
       <ValueRow
         value={formatPct(winRatePct, 1)}
         valueTone="green"
-        sub={`${winners.toLocaleString("pt-BR")} de ${decided.toLocaleString("pt-BR")} trades`}
+        sub={`${winners.toLocaleString("en-US")} of ${decided.toLocaleString("en-US")} trades`}
       />
       {/* Barra ganhos/perdas */}
       <div className="px-3 py-1">
@@ -200,21 +200,21 @@ function WinBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
         <span className="flex items-center gap-1.5">
           <Dot className="bg-green-9" />
           <span className="text-gray-11">Ganhos</span>
-          <span className="font-semibold text-gray-12">{winners.toLocaleString("pt-BR")}</span>
+          <span className="font-semibold text-gray-12">{winners.toLocaleString("en-US")}</span>
         </span>
         <span className="flex items-center gap-1.5">
           <Dot className="bg-vermelho-10" />
           <span className="text-gray-11">Perdas</span>
-          <span className="font-semibold text-gray-12">{losers.toLocaleString("pt-BR")}</span>
+          <span className="font-semibold text-gray-12">{losers.toLocaleString("en-US")}</span>
         </span>
       </div>
-      <Row label="Ganho médio" value={formatSignedUsd(avgWinUsd)} tone="green" />
-      <Row label="Perda média" value={formatSignedUsd(avgLossUsd)} tone="red" />
+      <Row label="Average gain" value={formatSignedUsd(avgWinUsd)} tone="green" />
+      <Row label="Average loss" value={formatSignedUsd(avgLossUsd)} tone="red" />
       <Row
-        label="Razão ganho/perda"
-        value={winLossRatio != null ? `${winLossRatio.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}x` : "—"}
+        label="Gain/loss ratio"
+        value={winLossRatio != null ? `${winLossRatio.toLocaleString("en-US", { maximumFractionDigits: 1 })}x` : "—"}
       />
-      <InfoFooter text="Entre 25% e 40% é normal em memecoin." />
+      <InfoFooter text="Between 25% and 40% is normal in memecoins." />
     </Shell>
   );
 }
@@ -227,7 +227,7 @@ const CAPTURE_BUCKETS = [
   { label: "75%+", color: "bg-secundaria-9", lo: 75, hi: Infinity },
 ] as const;
 
-/** Aproveitamento do topo (node 684:15860). */
+/** Peak capture (node 684:15860). */
 function TopBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => void }) {
   const withData = data.peaks.perTrade.filter((t) => t.hasData);
   const counts = CAPTURE_BUCKETS.map(
@@ -241,7 +241,7 @@ function TopBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
       ? formatPct(data.peaks.topCapturePct)
       : "—";
   return (
-    <Shell title="Aproveitamento do topo" onClose={onClose}>
+    <Shell title="Peak capture" onClose={onClose}>
       <ValueRow value={value} sub="Bom acima de 50%" />
       {/* Histograma de captura */}
       <div className="flex items-start gap-2 px-3 py-4">
@@ -258,9 +258,9 @@ function TopBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
           </div>
         ))}
       </div>
-      <Row label="Saída mediana" value={multipleLabel(medExit)} />
-      <Row label="Topo mediano" value={multipleLabel(medPeak)} />
-      <InfoFooter text="Acima de 50% é bom, acima de 70% é raro." />
+      <Row label="Median exit" value={multipleLabel(medExit)} />
+      <Row label="Median peak" value={multipleLabel(medPeak)} />
+      <InfoFooter text="Above 50% is good, above 70% is rare." />
     </Shell>
   );
 }
@@ -312,14 +312,14 @@ function DrawdownBody({ data, onClose }: { data: PortfolioAnalytics; onClose: ()
     <Shell title="Maior drawdown" onClose={onClose}>
       <ValueRow
         value={pct != null ? formatSignedPct(-Math.abs(pct)) : "—"}
-        sub={dd?.recoveryDays != null ? `${dd.recoveryDays} dias para recuperar` : "Não recuperou"}
+        sub={dd?.recoveryDays != null ? `${dd.recoveryDays} days to recover` : "Did not recover"}
       />
       <Sparkline points={points} color="red" />
       <Row label="Pico" value={dd ? formatShortDate(dd.peakDate) : "—"} />
       <Row label="Fundo" value={dd ? formatShortDate(dd.troughDate) : "—"} />
       <Row
         label="Recuperou em"
-        value={dd?.recoveryDays != null ? `${dd.recoveryDays} dias` : "—"}
+        value={dd?.recoveryDays != null ? `${dd.recoveryDays} days` : "—"}
       />
     </Shell>
   );
@@ -345,7 +345,7 @@ function OrdersRow({ label, usd, orders }: { label: string; usd: number; orders:
       <span className="flex items-center gap-3 font-semibold text-gray-12">
         <span>{formatCompactUsd(usd)}</span>
         <span className="h-px w-1 bg-gray-6" aria-hidden />
-        <span>{orders.toLocaleString("pt-BR")} ordens</span>
+        <span>{orders.toLocaleString("en-US")} orders</span>
       </span>
     </div>
   );
@@ -363,7 +363,7 @@ function VolBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
     <Shell title="Volume operado" onClose={onClose}>
       <ValueRow
         value={formatCompactUsd(data.volumeUsd)}
-        sub={`${data.totalTrades.toLocaleString("pt-BR")} operações`}
+        sub={`${data.totalTrades.toLocaleString("en-US")} trades`}
       />
       {weeks.length === 4 && (
         <div className="flex items-start gap-2 px-3 py-4">
@@ -376,14 +376,14 @@ function VolBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
                   style={{ height: `${(c / maxW) * 100}%` }}
                 />
               </div>
-              <span className="text-sm text-gray-12">Sem {i + 1}</span>
+              <span className="text-sm text-gray-12">Wk {i + 1}</span>
             </div>
           ))}
         </div>
       )}
       <OrdersRow label="Compras" usd={buyUsd} orders={data.buys} />
       <OrdersRow label="Vendas" usd={sellUsd} orders={data.sells} />
-      <Row label="Ticket médio" value={formatUsd(ticket)} />
+      <Row label="Average ticket" value={formatUsd(ticket)} />
     </Shell>
   );
 }
@@ -395,7 +395,7 @@ const SRC_BAR_COLORS = ["bg-green-11", "bg-violeta-11", "bg-azul-11", "bg-menta-
 function signedInt(value: string): string {
   const n = Number(value);
   const sign = n > 0 ? "+" : n < 0 ? "−" : "";
-  return `${sign}${Math.abs(n).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+  return `${sign}${Math.abs(n).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 /** Fonte mais lucrativa (node 698:20587): ranking das fontes por PnL. */
@@ -403,9 +403,9 @@ function SourcesBody({ sources, onClose }: { sources: TradeSource[]; onClose: ()
   const ranked = [...sources].sort((a, b) => Number(b.pnlUsd) - Number(a.pnlUsd)).slice(0, 6);
   const maxAbs = Math.max(1, ...ranked.map((s) => Math.abs(Number(s.pnlUsd))));
   return (
-    <Shell title="Fonte mais lucrativa" onClose={onClose}>
+    <Shell title="Most profitable source" onClose={onClose}>
       {ranked.length === 0 ? (
-        <p className="px-3 py-4 text-sm text-gray-11">Nenhuma fonte com dados no período.</p>
+        <p className="px-3 py-4 text-sm text-gray-11">No source with data in the period.</p>
       ) : (
         ranked.map((s, i) => {
           const pnl = Number(s.pnlUsd);

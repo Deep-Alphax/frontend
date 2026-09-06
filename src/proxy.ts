@@ -58,9 +58,9 @@ function apiOrigin(): string {
 
 /**
  * Origens próprias do app (apex + contraparte www⇄apex), p/ o img-src.
- * A metadata do WalletConnect exige URL ABSOLUTA no ícone (`APP_URL/brand/...`);
- * se a página é servida no host "irmão" (ex.: www) o `'self'` não cobre a apex e
- * o ícone é bloqueado. Liberar os dois hosts torna a CSP resiliente ao host.
+ * Assets referenciados por URL ABSOLUTA (`NEXT_PUBLIC_APP_URL/brand/...`) não são
+ * cobertos por `'self'` quando a página é servida no host "irmão" (ex.: www) —
+ * liberar os dois hosts torna a CSP resiliente ao host.
  */
 function appOrigins(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -95,29 +95,6 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const splineConnect = "https://*.spline.design https://unpkg.com";
   const splineImg = "https://*.spline.design";
 
-  // Wallet connect (Reown/WalletConnect): só libera os domínios quando há
-  // projectId configurado — mantém a CSP mínima quando a carteira está desligada.
-  const walletOn = (process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "").length > 0;
-  const wcConnect = walletOn
-    ? "https://*.walletconnect.org https://*.walletconnect.com " +
-      "wss://relay.walletconnect.org wss://relay.walletconnect.com " +
-      "https://rpc.walletconnect.org https://pulse.walletconnect.org " +
-      "https://api.web3modal.org https://api.mainnet-beta.solana.com " +
-      // Conector "Base Account" (Coinbase): telemetria (cca-lite) + RPC/wallet.
-      "https://cca-lite.coinbase.com https://*.coinbase.com"
-    : "";
-  const wcImg = walletOn
-    ? "https://imagedelivery.net https://explorer-api.walletconnect.com"
-    : "";
-  const wcFrame = walletOn
-    ? "https://secure.walletconnect.org https://*.walletconnect.org"
-    : "";
-  // A modal da Reown/AppKit injeta a fonte via Google Fonts em runtime:
-  // o <link> do CSS vem de fonts.googleapis.com (style-src) e os arquivos
-  // .woff2 de fonts.gstatic.com (font-src). Só liberado com a carteira ligada.
-  const wcStyle = walletOn ? "https://fonts.googleapis.com" : "";
-  const wcFont = walletOn ? "https://fonts.gstatic.com" : "";
-
   // Mídia dos embeds do Discord (GIF/imagem/vídeo). Usamos SEMPRE a `proxyURL`
   // do Discord — ele reencaminha QUALQUER provedor (klipy/tenor/giphy/…) por
   // estes hosts, então liberamos só o proxy dele (não cada provedor externo).
@@ -127,14 +104,15 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile}`,
-    `style-src 'self' 'unsafe-inline' ${wcStyle}`,
-    `font-src 'self' data: ${wcFont}`,
-    // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + ícones de carteiras + texturas do Spline.
-    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${wcImg} ${splineImg}`,
+    `style-src 'self' 'unsafe-inline'`,
+    // Fontes são self-hosted pelo `next/font` — nada de fonts.gstatic.com.
+    `font-src 'self' data:`,
+    // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + texturas do Spline.
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${splineImg}`,
     // Vídeo/GIF (gifv) dos embeds do Discord — sem media-src cairia no default-src.
     `media-src 'self' data: blob: ${discordMedia}`,
-    `connect-src 'self' ${api} ${apiWs} ${turnstile} ${wcConnect} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
-    `frame-src ${turnstile} ${wcFrame}`,
+    `connect-src 'self' ${api} ${apiWs} ${turnstile} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
+    `frame-src ${turnstile}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,
     `base-uri 'self'`,

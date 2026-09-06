@@ -16,27 +16,27 @@ export function PromoteAdmin() {
   const mutation = useMutation({
     mutationFn: () => setUserRole(email.trim(), role),
     onSuccess: (u) => {
-      toast.success(`${u.email} agora é ${u.role}`);
+      toast.success(`${u.email} is now ${u.role}`);
       setEmail("");
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Falha ao alterar a role")),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not change the role")),
   });
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-12">Gerenciar administradores</h2>
-        <p className="text-sm text-gray-11">Promove ou rebaixa um usuário pelo email.</p>
+        <h2 className="text-lg font-semibold text-gray-12">Manage administrators</h2>
+        <p className="text-sm text-gray-11">Promote or demote a user by email.</p>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="flex-1">
           <TextField
-            label="Email do usuário"
+            label="User email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="usuario@exemplo.com"
+            placeholder="user@example.com"
           />
         </div>
 
@@ -60,7 +60,7 @@ export function PromoteAdmin() {
           disabled={!email.trim() || mutation.isPending}
           onClick={() => mutation.mutate()}
         >
-          {mutation.isPending ? "Aplicando…" : "Aplicar"}
+          {mutation.isPending ? "Applying…" : "Apply"}
         </Button>
       </div>
     </section>

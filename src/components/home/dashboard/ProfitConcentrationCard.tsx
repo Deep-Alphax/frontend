@@ -7,7 +7,7 @@ interface ProfitConcentrationCardProps {
 }
 
 /**
- * "Concentração do lucro" (Figma 53:2873) — barra segmentada (top 3 / 4–10 / resto,
+ * "Profit concentration" (Figma 53:2873) — barra segmentada (top 3 / 4–10 / resto,
  * % do lucro bruto) + linhas de ponta a ponta com swatch, rótulo/sub e valor.
  * Dados reais do backend.
  */
@@ -37,7 +37,7 @@ export function ProfitConcentrationCard({
     },
     {
       dot: "bg-gray-6",
-      title: "Todo o resto",
+      title: "Everything else",
       sub: `${rest.count} ${rest.count === 1 ? "token" : "tokens"}`,
       usd: rest.pnlUsd,
     },
@@ -46,7 +46,7 @@ export function ProfitConcentrationCard({
   return (
     <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
       <div className="flex items-center justify-between border-b border-gray-6 p-4">
-        <h3 className="text-lg font-semibold text-gray-12">Concentração do lucro</h3>
+        <h3 className="text-lg font-semibold text-gray-12">Profit concentration</h3>
         <span className="text-base text-gray-11">100% do lucro bruto</span>
       </div>
 

@@ -13,11 +13,12 @@ interface NavItem {
   href: string;
 }
 
-// Rotas ainda não construídas apontam para "#"; "Meu perfil" é a Home.
+// Rotas ainda não construídas apontam para "#"; "My profile" é a Home.
 const NAV_ITEMS: NavItem[] = [
   { label: "Radar", href: "/radar" },
   { label: "KOLs", href: "/wallet-reader" },
-  { label: "Meu perfil", href: "/" },
+  { label: "Plans", href: "/plans" },
+  { label: "My profile", href: "/" },
 ];
 
 /** Nome de exibição a partir do perfil (nome, senão prefixo do e-mail). */
@@ -25,7 +26,7 @@ function displayName(profile?: {
   firstName: string | null;
   email: string;
 }): string {
-  if (!profile) return "Minha conta";
+  if (!profile) return "My account";
   if (profile.firstName?.trim()) return profile.firstName.trim();
   return profile.email.split("@")[0];
 }
@@ -40,7 +41,7 @@ export function Topbar() {
       {/* Esquerda: logo + navegação */}
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
         <div className="flex h-full items-center gap-8">
-          <Link href="/" aria-label="Deep Alpha — início" className="flex items-center">
+          <Link href="/" aria-label="Deep Alpha — home" className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/deep-alpha-logomark.svg"
@@ -74,15 +75,15 @@ export function Topbar() {
         </div>
 
         {/* Direita: depende da sessão.
-          - carregando → nada (evita flash de "Entrar" para quem está logado);
+          - carregando → nada (evita flash de "Sign in" para quem está logado);
           - logado → notificações + conta;
-          - deslogado → só o CTA "Entrar" (nenhuma conta no header). */}
+          - deslogado → só o CTA "Sign in" (nenhuma conta no header). */}
         <div className="flex items-center gap-4">
           {isLoading ? null : isAuthenticated ? (
             <>
               <button
                 type="button"
-                aria-label="Notificações"
+                aria-label="Notifications"
                 className="flex size-9 items-center justify-center rounded-lg text-gray-12 transition-colors hover:bg-gray-3"
               >
                 <Bell className="size-6" strokeWidth={1.5} />
@@ -95,7 +96,7 @@ export function Topbar() {
               href="/login"
               className="rounded-lg bg-principal-9 px-4 py-2 text-sm font-medium text-gray-1 transition-colors hover:bg-principal-10"
             >
-              Entrar
+              Sign in
             </Link>
           )}
         </div>

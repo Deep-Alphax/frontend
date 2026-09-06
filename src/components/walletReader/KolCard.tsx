@@ -82,7 +82,7 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
   // Todos os squads do KOL, na ordem em que vieram: "Squad1, Squad2, Squad3".
   // A linha tem `truncate`, então o `title` é quem mostra a lista inteira
   // quando ela não cabe.
-  const squad = kol.squads.length > 0 ? kol.squads.join(", ") : "Sem squad";
+  const squad = kol.squads.length > 0 ? kol.squads.join(", ") : "No squad";
 
   return (
     <article
@@ -142,14 +142,14 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
         </div>
         <span className="h-10 w-px shrink-0 bg-gray-6" aria-hidden />
         <div className="flex shrink-0 flex-col items-start gap-2 pl-3">
-          <p className="text-xs font-medium text-gray-11">Carteiras</p>
+          <p className="text-xs font-medium text-gray-11">Wallets</p>
           <p className="text-xl font-semibold leading-[1.1] tabular-nums text-gray-12">
             {kol.walletCount}
           </p>
         </div>
       </div>
 
-      {/* Tipos de trader + X */}
+      {/* Trader types + X */}
       <div className="flex items-center justify-between gap-2 p-4">
         <div className="flex min-w-0 items-center gap-1">
           {shown.length > 0 ? (
@@ -170,7 +170,7 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
             </>
           ) : (
             <span className="rounded-[32px] border border-dashed border-gray-6 px-3 py-2 text-sm text-gray-9">
-              Sem tipo definido
+              No type set
             </span>
           )}
         </div>
@@ -192,7 +192,7 @@ export function KolCard({ kol, onOpen, actions, dimmed = false }: KolCardProps) 
         <button
           type="button"
           onClick={onOpen}
-          aria-label={`Abrir ${kol.name}`}
+          aria-label={`Open ${kol.name}`}
           className="absolute inset-0 z-10 cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-principal-9"
         />
       )}

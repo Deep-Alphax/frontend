@@ -37,11 +37,11 @@ export function AuthCallback() {
         window.location.replace(redirectTo);
       })
       .catch((err: unknown) => {
-        setAsyncError(getApiErrorMessage(err, "Não foi possível concluir o login com Google."));
+        setAsyncError(getApiErrorMessage(err, "Could not complete Google sign-in."));
       });
   }, [invalid, code, redirectTo]);
 
-  const error = invalid ? "Login com Google cancelado ou inválido." : asyncError;
+  const error = invalid ? "Google sign-in was cancelled or is invalid." : asyncError;
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-gray-1 px-6 text-center">
@@ -67,7 +67,7 @@ export function AuthCallback() {
       ) : (
         <div className="flex items-center gap-3 text-gray-11">
           <Loader2 className="size-5 animate-spin" aria-hidden />
-          <span className="text-base">Concluindo login com Google…</span>
+          <span className="text-base">Completing Google sign-in…</span>
         </div>
       )}
     </main>
