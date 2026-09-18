@@ -798,7 +798,7 @@ function KolProfileForm({
               onClick={() => canLeave() && setEditing(false)}
               className="mr-auto text-sm text-gray-11 underline underline-offset-2 transition-colors hover:text-gray-12"
             >
-              Voltar aos detalhes
+              Back to details
             </button>
             <button
               type="button"
@@ -825,7 +825,7 @@ function KolProfileForm({
               onClick={guardedClose}
               className="flex h-12 items-center justify-center rounded-lg border border-gray-6 bg-gray-3 px-5 text-base font-semibold text-gray-12 transition-colors hover:bg-gray-4"
             >
-              Fechar
+              Close
             </button>
             <button
               type="button"

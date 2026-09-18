@@ -172,7 +172,7 @@ export function MonitorsManager() {
               {saveMutation.isPending ? "Saving…" : form.id ? "Save" : "Create rule"}
             </Button>
             <Button variant="secondary" className="w-auto" onClick={() => setForm(null)}>
-              Cancelar
+              Cancel
             </Button>
           </div>
         </div>
@@ -244,7 +244,7 @@ export function MonitorsManager() {
                         }
                         className="text-secundaria-11 hover:underline"
                       >
-                        Editar
+                        Edit
                       </button>
                       <button
                         onClick={() => {
@@ -254,7 +254,7 @@ export function MonitorsManager() {
                         }}
                         className="text-danger-11 hover:underline"
                       >
-                        Remover
+                        Remove
                       </button>
                     </div>
                   </td>

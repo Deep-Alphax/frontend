@@ -142,7 +142,7 @@ function KolEditor({
               onClick={onClose}
               className="rounded-lg border border-gray-6 bg-gray-3 px-3 py-2 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
             >
-              Cancelar
+              Cancel
             </button>
             <button
               type="button"

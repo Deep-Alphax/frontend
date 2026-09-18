@@ -269,7 +269,7 @@ function CustomizeForm({
           onClick={onClose}
           className="h-10 flex-1 rounded-lg border border-gray-6 bg-gray-3 px-8 text-base font-semibold text-gray-12 transition-colors hover:bg-gray-4"
         >
-          Fechar
+          Close
         </button>
         <button
           type="button"

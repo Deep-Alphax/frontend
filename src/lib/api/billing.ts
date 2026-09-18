@@ -19,3 +19,11 @@ export async function createCheckout(): Promise<string> {
   const { data } = await api.post<{ url: string }>("/api/v1/billing/checkout");
   return data.url;
 }
+
+/**
+ * Chave do plano efetivo no React Query — invalide após voltar do checkout.
+ *
+ * Vive aqui (e não no componente) porque o header e a tela de planos consultam o
+ * mesmo dado: chaves separadas dariam duas requisições e dois estados divergentes.
+ */
+export const PLAN_KEY = ["billing-plan"] as const;

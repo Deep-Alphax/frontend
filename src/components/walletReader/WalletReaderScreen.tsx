@@ -554,7 +554,7 @@ export function WalletReaderScreen() {
       {selected.size > 0 && (
         <div className="z-40 flex flex-wrap items-center gap-3 border-t border-gray-6 bg-gray-2/95 px-6 py-3 backdrop-blur">
           <span className="text-sm font-medium text-gray-12">
-            {selected.size} carteira{selected.size !== 1 ? "s" : ""} selecionada{selected.size !== 1 ? "s" : ""}
+            {selected.size} wallet{selected.size !== 1 ? "s" : ""} selected
           </span>
           <div className="flex-1" />
           <button

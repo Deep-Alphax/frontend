@@ -157,7 +157,7 @@ export function SidewalletBlock({
                       </span>
                     )}
                     <span className="text-sm text-gray-12">
-                      {f.name ?? "carteira desconhecida"}
+                      {f.name ?? "unknown wallet"}
                       {f.ownerKolName && f.ownerKolName !== f.name ? ` (${f.ownerKolName})` : ""}
                     </span>
                     <div className="flex-1" />
@@ -175,7 +175,7 @@ export function SidewalletBlock({
                       onClick={() => onDismiss(f.address)}
                       className="shrink-0 text-xs text-gray-11 underline underline-offset-2 hover:text-gray-12"
                     >
-                      remover
+                      remove
                     </button>
                   </div>
                   <div className="truncate font-mono text-xs text-gray-11">{f.address}</div>

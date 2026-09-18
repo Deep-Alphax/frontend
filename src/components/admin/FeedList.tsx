@@ -121,7 +121,7 @@ export function FeedList() {
           />
         </div>
         <Button className="w-auto" onClick={applySearch}>
-          Buscar
+          Search
         </Button>
       </div>
 

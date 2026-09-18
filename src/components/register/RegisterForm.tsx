@@ -16,6 +16,7 @@ import { registerSchema, type RegisterFormValues } from "@/lib/validation/auth";
 import { register as registerAccount } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { TURNSTILE_SITE_KEY } from "@/lib/env";
+import { clearReferral, storedReferral } from "@/lib/referral";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -49,8 +50,12 @@ export function RegisterForm() {
         acceptedPrivacyPolicy: true,
         language: "PT",
         turnstileToken,
+        referralCode: storedReferral(),
       }),
     onSuccess: () => {
+      // A indicação já foi gravada na conta; manter o código aqui atribuiria a
+      // PRÓXIMA conta criada neste navegador ao mesmo afiliado.
+      clearReferral();
       // Cadastro autologa (cookies já setados) → tela de conclusão.
       router.replace("/register/success");
     },

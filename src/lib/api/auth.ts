@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/client";
+import { storedReferral } from "@/lib/referral";
 import { API_URL } from "@/lib/env";
 
 export interface LoginPayload {
@@ -52,6 +53,8 @@ export interface RegisterPayload {
   /** Idioma preferido; default do app é PT. */
   language?: "EN" | "PT" | "ES";
   turnstileToken?: string;
+  /** Código do link de afiliado; código inválido é ignorado pelo backend. */
+  referralCode?: string;
 }
 
 /** Cadastro autologa: retorna o usuário e o backend seta os cookies de sessão. */
@@ -93,6 +96,11 @@ export async function logout(): Promise<void> {
 export function buildGoogleAuthUrl(redirectTo = "/"): string {
   const url = new URL("/api/v1/auth/google", API_URL);
   if (redirectTo) url.searchParams.set("redirect_to", redirectTo);
+  // O código de indicação entra aqui para o backend assiná-lo dentro do `state`
+  // do OAuth — o único parâmetro que o Google devolve intacto. Sem isso, quem
+  // chega pelo link de afiliado e entra com Google não é atribuído a ninguém.
+  const ref = storedReferral();
+  if (ref) url.searchParams.set("ref", ref);
   return url.toString();
 }
 
@@ -104,7 +112,14 @@ export function buildGoogleAuthUrl(redirectTo = "/"): string {
  * consent, e a troca do code no Google exige que ele bata exatamente. 400 =
  * code inválido/expirado (ex.: page refresh reusa o code).
  */
-export async function validateGoogleCode(code: string): Promise<void> {
+export async function validateGoogleCode(
+  code: string,
+  referralCode?: string,
+): Promise<void> {
   const redirectUri = `${API_URL}/api/v1/auth/google/callback`;
-  await api.post("/api/v1/auth/google/validate", { code, redirectUri });
+  await api.post("/api/v1/auth/google/validate", {
+    code,
+    redirectUri,
+    referralCode,
+  });
 }

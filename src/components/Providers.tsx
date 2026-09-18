@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
+
+import { captureReferralFromUrl } from "@/lib/referral";
 
 /**
  * Providers globais do client (React Query + toasts).
@@ -25,6 +27,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
+
+  // Captura o `?ref=` do link de afiliado em QUALQUER rota, não só no cadastro:
+  // o link circula apontando para a home e para /plans, e quem cai ali e se
+  // cadastra depois tem que continuar atribuído.
+  useEffect(() => {
+    captureReferralFromUrl(window.location.search);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

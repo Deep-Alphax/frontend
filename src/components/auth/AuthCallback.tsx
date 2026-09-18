@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { validateGoogleCode } from "@/lib/api/auth";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { safeRedirect } from "@/lib/auth/redirect";
+import { clearReferral, storedReferral } from "@/lib/referral";
 
 /**
  * Finaliza o login com Google: lê `code`/`redirect_to` do callback (o backend já
@@ -23,6 +24,11 @@ export function AuthCallback() {
   const code = params.get("code");
   const oauthError = params.get("error");
   const redirectTo = safeRedirect(params.get("redirect_to"));
+  // O código de indicação volta pelo `state` assinado do OAuth (o backend o
+  // reemite aqui na query). O storage é só a rede de segurança: o `state`
+  // sobrevive a navegador que bloqueia storage, e o storage sobrevive a um
+  // state expirado em consent demorado.
+  const referralCode = params.get("ref") ?? storedReferral();
   // Sem code (ou erro vindo do Google) já é inválido — derivado no render, não em effect.
   const invalid = Boolean(oauthError) || !code;
 
@@ -30,8 +36,11 @@ export function AuthCallback() {
     if (invalid || started.current) return;
     started.current = true;
 
-    validateGoogleCode(code as string)
+    validateGoogleCode(code as string, referralCode ?? undefined)
       .then(() => {
+        // A indicação já está gravada na conta; manter o código aqui atribuiria
+        // a PRÓXIMA conta criada neste navegador ao mesmo afiliado.
+        clearReferral();
         // Reload real (não router.replace): descarta o cache de sessão anterior e
         // faz a nova página ler o cookie-dica já presente.
         window.location.replace(redirectTo);
@@ -39,7 +48,7 @@ export function AuthCallback() {
       .catch((err: unknown) => {
         setAsyncError(getApiErrorMessage(err, "Could not complete Google sign-in."));
       });
-  }, [invalid, code, redirectTo]);
+  }, [invalid, code, redirectTo, referralCode]);
 
   const error = invalid ? "Google sign-in was cancelled or is invalid." : asyncError;
 
@@ -61,7 +70,7 @@ export function AuthCallback() {
             href="/login"
             className="rounded-lg bg-principal-9 px-5 py-2.5 text-sm font-medium text-gray-1 transition-colors hover:bg-principal-10"
           >
-            Voltar ao login
+            Back to sign in
           </Link>
         </div>
       ) : (

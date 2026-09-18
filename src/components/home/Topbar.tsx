@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Bell } from "lucide-react";
 
 import { AccountMenu } from "@/components/home/AccountMenu";
+import { BecomeProButton } from "@/components/home/BecomeProButton";
+import { WalletChip } from "@/components/home/WalletChip";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
 
@@ -14,11 +16,11 @@ interface NavItem {
 }
 
 // Rotas ainda não construídas apontam para "#"; "My profile" é a Home.
+// Planos NÃO entra aqui: virou o CTA "Become a Pro" à direita (Figma 1056:27771).
 const NAV_ITEMS: NavItem[] = [
   { label: "Mentorship", href: "/mentorship" },
   { label: "Radar", href: "/radar" },
   { label: "KOLs", href: "/wallet-reader" },
-  { label: "Plans", href: "/plans" },
   { label: "My profile", href: "/" },
 ];
 
@@ -77,11 +79,15 @@ export function Topbar() {
 
         {/* Direita: depende da sessão.
           - carregando → nada (evita flash de "Sign in" para quem está logado);
-          - logado → notificações + conta;
+          - logado → carteiras + notificações + conta;
           - deslogado → só o CTA "Sign in" (nenhuma conta no header). */}
         <div className="flex items-center gap-4">
+          <BecomeProButton />
+
           {isLoading ? null : isAuthenticated ? (
             <>
+              <WalletChip />
+
               <button
                 type="button"
                 aria-label="Notifications"

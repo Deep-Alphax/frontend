@@ -7,7 +7,12 @@ import { Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { catalogWallet, type BackendChain } from "@/lib/api/wallets";
+import {
+  catalogWallet,
+  deleteWallet,
+  type BackendChain,
+  type Wallet,
+} from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { extractWalletAddress } from "@/lib/extractWalletAddress";
@@ -26,26 +31,53 @@ const CHAINS: { value: BackendChain; label: string }[] = [
 interface AddWalletModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Carteira sendo TROCADA (Figma "Editar carteira"). O formulário é o mesmo;
+   * muda o título, o rótulo do botão e o fato de a antiga sair do catálogo.
+   */
+  replacing?: Wallet | null;
 }
 
 /**
- * Modal "Search wallet": cataloga um endereço público na conta (SEM assinatura).
- * Ao concluir, a carteira vira a selecionada no dashboard e a ingestão dispara — se
- * outra pessoa já a acompanha, os dados são reusados na hora. Gate de montagem: só
- * renderiza o formulário quando aberto (assim o estado nasce limpo a cada abertura).
+ * Modal "Search wallet" / "Edit wallet" (Figma `546:17429` e `566:19613` — o
+ * mesmo shell de 384px, só o título e o CTA mudam).
+ *
+ * Cataloga um endereço público na conta (SEM assinatura). Ao concluir, a
+ * carteira vira a selecionada no dashboard e a ingestão dispara — se outra
+ * pessoa já a acompanha, os dados são reusados na hora. Gate de montagem: só
+ * renderiza o formulário quando aberto (assim o estado nasce limpo a cada
+ * abertura, inclusive ao trocar qual carteira está sendo editada).
  */
-export function AddWalletModal({ open, onOpenChange }: AddWalletModalProps) {
+export function AddWalletModal({
+  open,
+  onOpenChange,
+  replacing = null,
+}: AddWalletModalProps) {
   if (!open) return null;
-  return <AddWalletDialog onClose={() => onOpenChange(false)} />;
+  return (
+    <WalletDialog
+      key={replacing?.id ?? "new"}
+      replacing={replacing}
+      onClose={() => onOpenChange(false)}
+    />
+  );
 }
 
-function AddWalletDialog({ onClose }: { onClose: () => void }) {
+function WalletDialog({
+  replacing,
+  onClose,
+}: {
+  replacing: Wallet | null;
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const select = useWalletSelection((s) => s.select);
-  const [chain, setChain] = useState<BackendChain>("SOLANA");
-  const [address, setAddress] = useState("");
+  const [chain, setChain] = useState<BackendChain>(replacing?.chain ?? "SOLANA");
+  const [address, setAddress] = useState(replacing?.address ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const isEdit = replacing !== null;
 
   // Fecha no Escape (subscrição a evento externo — uso legítimo de effect).
   useEffect(() => {
@@ -68,18 +100,32 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
     setSubmitting(true);
     setError(null);
     try {
+      // Cataloga ANTES de remover a antiga: se o endereço novo for recusado,
+      // o usuário não fica sem carteira nenhuma.
       const wallet = await catalogWallet({ chain, address: trimmed });
+      if (replacing && replacing.id !== wallet.id) {
+        await deleteWallet(replacing.id);
+      }
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio-analytics"] });
       select(wallet.id); // passa a mostrar a carteira recém-catalogada
-      toast.success("Wallet added — reading its history.");
+      toast.success(
+        isEdit ? "Wallet updated." : "Wallet added — reading its history.",
+      );
       onClose();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Could not add the wallet."));
+      setError(
+        getApiErrorMessage(
+          err,
+          isEdit ? "Could not change the wallet." : "Could not add the wallet.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
+  const title = isEdit ? "Edit wallet" : "Search wallet";
 
   return (
     <div
@@ -89,11 +135,11 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
       }}
       role="dialog"
       aria-modal="true"
-      aria-label="Search wallet"
+      aria-label={title}
     >
-      <div className="w-full max-w-md rounded-lg border border-gray-6 bg-gray-2 p-6 shadow-xl">
+      <div className="w-full max-w-[384px] rounded-lg border border-gray-6 bg-gray-2 p-6 shadow-xl">
         <div className="mb-1 flex items-start justify-between">
-          <h2 className="text-xl font-semibold text-gray-12">Search wallet</h2>
+          <h2 className="text-xl font-semibold text-gray-12">{title}</h2>
           <button
             type="button"
             aria-label="Close"
@@ -111,7 +157,7 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="add-wallet-chain" className="text-base text-gray-12">
-              Rede
+              Network
             </label>
             <select
               id="add-wallet-chain"
@@ -128,7 +174,7 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
           </div>
 
           <TextField
-            label="Address"
+            label="Public address"
             placeholder="0x… (EVM) or base58 (Solana)"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -140,7 +186,13 @@ function AddWalletDialog({ onClose }: { onClose: () => void }) {
           />
 
           <Button type="submit" disabled={submitting} className="mt-1">
-            {submitting ? "Adicionando…" : "Add wallet"}
+            {submitting
+              ? isEdit
+                ? "Saving…"
+                : "Adding…"
+              : isEdit
+                ? "Change wallet"
+                : "Add wallet"}
           </Button>
         </form>
       </div>

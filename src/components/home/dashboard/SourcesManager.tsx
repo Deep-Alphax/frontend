@@ -95,7 +95,7 @@ function SourceCard({ source }: { source: Source }) {
               <span className="text-gray-11">{w.chain}</span>
               <span className="font-mono text-gray-12">{shortAddress(w.address)}</span>
               {w.syncStatus === "PENDING" || w.syncStatus === "SYNCING" ? (
-                <Loader2 className="size-3 animate-spin text-gray-11" aria-label="sincronizando" />
+                <Loader2 className="size-3 animate-spin text-gray-11" aria-label="syncing" />
               ) : null}
               <button
                 type="button"

@@ -145,7 +145,7 @@ export function BlacklistManager() {
                       }}
                       className="text-danger-11 hover:underline"
                     >
-                      Remover
+                      Remove
                     </button>
                   </td>
                 </tr>

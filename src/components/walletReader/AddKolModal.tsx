@@ -37,7 +37,7 @@ export function AddKolModal({
             onClick={onClose}
             className="h-9 rounded-lg border border-gray-6 bg-gray-3 px-4 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
           >
-            Cancelar
+            Cancel
           </button>
           <button
             type="button"
@@ -50,7 +50,7 @@ export function AddKolModal({
             }}
             className="h-9 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
           >
-            Criar KOL
+            Create KOL
           </button>
         </div>
       }

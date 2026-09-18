@@ -50,3 +50,18 @@ export async function getWallets(): Promise<Wallet[]> {
 export async function deleteWallet(id: string): Promise<void> {
   await api.delete(`/api/v1/wallets/${id}`);
 }
+
+/**
+ * PATCH /api/v1/wallets/:id — atualiza o rótulo da carteira catalogada.
+ *
+ * Só o rótulo: chain e endereço IDENTIFICAM a carteira canônica e são
+ * compartilhados entre contas, então trocar o endereço é catalogar outra
+ * (ver `EditWalletModal`), não editar esta.
+ */
+export async function updateWallet(
+  id: string,
+  input: { label?: string | null },
+): Promise<Wallet> {
+  const { data } = await api.patch<Wallet>(`/api/v1/wallets/${id}`, input);
+  return data;
+}

@@ -4,12 +4,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/Button";
-import { createCheckout, getMyPlan, type Plan } from "@/lib/api/billing";
+import { createCheckout, getMyPlan, PLAN_KEY, type Plan } from "@/lib/api/billing";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/useSession";
-
-/** Chave do plano efetivo — invalide após voltar do checkout. */
-export const PLAN_KEY = ["billing-plan"] as const;
 
 interface PlanCtaProps {
   tone: "free" | "pro";
