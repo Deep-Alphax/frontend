@@ -12,6 +12,7 @@ import { TierPill, XIcon } from "@/components/walletReader/KolCard";
 import { kolDetailKey, type useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { getKol, type KolOverridePatch } from "@/lib/api/walletReader";
 import { useKolScans, useScans } from "@/lib/walletReader/useScans";
+import { ProLock } from "@/components/plans/ProLock";
 import { dedupSquads, squadKey } from "@/lib/walletReader/squads";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
 import {
@@ -280,8 +281,11 @@ function KolProfileForm({
   toggleSelect,
 }: KolProfileModalProps & { state: KolState }) {
   const { patchOverride, removeKol, squads: knownSquads } = index;
-  const { runScan } = useScans();
-  const scans = useKolScans(id);
+  // FREE: o servidor manda o KOL sem carteiras (`walletsLocked`) e barra os
+  // scans com 403 — nem consultamos, para não gerar erro à toa.
+  const walletsLocked = state.walletsLocked === true;
+  const { runScan } = useScans(!walletsLocked);
+  const scans = useKolScans(walletsLocked ? null : id);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [wName, setWName] = useState("");
@@ -546,6 +550,20 @@ function KolProfileForm({
     </aside>
   );
 
+  /** No FREE, carteiras e varredura viram um único convite ao Pro. */
+  const walletsLock = (
+    <EditSection label="Wallets" count={`${state.walletCount} total`} last>
+      <ProLock
+        title={
+          state.walletCount === 1
+            ? "See the wallet of this KOL"
+            : `See the ${state.walletCount} wallets of this KOL`
+        }
+        detail="Wallets, sidewallets and copytraders are part of the Pro plan."
+      />
+    </EditSection>
+  );
+
   /** Bloco da varredura — igual nos dois modos (node 901:18413 / 901:20251). */
   const sidewallets = (
     <div className="rounded-xl border border-gray-6 bg-gray-1/60 p-4">
@@ -572,27 +590,33 @@ function KolProfileForm({
         </p>
       </div>
 
-      <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
-        {draft.wallets.length === 0 ? (
-          <p className="text-sm text-gray-11">No wallets on file.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {draft.wallets.map((w) => (
-              <WalletRow
-                key={w.address}
-                name={w.name}
-                address={w.address}
-                selected={isSelected(id, w.address)}
-                onToggle={() => toggleSelect(id, w, state.squads)}
-              />
-            ))}
-          </div>
-        )}
-      </EditSection>
+      {walletsLocked ? (
+        walletsLock
+      ) : (
+        <>
+          <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
+            {draft.wallets.length === 0 ? (
+              <p className="text-sm text-gray-11">No wallets on file.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {draft.wallets.map((w) => (
+                  <WalletRow
+                    key={w.address}
+                    name={w.name}
+                    address={w.address}
+                    selected={isSelected(id, w.address)}
+                    onToggle={() => toggleSelect(id, w, state.squads)}
+                  />
+                ))}
+              </div>
+            )}
+          </EditSection>
 
-      <EditSection label="Sidewallets / Copytraders" last>
-        {sidewallets}
-      </EditSection>
+          <EditSection label="Sidewallets / Copytraders" last>
+            {sidewallets}
+          </EditSection>
+        </>
+      )}
     </div>
   );
 
@@ -709,6 +733,10 @@ function KolProfileForm({
         </div>
       </EditSection>
 
+      {walletsLocked ? (
+        walletsLock
+      ) : (
+      <>
       <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
         {draft.wallets.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -759,6 +787,8 @@ function KolProfileForm({
       </EditSection>
 
       <EditSection label="Sidewallets / Copytraders">{sidewallets}</EditSection>
+      </>
+      )}
 
       <section className="px-4 py-5">
         <div className="flex items-center justify-between gap-4 rounded-lg border border-vermelho-5 bg-vermelho-5/10 p-4">

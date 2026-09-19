@@ -80,6 +80,8 @@ export interface KolIndexPage {
   viewCounts: Record<string, number>;
   /** Todo squad visível ao usuário — do preset e da conta —, ordenado. */
   squads: string[];
+  /** `true` no FREE: carteiras dos KOLs (e busca por endereço) são do Pro. */
+  walletsLocked?: boolean;
 }
 
 /**

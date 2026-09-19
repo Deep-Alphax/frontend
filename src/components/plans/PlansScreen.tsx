@@ -13,22 +13,22 @@ import { cn } from "@/lib/cn";
  * os badges revelam por recorte (ver `PlanCard`).
  */
 
+/*
+ * Tem que bater com `backend/src/app/billing/plan-limits.ts` — lá é o que vale;
+ * aqui é só a vitrine. Mudou um limite? Mude os dois.
+ */
 const FREE_FEATURES: PlanFeature[] = [
-  { title: "Feed speed", detail: "3 minutes behind the market" },
-  { title: "Monitored groups", detail: "2 groups" },
-  { title: "Token analysis", detail: "Price and liquidity" },
-  { title: "Tracked wallets", detail: "Yours only" },
-  { title: "KOL index", detail: "Only a few" },
+  { title: "Monitored groups", detail: "A selection of groups" },
+  { title: "KOL index", detail: "Every KOL, without their wallets" },
+  { title: "Tracked wallets", detail: "Your own wallet" },
   { title: "Alerts", detail: "1 alert" },
 ];
 
 const PRO_FEATURES: PlanFeature[] = [
-  { title: "Feed speed", detail: "You see it the moment they post" },
-  { title: "Monitored groups", detail: "Unlimited — Telegram and Discord" },
-  { title: "Token analysis", detail: "Dev, top 10, snipers and who already exited" },
-  { title: "Tracked wallets", detail: "Up to 20, yours and those you follow" },
-  { title: "KOL index", detail: "Who lands it, who repeats it and who only talks" },
-  { title: "Alerts", detail: "No limit, on mobile, with sound" },
+  { title: "Monitored groups", detail: "Every group we monitor" },
+  { title: "KOL index", detail: "Every KOL with their wallets, sidewallets and copytraders" },
+  { title: "Tracked wallets", detail: "Up to 20" },
+  { title: "Alerts", detail: "Unlimited, in the app and as push notifications" },
 ];
 
 const DISPLAY_28 = "text-display-28 leading-[1.1] tracking-[1px]";

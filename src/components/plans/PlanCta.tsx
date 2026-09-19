@@ -1,12 +1,13 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/Button";
-import { createCheckout, getMyPlan, PLAN_KEY, type Plan } from "@/lib/api/billing";
+import { createCheckout } from "@/lib/api/billing";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/useSession";
+import { usePlan } from "@/lib/billing/usePlan";
 
 interface PlanCtaProps {
   tone: "free" | "pro";
@@ -23,14 +24,7 @@ interface PlanCtaProps {
 export function PlanCta({ tone }: PlanCtaProps) {
   const { isAuthenticated } = useSession();
 
-  const { data: plan, isLoading } = useQuery({
-    queryKey: PLAN_KEY,
-    queryFn: getMyPlan,
-    enabled: isAuthenticated,
-    staleTime: 60_000,
-  });
-
-  const current: Plan = plan ?? "FREE";
+  const { plan: current, isLoading } = usePlan();
 
   const checkout = useMutation({
     mutationFn: createCheckout,

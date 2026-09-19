@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Topbar } from "@/components/home/Topbar";
 import { SourcesRail } from "@/components/radar/SourcesRail";
@@ -13,6 +13,7 @@ import { ProfilePanel } from "@/components/radar/ProfilePanel";
 import { ColumnDragHandle } from "@/components/radar/ColumnDragHandle";
 import { useRadarFeed, type SourceSelection } from "@/components/radar/useRadarFeed";
 import { FavoritesLookupProvider } from "@/components/radar/favoritesLookup";
+import { FocusedMessage } from "@/components/radar/FocusedMessage";
 import {
   COLUMN_ORDER_KEY,
   moveColumn,
@@ -300,6 +301,14 @@ export function RadarScreen() {
         {/* Barra inferior (substitui o footer) — module chips de métricas. */}
         <RadarModuleBar />
       </div>
+
+      {/* `?message=<id>` (clique num alerta). Suspense: `useSearchParams` exige
+          fronteira para a rota continuar pré-renderizável. */}
+      <Suspense fallback={null}>
+        <FocusedMessage
+          onSelectAuthor={(id, name) => setSelectedAuthor({ id, name })}
+        />
+      </Suspense>
     </FavoritesLookupProvider>
   );
 }

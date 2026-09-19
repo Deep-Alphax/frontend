@@ -7,8 +7,6 @@ import { getScans, getScansOf, requestScan } from "@/lib/api/walletReader";
 import { getSocket } from "@/lib/realtime/socket";
 import type { ScanResult, ScanSummary } from "@/lib/walletReader/types";
 
-const SCANS_URL = "/wallet-reader/sidewallet-scans.json";
-
 /** Chave da query — o realtime chega por ela. */
 export const SCANS_KEY = ["wallet-reader-scans"] as const;
 /** Chave das varreduras COMPLETAS de um KOL (uma por carteira). */
@@ -40,18 +38,16 @@ function toSummary(r: ScanResult): ScanSummary {
   };
 }
 
-/** Backend primeiro; JSON estático só quando ele está fora (dev offline). */
+/**
+ * Só o backend. Havia um fallback para um JSON em `public/`, mas arquivo em
+ * `public/` é servido a QUALQUER um — e scans trazem carteiras de KOL, que são
+ * recurso do Pro. Backend fora = lista vazia, não dado vazado.
+ */
 async function fetchScans(): Promise<ScanMap> {
   try {
     return await getScans();
   } catch {
-    try {
-      const r = await fetch(SCANS_URL);
-      const data = r.ok ? await r.json() : { scans: {} };
-      return (data.scans ?? {}) as ScanMap;
-    } catch {
-      return {};
-    }
+    return {};
   }
 }
 
@@ -63,9 +59,10 @@ async function fetchScans(): Promise<ScanMap> {
  * o POST devolve `queued` na hora e o resultado chega por `scan:update`. Nada de
  * polling (é a regra do projeto para estado que muda no servidor).
  */
-export function useScans() {
+export function useScans(enabled = true) {
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: SCANS_KEY, queryFn: fetchScans });
+  // `enabled=false` no FREE: o controller de scans é Pro e responderia 403.
+  const { data } = useQuery({ queryKey: SCANS_KEY, queryFn: fetchScans, enabled });
 
   const merge = useCallback(
     (r: ScanSummary) =>
@@ -74,6 +71,7 @@ export function useScans() {
   );
 
   useEffect(() => {
+    if (!enabled) return;
     const socket = getSocket();
     const handler = (r: ScanResult) => {
       if (!r?.kolId) return;
@@ -88,7 +86,7 @@ export function useScans() {
     return () => {
       socket.off("scan:update", handler);
     };
-  }, [merge, qc]);
+  }, [enabled, merge, qc]);
 
   /** Pede a varredura. Devolve o estado imediato (cache, `queued` ou `running`). */
   const runScan = useCallback(

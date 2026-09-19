@@ -14,6 +14,8 @@ import {
   type Wallet,
 } from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { planErrorCode } from "@/lib/billing/planErrors";
+import { ProLock } from "@/components/plans/ProLock";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { extractWalletAddress } from "@/lib/extractWalletAddress";
 
@@ -75,6 +77,8 @@ function WalletDialog({
   const [chain, setChain] = useState<BackendChain>(replacing?.chain ?? "SOLANA");
   const [address, setAddress] = useState(replacing?.address ?? "");
   const [error, setError] = useState<string | null>(null);
+  // Recusa por PLANO (teto de carteiras) ganha o convite ao Pro, não só o erro.
+  const [planBlocked, setPlanBlocked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const isEdit = replacing !== null;
@@ -99,6 +103,7 @@ function WalletDialog({
     if (trimmed !== address.trim()) setAddress(trimmed); // mostra o que foi usado
     setSubmitting(true);
     setError(null);
+    setPlanBlocked(false);
     try {
       // Cataloga ANTES de remover a antiga: se o endereço novo for recusado,
       // o usuário não fica sem carteira nenhuma.
@@ -114,6 +119,7 @@ function WalletDialog({
       );
       onClose();
     } catch (err) {
+      setPlanBlocked(planErrorCode(err) !== null);
       setError(
         getApiErrorMessage(
           err,
@@ -184,6 +190,10 @@ function WalletDialog({
             autoComplete="off"
             spellCheck={false}
           />
+
+          {planBlocked && (
+            <ProLock title="Track up to 20 wallets" detail="The Free plan tracks 1 wallet." />
+          )}
 
           <Button type="submit" disabled={submitting} className="mt-1">
             {submitting

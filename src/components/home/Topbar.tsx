@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell } from "lucide-react";
 
+import { NotificationBell } from "@/components/alerts/NotificationBell";
 import { AccountMenu } from "@/components/home/AccountMenu";
 import { BecomeProButton } from "@/components/home/BecomeProButton";
 import { WalletChip } from "@/components/home/WalletChip";
@@ -88,13 +88,7 @@ export function Topbar() {
             <>
               <WalletChip />
 
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="flex size-9 items-center justify-center rounded-lg text-gray-12 transition-colors hover:bg-gray-3"
-              >
-                <Bell className="size-6" strokeWidth={1.5} />
-              </button>
+              <NotificationBell />
 
               <AccountMenu name={name} avatarUrl={profile?.avatarUrl} />
             </>

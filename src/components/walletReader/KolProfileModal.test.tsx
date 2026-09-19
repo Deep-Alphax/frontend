@@ -8,6 +8,7 @@ import { KolProfileModal } from "./KolProfileModal";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import * as api from "@/lib/api/walletReader";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
+import { useKolScans, useScans } from "@/lib/walletReader/useScans";
 import type { KolIndexPage, KolOverridePatch } from "@/lib/api/walletReader";
 import type { KolState } from "@/lib/walletReader/types";
 
@@ -15,8 +16,8 @@ vi.mock("@/lib/api/walletReader");
 vi.mock("@/lib/walletReader/avatar");
 // O bloco de sidewallets abre socket e consulta scans — fora do escopo aqui.
 vi.mock("@/lib/walletReader/useScans", () => ({
-  useScans: () => ({ scans: {}, runScan: vi.fn() }),
-  useKolScans: () => [],
+  useScans: vi.fn(() => ({ scans: {}, runScan: vi.fn() })),
+  useKolScans: vi.fn(() => []),
 }));
 
 /** `fileToAvatar` usa canvas, que o jsdom não implementa. */
@@ -421,5 +422,50 @@ describe("KolProfileModal — limites da UI", () => {
     await user.clear(notes);
     fireEvent.change(notes, { target: { value: "a".repeat(30) } });
     expect(screen.getByText("30/200 caracteres")).toBeInTheDocument();
+  });
+});
+
+describe("KolProfileModal — plano FREE (carteiras são do Pro)", () => {
+  beforeEach(() => {
+    // O servidor manda o KOL do FREE assim: sem endereços, com a contagem.
+    server.kol = {
+      ...server.kol,
+      wallets: [],
+      walletCount: 3,
+      walletsLocked: true,
+    };
+  });
+
+  it("mostra o convite ao Pro no lugar das carteiras e não consulta scans", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<Harness />);
+    await user.click(screen.getByRole("button", { name: "open kol" }));
+
+    expect(await screen.findByText("See the 3 wallets of this KOL")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /upgrade to pro/i })).toHaveAttribute(
+      "href",
+      "/plans",
+    );
+    expect(screen.queryByText("Sidewallets / Copytraders")).not.toBeInTheDocument();
+    // Scans são rota Pro (403 no FREE): nem a lista nem os do KOL são pedidos.
+    expect(vi.mocked(useScans)).toHaveBeenLastCalledWith(false);
+    expect(vi.mocked(useKolScans)).toHaveBeenLastCalledWith(null);
+  });
+
+  it("no modo edição não oferece adicionar carteira, e o Salvar não manda `wallets`", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<Harness />);
+    const notes = await openEditing(user);
+
+    expect(screen.queryByRole("textbox", { name: "Wallet address" })).not.toBeInTheDocument();
+
+    await user.clear(notes);
+    await user.type(notes, "nota nova");
+    await save(user);
+
+    await waitFor(() => expect(api.patchKolOverride).toHaveBeenCalled());
+    const patch = vi.mocked(api.patchKolOverride).mock.calls[0][1];
+    expect(patch).toMatchObject({ notes: "nota nova" });
+    expect(patch).not.toHaveProperty("wallets");
   });
 });

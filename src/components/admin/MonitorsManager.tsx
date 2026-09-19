@@ -24,6 +24,7 @@ interface FormState {
   telegramChatId: string;
   waitForBotReply: boolean;
   isActive: boolean;
+  freeTier: boolean;
 }
 
 const EMPTY_FORM: FormState = {
@@ -35,6 +36,8 @@ const EMPTY_FORM: FormState = {
   telegramChatId: "",
   waitForBotReply: true,
   isActive: true,
+  // Grupo novo nasce só-Pro: esquecer de marcar nunca vaza conteúdo pago.
+  freeTier: false,
 };
 
 /** Gestão (CRUD) das regras de monitoramento do Discord. */
@@ -59,6 +62,7 @@ export function MonitorsManager() {
         telegramChatId: f.telegramChatId.trim(),
         waitForBotReply: f.waitForBotReply,
         isActive: f.isActive,
+        freeTier: f.freeTier,
       };
       return f.id ? updateMonitor(f.id, payload) : createMonitor(payload);
     },
@@ -74,6 +78,15 @@ export function MonitorsManager() {
     mutationFn: (m: FeedMonitor) => updateMonitor(m.id, { isActive: !m.isActive }),
     onSuccess: invalidate,
     onError: (err) => toast.error(getApiErrorMessage(err, "Could not toggle")),
+  });
+
+  const tierMutation = useMutation({
+    mutationFn: (m: FeedMonitor) => updateMonitor(m.id, { freeTier: !m.freeTier }),
+    onSuccess: (_, m) => {
+      toast.success(m.freeTier ? "Group is now Pro only" : "Group released to Free");
+      invalidate();
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not change the plan")),
   });
 
   const deleteMutation = useMutation({
@@ -161,6 +174,15 @@ export function MonitorsManager() {
               />
               Ativa
             </label>
+            <label className="flex items-center gap-2 text-sm text-gray-12">
+              <input
+                type="checkbox"
+                checked={form.freeTier}
+                onChange={(e) => setForm({ ...form, freeTier: e.target.checked })}
+                className="size-4 accent-principal-9"
+              />
+              Available on the Free plan
+            </label>
           </div>
 
           <div className="flex gap-3">
@@ -192,6 +214,7 @@ export function MonitorsManager() {
                 <th className="py-2 pr-4 font-medium">Channel</th>
                 <th className="py-2 pr-4 font-medium">Telegram</th>
                 <th className="py-2 pr-4 font-medium">Active</th>
+                <th className="py-2 pr-4 font-medium">Plan</th>
                 <th className="py-2 font-medium">Actions</th>
               </tr>
             </thead>
@@ -227,6 +250,23 @@ export function MonitorsManager() {
                       {m.isActive ? "ativa" : "inativa"}
                     </button>
                   </td>
+                  <td className="py-3 pr-4">
+                    {/* Um clique libera/tira do FREE. O feed do FREE (REST e
+                        socket) passa a refletir na requisição seguinte. */}
+                    <button
+                      onClick={() => tierMutation.mutate(m)}
+                      disabled={tierMutation.isPending}
+                      title={m.freeTier ? "Visible to Free and Pro" : "Visible to Pro only"}
+                      className={
+                        "rounded-full px-2 py-0.5 text-xs font-medium " +
+                        (m.freeTier
+                          ? "bg-secundaria-11/15 text-secundaria-11"
+                          : "bg-principal-9/15 text-principal-9")
+                      }
+                    >
+                      {m.freeTier ? "Free + Pro" : "Pro only"}
+                    </button>
+                  </td>
                   <td className="py-3">
                     <div className="flex gap-2">
                       <button
@@ -240,6 +280,7 @@ export function MonitorsManager() {
                             telegramChatId: m.telegramChatId,
                             waitForBotReply: m.waitForBotReply,
                             isActive: m.isActive,
+                            freeTier: m.freeTier,
                           })
                         }
                         className="text-secundaria-11 hover:underline"

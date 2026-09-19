@@ -174,6 +174,9 @@ export const config = {
     // Exclui assets estáticos E as rotas de metadata (opengraph-image/twitter-image):
     // crawlers batem nelas DESLOGADOS — sem excluir, o guard de auth as redirecionava
     // pro /login e o preview de link (OG) quebrava. `icon.svg` já cai na regra `.svg$`.
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // `sw.js` (service worker do push): o navegador o rebusca sozinho em segundo
+    // plano, e um redirect para /login faz a atualização falhar. É estático e
+    // não carrega dado de ninguém.
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|sw\\.js$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

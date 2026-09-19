@@ -12,6 +12,8 @@ export interface FeedMonitor {
   telegramChatId: string;
   waitForBotReply: boolean;
   isActive: boolean;
+  /** Grupo liberado para o plano FREE. `false` = só Pro (default). */
+  freeTier: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +28,7 @@ export interface CreateMonitorInput {
   telegramChatId: string;
   waitForBotReply?: boolean;
   isActive?: boolean;
+  freeTier?: boolean;
 }
 
 export type UpdateMonitorInput = Partial<CreateMonitorInput>;
@@ -168,6 +171,17 @@ export async function getFeedMessages(params: {
   search?: string;
 }): Promise<FeedPage> {
   const { data } = await api.get<FeedPage>("/api/v1/feed/messages", { params });
+  return data;
+}
+
+/**
+ * GET /api/v1/feed/messages/:id — uma captura (abrir pelo alerta). 404 também
+ * quando ela existe mas está fora do plano do usuário.
+ */
+export async function getFeedMessage(id: string): Promise<CapturedMessage> {
+  const { data } = await api.get<CapturedMessage>(
+    `/api/v1/feed/messages/${encodeURIComponent(id)}`,
+  );
   return data;
 }
 

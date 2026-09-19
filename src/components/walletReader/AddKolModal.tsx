@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import { Modal } from "@/components/walletReader/Modal";
+import { ProLock } from "@/components/plans/ProLock";
+import { usePlan } from "@/lib/billing/usePlan";
 
 /** Modal de criação de um novo KOL manual. */
 export function AddKolModal({
@@ -14,6 +16,7 @@ export function AddKolModal({
   onClose: () => void;
   onCreate: (name: string, wallet?: { name: string; address: string }) => void;
 }) {
+  const { isPro } = usePlan();
   const [name, setName] = useState("");
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
@@ -66,24 +69,35 @@ export function AddKolModal({
             className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
           />
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-11">Wallet nickname (optional)</span>
-          <input
-            value={wName}
-            onChange={(e) => setWName(e.target.value)}
-            placeholder="Principal"
-            className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
+        {/* FREE: o servidor ignora carteira de KOL — não oferecer um campo que
+            seria descartado em silêncio. */}
+        {isPro ? (
+          <>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-11">Wallet nickname (optional)</span>
+              <input
+                value={wName}
+                onChange={(e) => setWName(e.target.value)}
+                placeholder="Principal"
+                className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-11">Wallet address (optional)</span>
+              <input
+                value={wAddr}
+                onChange={(e) => setWAddr(e.target.value)}
+                placeholder="paste the on-chain address"
+                className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 font-mono text-xs text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
+              />
+            </label>
+          </>
+        ) : (
+          <ProLock
+            title="Link wallets to your KOLs"
+            detail="KOL wallets are part of the Pro plan."
           />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-11">Wallet address (optional)</span>
-          <input
-            value={wAddr}
-            onChange={(e) => setWAddr(e.target.value)}
-            placeholder="paste the on-chain address"
-            className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 font-mono text-xs text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
-          />
-        </label>
+        )}
       </div>
     </Modal>
   );

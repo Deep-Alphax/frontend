@@ -13,6 +13,7 @@ import {
   type Source,
 } from "@/lib/api/sources";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { toastApiError } from "@/lib/billing/planErrors";
 import type { BackendChain } from "@/lib/api/wallets";
 import { cn } from "@/lib/cn";
 
@@ -51,7 +52,7 @@ function SourceCard({ source }: { source: Source }) {
       invalidate();
       toast.success("Source wallet added.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the wallet.")),
+    onError: (e) => toastApiError(e, "Could not add the wallet."),
   });
 
   const removeWallet = useMutation({
@@ -179,7 +180,7 @@ export function SourcesManager() {
     onError: (e) => {
       // A fonte pode ter sido criada mas a carteira falhado → atualiza mesmo assim.
       queryClient.invalidateQueries({ queryKey: ["sources"] });
-      toast.error(getApiErrorMessage(e, "Could not create the source."));
+      toastApiError(e, "Could not create the source.");
     },
   });
 

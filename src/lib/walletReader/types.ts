@@ -58,6 +58,11 @@ export interface KolState {
   notes: string;
   avatar: string | null;
   dismissedSidewallets: string[];
+  /**
+   * Só no detalhe (`GET /kols/:id`): `true` no plano FREE — `wallets` vem vazia
+   * do servidor (as carteiras dos KOLs são recurso do Pro), `walletCount` não.
+   */
+  walletsLocked?: boolean;
 }
 
 /** Trader types (etiquetas). `hue` mantém a cor original do app. */
