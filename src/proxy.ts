@@ -24,7 +24,8 @@ function isPublicPath(pathname: string): boolean {
   // que leva ao login. A API e as demais telas seguem protegidas.
   if (pathname === "/") return true;
   if (pathname === "/login") return true;
-  if (pathname === "/register" || pathname.startsWith("/register/")) return true;
+  if (pathname === "/register" || pathname.startsWith("/register/"))
+    return true;
   if (pathname.startsWith("/forgot-password")) return true;
   if (pathname.startsWith("/reset-password")) return true;
   if (pathname.startsWith("/auth/")) return true;
@@ -101,6 +102,15 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const discordMedia =
     "https://*.discordapp.net https://cdn.discordapp.com https://media.discordapp.net";
 
+  // Player das aulas da mentoria. Hosts NOMEADOS, não um `https:` geral: o
+  // `videoUrl` é digitado no admin, e um frame-src aberto transformaria esse
+  // campo em "embute qualquer página de terceiro dentro do app".
+  //   - youtube-nocookie: variante sem cookie de rastreio; é a que usamos ao
+  //     montar o embed (ver `lib/mentorship/video.ts`).
+  //   - youtube.com: o player faz redirect/fallback para ele em alguns casos.
+  const videoFrames =
+    "https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com";
+
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile}`,
@@ -112,7 +122,7 @@ function buildContentSecurityPolicy(isDev: boolean): string {
     // Vídeo/GIF (gifv) dos embeds do Discord — sem media-src cairia no default-src.
     `media-src 'self' data: blob: ${discordMedia}`,
     `connect-src 'self' ${api} ${apiWs} ${turnstile} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
-    `frame-src ${turnstile}`,
+    `frame-src ${turnstile} ${videoFrames}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,
     `base-uri 'self'`,
@@ -125,8 +135,14 @@ function buildContentSecurityPolicy(isDev: boolean): string {
 }
 
 /** Aplica os security headers a uma resposta e a retorna. */
-function withSecurityHeaders(response: NextResponse, isDev: boolean): NextResponse {
-  response.headers.set("Content-Security-Policy", buildContentSecurityPolicy(isDev));
+function withSecurityHeaders(
+  response: NextResponse,
+  isDev: boolean,
+): NextResponse {
+  response.headers.set(
+    "Content-Security-Policy",
+    buildContentSecurityPolicy(isDev),
+  );
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");

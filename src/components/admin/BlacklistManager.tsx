@@ -21,7 +21,10 @@ export function BlacklistManager() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(EMPTY);
 
-  const listQuery = useQuery({ queryKey: ["feed-blacklist"], queryFn: getBlacklist });
+  const listQuery = useQuery({
+    queryKey: ["feed-blacklist"],
+    queryFn: getBlacklist,
+  });
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["feed-blacklist"] });
     queryClient.invalidateQueries({ queryKey: ["feed-status"] });
@@ -43,7 +46,8 @@ export function BlacklistManager() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: (b: BlacklistedUser) => updateBlacklist(b.id, { isActive: !b.isActive }),
+    mutationFn: (b: BlacklistedUser) =>
+      updateBlacklist(b.id, { isActive: !b.isActive }),
     onSuccess: invalidate,
     onError: (err) => toast.error(getApiErrorMessage(err, "Could not toggle")),
   });
@@ -65,8 +69,9 @@ export function BlacklistManager() {
       <div>
         <h2 className="text-lg font-semibold text-gray-12">User blacklist</h2>
         <p className="text-sm text-gray-11">
-          Messages from these users <b>do not</b> reach Telegram. Block by Discord ID
-          (exact) and/or username/tag (partial). Applies to every channel.
+          Messages from these users <b>do not</b> reach Telegram. Block by
+          Discord ID (exact) and/or username/tag (partial). Applies to every
+          channel.
         </p>
       </div>
 
@@ -117,12 +122,19 @@ export function BlacklistManager() {
             </thead>
             <tbody>
               {items.map((b) => (
-                <tr key={b.id} className="border-b border-gray-6/50 text-gray-12">
+                <tr
+                  key={b.id}
+                  className="border-b border-gray-6/50 text-gray-12"
+                >
                   <td className="py-3 pr-4">
                     {b.discordUserId && (
-                      <div className="font-mono text-xs text-gray-11">{b.discordUserId}</div>
+                      <div className="font-mono text-xs text-gray-11">
+                        {b.discordUserId}
+                      </div>
                     )}
-                    {b.username && <div className="font-medium">{b.username}</div>}
+                    {b.username && (
+                      <div className="font-medium">{b.username}</div>
+                    )}
                   </td>
                   <td className="py-3 pr-4 text-gray-11">{b.reason || "—"}</td>
                   <td className="py-3 pr-4">
@@ -141,7 +153,8 @@ export function BlacklistManager() {
                   <td className="py-3">
                     <button
                       onClick={() => {
-                        if (confirm("Remove from blacklist?")) deleteMutation.mutate(b.id);
+                        if (confirm("Remove from blacklist?"))
+                          deleteMutation.mutate(b.id);
                       }}
                       className="text-danger-11 hover:underline"
                     >

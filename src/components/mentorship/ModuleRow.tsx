@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { LessonCard } from "@/components/mentorship/LessonCard";
 import { TEXT_TRIM } from "@/components/plans/textTrim";
@@ -31,9 +32,12 @@ export function ModuleRow({
   onOpenModule,
 }: {
   module: MentorshipModule;
+  /** Override do destino. Sem ele, o card navega para a rota da aula. */
   onOpenLesson?: (lesson: MentorshipLesson) => void;
+  /** Override do destino. Sem ele, abre a página do módulo. */
   onOpenModule?: (module: MentorshipModule) => void;
 }) {
+  const router = useRouter();
   const trackRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ canPrev: false, canNext: false });
 
@@ -76,20 +80,35 @@ export function ModuleRow({
       <header className="flex items-end justify-between gap-6">
         <div className="flex min-w-0 max-w-[850px] flex-1 flex-col gap-3">
           <div className="flex items-center gap-2">
-            <h2 className={cn("text-2xl font-semibold leading-[1.1] text-gray-12", TEXT_TRIM)}>
+            <h2
+              className={cn(
+                "text-2xl font-semibold leading-[1.1] text-gray-12",
+                TEXT_TRIM,
+              )}
+            >
               {m.title}
             </h2>
             {m.label ? (
               <>
-                <span aria-hidden="true" className="h-px w-3 shrink-0 bg-gray-6" />
-                <span className={cn("shrink-0 text-sm leading-[1.3] text-gray-11", TEXT_TRIM)}>
+                <span
+                  aria-hidden="true"
+                  className="h-px w-3 shrink-0 bg-gray-6"
+                />
+                <span
+                  className={cn(
+                    "shrink-0 text-sm leading-[1.3] text-gray-11",
+                    TEXT_TRIM,
+                  )}
+                >
                   {m.label}
                 </span>
               </>
             ) : null}
           </div>
           {m.subtitle ? (
-            <p className={cn("text-base leading-[1.3] text-gray-11", TEXT_TRIM)}>
+            <p
+              className={cn("text-base leading-[1.3] text-gray-11", TEXT_TRIM)}
+            >
               {m.subtitle}
             </p>
           ) : null}
@@ -112,7 +131,11 @@ export function ModuleRow({
           </TrackButton>
           <button
             type="button"
-            onClick={() => onOpenModule?.(m)}
+            onClick={() =>
+              onOpenModule
+                ? onOpenModule(m)
+                : router.push(`/mentorship/${m.slug}`)
+            }
             className={cn(
               "flex h-9 items-center justify-center rounded-lg border border-gray-6 bg-gray-3 px-4 text-sm font-semibold leading-[1.1] text-gray-12 transition-colors hover:bg-gray-4 focus-visible:ring-2 focus-visible:ring-secundaria-11/60 focus-visible:outline-none",
               TEXT_TRIM,
@@ -130,7 +153,15 @@ export function ModuleRow({
         className="flex gap-3.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {m.lessons.map((lesson) => (
-          <LessonCard key={lesson.id} lesson={lesson} onOpen={onOpenLesson} />
+          <LessonCard
+            key={lesson.id}
+            lesson={lesson}
+            onOpen={(l) =>
+              onOpenLesson
+                ? onOpenLesson(l)
+                : router.push(`/mentorship/${m.slug}/${l.id}`)
+            }
+          />
         ))}
       </div>
     </section>

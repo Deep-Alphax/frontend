@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFeedMessages, type CapturedMessage, type FeedPage } from "@/lib/api/feed";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  getFeedMessages,
+  type CapturedMessage,
+  type FeedPage,
+} from "@/lib/api/feed";
 import { getSocket } from "@/lib/realtime/socket";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -10,7 +18,10 @@ import { TextField } from "@/components/ui/TextField";
 /** Formata ISO → local curto. */
 function fmt(iso: string): string {
   try {
-    return new Date(iso).toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
+    return new Date(iso).toLocaleString("en-US", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
   } catch {
     return iso;
   }
@@ -21,12 +32,18 @@ function MessageCard({ m }: { m: CapturedMessage }) {
     <div className="flex flex-col gap-2 rounded-lg border border-gray-6 bg-gray-1 p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-11">
         <span className="font-medium text-gray-12">{m.authorTag || "—"}</span>
-        <span>{m.guildName ? `${m.guildName} › #${m.channelName ?? ""}` : m.channelId}</span>
+        <span>
+          {m.guildName
+            ? `${m.guildName} › #${m.channelName ?? ""}`
+            : m.channelId}
+        </span>
         <span className="ml-auto">{fmt(m.createdAt)}</span>
         <span
           className={
             "rounded-full px-2 py-0.5 font-medium " +
-            (m.sentToTelegram ? "bg-green-10/20 text-green-11" : "bg-danger-10/20 text-danger-11")
+            (m.sentToTelegram
+              ? "bg-green-10/20 text-green-11"
+              : "bg-danger-10/20 text-danger-11")
           }
           title={m.telegramError ?? undefined}
         >
@@ -66,7 +83,8 @@ export function FeedList() {
 
   const feedQuery = useQuery({
     queryKey: ["feed-messages", page, search],
-    queryFn: () => getFeedMessages({ page, limit: 20, search: search || undefined }),
+    queryFn: () =>
+      getFeedMessages({ page, limit: 20, search: search || undefined }),
     placeholderData: keepPreviousData,
   });
 
@@ -107,7 +125,9 @@ export function FeedList() {
         <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-12">
           Feed de capturas
         </h2>
-        {data && <span className="text-sm text-gray-11">{data.total} no total</span>}
+        {data && (
+          <span className="text-sm text-gray-11">{data.total} no total</span>
+        )}
       </div>
 
       <div className="flex items-end gap-3">

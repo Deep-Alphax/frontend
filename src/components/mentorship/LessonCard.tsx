@@ -15,9 +15,17 @@ import { cn } from "@/lib/cn";
 export function LessonCard({
   lesson,
   onOpen,
+  fluid = false,
 }: {
   lesson: MentorshipLesson;
   onOpen?: (lesson: MentorshipLesson) => void;
+  /**
+   * `false` (padrão): largura fixa de 292px, para a esteira horizontal da tela
+   * de mentoria, onde os cards não podem encolher.
+   * `true`: ocupa a coluna, para a grade da página do módulo — lá o container é
+   * quem define a largura e o card precisa acompanhar.
+   */
+  fluid?: boolean;
 }) {
   const episode = formatEpisode(lesson.episode);
 
@@ -25,7 +33,10 @@ export function LessonCard({
     <button
       type="button"
       onClick={() => onOpen?.(lesson)}
-      className="group flex w-[292px] shrink-0 flex-col gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-secundaria-11/60"
+      className={cn(
+        "group flex flex-col gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-secundaria-11/60",
+        fluid ? "w-full" : "w-[292px] shrink-0",
+      )}
     >
       <div className="relative aspect-[292/160] w-full overflow-hidden rounded-lg border border-gray-6 bg-gray-3">
         {lesson.coverUrl ? (
@@ -71,7 +82,12 @@ export function LessonCard({
         >
           {lesson.title}
         </h4>
-        <p className={cn("truncate text-xs leading-[1.3] text-gray-11", TEXT_TRIM)}>
+        <p
+          className={cn(
+            "truncate text-xs leading-[1.3] text-gray-11",
+            TEXT_TRIM,
+          )}
+        >
           {lesson.moduleTitle} · {episode}
         </p>
       </div>

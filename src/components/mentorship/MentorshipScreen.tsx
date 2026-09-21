@@ -52,16 +52,34 @@ export function MentorshipScreen() {
               <section className="flex flex-col gap-6">
                 <header className="flex items-end justify-between gap-6">
                   <div className="flex flex-col gap-3">
-                    <h2 className={cn("text-2xl font-semibold leading-[1.1] text-gray-12", TEXT_TRIM)}>
+                    <h2
+                      className={cn(
+                        "text-2xl font-semibold leading-[1.1] text-gray-12",
+                        TEXT_TRIM,
+                      )}
+                    >
                       Tracks and modules
                     </h2>
-                    <p className={cn("text-base leading-[1.3] text-gray-11", TEXT_TRIM)}>
-                      {data.totals.modules} modules, {data.totals.lessons} lessons.
-                      Start wherever it makes sense for you.
+                    <p
+                      className={cn(
+                        "text-base leading-[1.3] text-gray-11",
+                        TEXT_TRIM,
+                      )}
+                    >
+                      {data.totals.modules} modules, {data.totals.lessons}{" "}
+                      lessons. Start wherever it makes sense for you.
                     </p>
                   </div>
-                  <p className={cn("shrink-0 text-sm leading-[1.3] text-gray-11", TEXT_TRIM)}>
-                    {formatCompleted(data.totals.completed, data.totals.lessons)}
+                  <p
+                    className={cn(
+                      "shrink-0 text-sm leading-[1.3] text-gray-11",
+                      TEXT_TRIM,
+                    )}
+                  >
+                    {formatCompleted(
+                      data.totals.completed,
+                      data.totals.lessons,
+                    )}
                   </p>
                 </header>
 
@@ -74,7 +92,12 @@ export function MentorshipScreen() {
 
               {data.continueLesson ? (
                 <section className="flex flex-col gap-4">
-                  <h2 className={cn("text-2xl font-semibold leading-[1.1] text-gray-12", TEXT_TRIM)}>
+                  <h2
+                    className={cn(
+                      "text-2xl font-semibold leading-[1.1] text-gray-12",
+                      TEXT_TRIM,
+                    )}
+                  >
                     Continue where you left off
                   </h2>
                   <ContinueCard lesson={data.continueLesson} />

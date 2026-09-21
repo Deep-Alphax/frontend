@@ -45,7 +45,10 @@ export function MonitorsManager() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState | null>(null);
 
-  const monitorsQuery = useQuery({ queryKey: ["feed-monitors"], queryFn: getMonitors });
+  const monitorsQuery = useQuery({
+    queryKey: ["feed-monitors"],
+    queryFn: getMonitors,
+  });
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["feed-monitors"] });
@@ -71,22 +74,28 @@ export function MonitorsManager() {
       setForm(null);
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Could not save the rule")),
+    onError: (err) =>
+      toast.error(getApiErrorMessage(err, "Could not save the rule")),
   });
 
   const toggleMutation = useMutation({
-    mutationFn: (m: FeedMonitor) => updateMonitor(m.id, { isActive: !m.isActive }),
+    mutationFn: (m: FeedMonitor) =>
+      updateMonitor(m.id, { isActive: !m.isActive }),
     onSuccess: invalidate,
     onError: (err) => toast.error(getApiErrorMessage(err, "Could not toggle")),
   });
 
   const tierMutation = useMutation({
-    mutationFn: (m: FeedMonitor) => updateMonitor(m.id, { freeTier: !m.freeTier }),
+    mutationFn: (m: FeedMonitor) =>
+      updateMonitor(m.id, { freeTier: !m.freeTier }),
     onSuccess: (_, m) => {
-      toast.success(m.freeTier ? "Group is now Pro only" : "Group released to Free");
+      toast.success(
+        m.freeTier ? "Group is now Pro only" : "Group released to Free",
+      );
       invalidate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Could not change the plan")),
+    onError: (err) =>
+      toast.error(getApiErrorMessage(err, "Could not change the plan")),
   });
 
   const deleteMutation = useMutation({
@@ -100,16 +109,21 @@ export function MonitorsManager() {
 
   const monitors = monitorsQuery.data ?? [];
   const canSave =
-    !!form && (form.channelId.trim() || form.guildId.trim()) && form.telegramChatId.trim();
+    !!form &&
+    (form.channelId.trim() || form.guildId.trim()) &&
+    form.telegramChatId.trim();
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-12">Monitoring rules</h2>
+          <h2 className="text-lg font-semibold text-gray-12">
+            Monitoring rules
+          </h2>
           <p className="text-sm text-gray-11">
-            Discord channel → Telegram. No pattern = <b>mirrors everything</b>; with a pattern
-            (regex <code>/body/flags</code> or plain text) = filters.
+            Discord channel → Telegram. No pattern = <b>mirrors everything</b>;
+            with a pattern (regex <code>/body/flags</code> or plain text) =
+            filters.
           </p>
         </div>
         {!form && (
@@ -150,7 +164,9 @@ export function MonitorsManager() {
             <TextField
               label="Telegram chat/channel ID"
               value={form.telegramChatId}
-              onChange={(e) => setForm({ ...form, telegramChatId: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, telegramChatId: e.target.value })
+              }
               placeholder="-1004299449661"
             />
           </div>
@@ -160,7 +176,9 @@ export function MonitorsManager() {
               <input
                 type="checkbox"
                 checked={form.waitForBotReply}
-                onChange={(e) => setForm({ ...form, waitForBotReply: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, waitForBotReply: e.target.checked })
+                }
                 className="size-4 accent-principal-9"
               />
               Wait for the bot reply (rich data)
@@ -169,7 +187,9 @@ export function MonitorsManager() {
               <input
                 type="checkbox"
                 checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, isActive: e.target.checked })
+                }
                 className="size-4 accent-principal-9"
               />
               Ativa
@@ -178,7 +198,9 @@ export function MonitorsManager() {
               <input
                 type="checkbox"
                 checked={form.freeTier}
-                onChange={(e) => setForm({ ...form, freeTier: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, freeTier: e.target.checked })
+                }
                 className="size-4 accent-principal-9"
               />
               Available on the Free plan
@@ -191,9 +213,17 @@ export function MonitorsManager() {
               disabled={!canSave || saveMutation.isPending}
               onClick={() => form && saveMutation.mutate(form)}
             >
-              {saveMutation.isPending ? "Saving…" : form.id ? "Save" : "Create rule"}
+              {saveMutation.isPending
+                ? "Saving…"
+                : form.id
+                  ? "Save"
+                  : "Create rule"}
             </Button>
-            <Button variant="secondary" className="w-auto" onClick={() => setForm(null)}>
+            <Button
+              variant="secondary"
+              className="w-auto"
+              onClick={() => setForm(null)}
+            >
               Cancel
             </Button>
           </div>
@@ -204,7 +234,9 @@ export function MonitorsManager() {
       {monitorsQuery.isLoading ? (
         <p className="text-sm text-gray-11">Loading…</p>
       ) : monitors.length === 0 ? (
-        <p className="text-sm text-gray-11">No rules yet. Create the first one.</p>
+        <p className="text-sm text-gray-11">
+          No rules yet. Create the first one.
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -220,23 +252,32 @@ export function MonitorsManager() {
             </thead>
             <tbody>
               {monitors.map((m) => (
-                <tr key={m.id} className="border-b border-gray-6/50 text-gray-12">
+                <tr
+                  key={m.id}
+                  className="border-b border-gray-6/50 text-gray-12"
+                >
                   <td className="py-3 pr-4">
                     <div className="font-medium">{m.name || "—"}</div>
                     {m.pattern ? (
                       <code className="text-xs text-gray-11">{m.pattern}</code>
                     ) : (
-                      <span className="text-xs text-green-11">espelha tudo</span>
+                      <span className="text-xs text-green-11">
+                        espelha tudo
+                      </span>
                     )}
                   </td>
                   <td className="py-3 pr-4 font-mono text-xs text-gray-11">
                     {m.channelId ? (
                       m.channelId
                     ) : (
-                      <span className="text-secundaria-11">servidor {m.guildId}</span>
+                      <span className="text-secundaria-11">
+                        servidor {m.guildId}
+                      </span>
                     )}
                   </td>
-                  <td className="py-3 pr-4 font-mono text-xs text-gray-11">{m.telegramChatId}</td>
+                  <td className="py-3 pr-4 font-mono text-xs text-gray-11">
+                    {m.telegramChatId}
+                  </td>
                   <td className="py-3 pr-4">
                     <button
                       onClick={() => toggleMutation.mutate(m)}
@@ -256,7 +297,11 @@ export function MonitorsManager() {
                     <button
                       onClick={() => tierMutation.mutate(m)}
                       disabled={tierMutation.isPending}
-                      title={m.freeTier ? "Visible to Free and Pro" : "Visible to Pro only"}
+                      title={
+                        m.freeTier
+                          ? "Visible to Free and Pro"
+                          : "Visible to Pro only"
+                      }
                       className={
                         "rounded-full px-2 py-0.5 text-xs font-medium " +
                         (m.freeTier
@@ -289,7 +334,9 @@ export function MonitorsManager() {
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Remove the rule "${m.name || m.pattern}"?`)) {
+                          if (
+                            confirm(`Remove the rule "${m.name || m.pattern}"?`)
+                          ) {
                             deleteMutation.mutate(m.id);
                           }
                         }}

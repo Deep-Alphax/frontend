@@ -39,7 +39,9 @@ vi.mock("react-hot-toast", () => ({
 
 const mockSession = vi.mocked(useSession);
 
-function makeModule(over: Partial<AdminModuleSummary> = {}): AdminModuleSummary {
+function makeModule(
+  over: Partial<AdminModuleSummary> = {},
+): AdminModuleSummary {
   return {
     id: "m1",
     slug: "on-chain-fundamentals",
@@ -67,6 +69,7 @@ function makeLesson(over: Partial<AdminLesson> = {}): AdminLesson {
     videoUrl: "",
     position: 0,
     published: true,
+    materials: [],
     ...over,
   };
 }
@@ -85,7 +88,17 @@ const server = {
   reset() {
     this.modules = new Map([
       ["m1", makeModule()],
-      ["m2", makeModule({ id: "m2", slug: "working-the-radar", title: "Working the Radar", label: "Module 2", position: 1, lessonCount: 0 })],
+      [
+        "m2",
+        makeModule({
+          id: "m2",
+          slug: "working-the-radar",
+          title: "Working the Radar",
+          label: "Module 2",
+          position: 1,
+          lessonCount: 0,
+        }),
+      ],
     ]);
     this.lessons = new Map([["l1", makeLesson()]]);
   },
@@ -116,11 +129,18 @@ function wireApi() {
     },
   );
 
-  vi.mocked(api.createModule).mockImplementation(async (payload: ModulePayload) => {
-    const next = makeModule({ ...payload, id: "m3", position: 2, lessonCount: 0 });
-    server.modules.set(next.id, next);
-    return next;
-  });
+  vi.mocked(api.createModule).mockImplementation(
+    async (payload: ModulePayload) => {
+      const next = makeModule({
+        ...payload,
+        id: "m3",
+        position: 2,
+        lessonCount: 0,
+      });
+      server.modules.set(next.id, next);
+      return next;
+    },
+  );
 
   vi.mocked(api.reorderModules).mockImplementation(async (ids: string[]) => {
     ids.forEach((id, position) => {
@@ -155,7 +175,9 @@ async function openEditor(
   user: ReturnType<typeof userEvent.setup>,
   title: string,
 ) {
-  await user.click(await screen.findByRole("button", { name: `Edit ${title}` }));
+  await user.click(
+    await screen.findByRole("button", { name: `Edit ${title}` }),
+  );
   return await screen.findByRole("textbox", { name: /^title$/i });
 }
 
@@ -199,13 +221,20 @@ describe("MentorshipAdmin — trilhas", () => {
     renderWithQuery(<MentorshipAdmin />);
 
     const items = await screen.findAllByRole("listitem");
-    expect(within(items[0]).getByText("On-chain fundamentals")).toBeInTheDocument();
-    expect(within(items[0]).getByText(/on-chain-fundamentals · 1 lesson/)).toBeInTheDocument();
+    expect(
+      within(items[0]).getByText("On-chain fundamentals"),
+    ).toBeInTheDocument();
+    expect(
+      within(items[0]).getByText(/on-chain-fundamentals · 1 lesson/),
+    ).toBeInTheDocument();
     expect(within(items[1]).getByText("Working the Radar")).toBeInTheDocument();
   });
 
   it("marca rascunho e não some com ele da lista do admin", async () => {
-    server.modules.set("m2", makeModule({ ...server.modules.get("m2")!, published: false }));
+    server.modules.set(
+      "m2",
+      makeModule({ ...server.modules.get("m2")!, published: false }),
+    );
     renderWithQuery(<MentorshipAdmin />);
 
     expect(await screen.findByText("Draft")).toBeInTheDocument();
@@ -257,7 +286,10 @@ describe("MentorshipAdmin — trilhas", () => {
     await user.type(slug, "my-url");
     expect(slug).toHaveValue("my-url");
 
-    await user.type(screen.getByRole("textbox", { name: /^title$/i }), "Anything");
+    await user.type(
+      screen.getByRole("textbox", { name: /^title$/i }),
+      "Anything",
+    );
 
     // O slug pode já estar numa URL compartilhada — mexer no título não o toca.
     expect(slug).toHaveValue("my-url");
@@ -283,14 +315,19 @@ describe("MentorshipAdmin — trilhas", () => {
       await screen.findByRole("button", { name: /move working the radar up/i }),
     );
 
-    expect(vi.mocked(api.reorderModules).mock.calls[0][0]).toEqual(["m2", "m1"]);
+    expect(vi.mocked(api.reorderModules).mock.calls[0][0]).toEqual([
+      "m2",
+      "m1",
+    ]);
   });
 
   it("desabilita a seta que não tem para onde ir", async () => {
     renderWithQuery(<MentorshipAdmin />);
 
     expect(
-      await screen.findByRole("button", { name: /move on-chain fundamentals up/i }),
+      await screen.findByRole("button", {
+        name: /move on-chain fundamentals up/i,
+      }),
     ).toBeDisabled();
     expect(
       screen.getByRole("button", { name: /move working the radar down/i }),
@@ -303,7 +340,9 @@ describe("MentorshipAdmin — trilhas", () => {
     renderWithQuery(<MentorshipAdmin />);
 
     await user.click(
-      await screen.findByRole("button", { name: /delete on-chain fundamentals/i }),
+      await screen.findByRole("button", {
+        name: /delete on-chain fundamentals/i,
+      }),
     );
     expect(api.deleteModule).not.toHaveBeenCalled();
 
@@ -335,7 +374,9 @@ describe("MentorshipAdmin — aulas", () => {
     renderWithQuery(<MentorshipAdmin />);
 
     await openEditor(user, "On-chain fundamentals");
-    await user.click(await screen.findByRole("button", { name: /edit lesson/i }));
+    await user.click(
+      await screen.findByRole("button", { name: /edit lesson/i }),
+    );
 
     const duration = await screen.findByRole("textbox", { name: /duration/i });
     await user.clear(duration);
@@ -352,7 +393,9 @@ describe("MentorshipAdmin — aulas", () => {
     renderWithQuery(<MentorshipAdmin />);
 
     await openEditor(user, "On-chain fundamentals");
-    await user.click(await screen.findByRole("button", { name: /edit lesson/i }));
+    await user.click(
+      await screen.findByRole("button", { name: /edit lesson/i }),
+    );
 
     const duration = await screen.findByRole("textbox", { name: /duration/i });
     await user.clear(duration);
@@ -363,7 +406,10 @@ describe("MentorshipAdmin — aulas", () => {
   });
 
   it("reordena as aulas dentro da trilha", async () => {
-    server.lessons.set("l2", makeLesson({ id: "l2", title: "Fee and gas", episode: 2, position: 1 }));
+    server.lessons.set(
+      "l2",
+      makeLesson({ id: "l2", title: "Fee and gas", episode: 2, position: 1 }),
+    );
     const user = userEvent.setup();
     renderWithQuery(<MentorshipAdmin />);
 
@@ -371,6 +417,9 @@ describe("MentorshipAdmin — aulas", () => {
     const buttons = await screen.findAllByRole("button", { name: /move up/i });
     await user.click(buttons[buttons.length - 1]);
 
-    expect(vi.mocked(api.reorderLessons).mock.calls[0]).toEqual(["m1", ["l2", "l1"]]);
+    expect(vi.mocked(api.reorderLessons).mock.calls[0]).toEqual([
+      "m1",
+      ["l2", "l1"],
+    ]);
   });
 });

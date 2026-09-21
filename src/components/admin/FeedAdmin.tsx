@@ -34,16 +34,22 @@ function StatusBar() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Pill ok={!!s?.connected} on={`Self-bot: ${s?.userTag ?? "conectado"}`} off="Self-bot: offline" />
+      <Pill
+        ok={!!s?.connected}
+        on={`Self-bot: ${s?.userTag ?? "conectado"}`}
+        off="Self-bot: offline"
+      />
       <Pill ok={!!s?.telegramEnabled} on="Telegram: on" off="Telegram: off" />
       {s && (
         <span className="rounded-full bg-gray-3 px-3 py-1 text-xs text-gray-11">
-          {s.activeMonitors} regras · {s.watchedChannels} canais · {s.watchedGuilds} servidores
+          {s.activeMonitors} regras · {s.watchedChannels} canais ·{" "}
+          {s.watchedGuilds} servidores
         </span>
       )}
       {s && !s.enabled && (
         <span className="text-xs text-danger-11">
-          DISCORD_USER_TOKEN ausente — self-bot desligado (defina no .env e reinicie).
+          DISCORD_USER_TOKEN ausente — self-bot desligado (defina no .env e
+          reinicie).
         </span>
       )}
     </div>
@@ -68,7 +74,9 @@ export function FeedAdmin() {
   const [tab, setTab] = useState<TabKey>("regras");
 
   if (isLoading) {
-    return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
+    return (
+      <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />
+    );
   }
   if (!isAuthenticated) {
     return <p className="text-gray-11">Sign in to continue.</p>;
@@ -76,7 +84,9 @@ export function FeedAdmin() {
   if (profile?.role !== "ADMIN") {
     return (
       <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">Restricted access</h1>
+        <h1 className="text-lg font-semibold text-gray-12">
+          Restricted access
+        </h1>
         <p className="text-sm text-gray-11">This area is admins only.</p>
       </div>
     );

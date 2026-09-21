@@ -46,14 +46,26 @@ export function ContinueCard({
 
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-6 self-stretch p-6">
         <div className="flex flex-col gap-4">
-          <p className={cn("text-sm font-medium leading-[1.3] text-principal-9", TEXT_TRIM)}>
+          <p
+            className={cn(
+              "text-sm font-medium leading-[1.3] text-principal-9",
+              TEXT_TRIM,
+            )}
+          >
             {lesson.moduleTitle.toUpperCase()} · {formatEpisode(lesson.episode)}
           </p>
           <div className="flex flex-col gap-3">
-            <h3 className={cn("text-xl font-semibold leading-[1.1] text-gray-12", TEXT_TRIM)}>
+            <h3
+              className={cn(
+                "text-xl font-semibold leading-[1.1] text-gray-12",
+                TEXT_TRIM,
+              )}
+            >
               {lesson.title}
             </h3>
-            <p className={cn("text-base leading-[1.3] text-gray-11", TEXT_TRIM)}>
+            <p
+              className={cn("text-base leading-[1.3] text-gray-11", TEXT_TRIM)}
+            >
               {lesson.description}
             </p>
           </div>
@@ -69,7 +81,12 @@ export function ContinueCard({
               style={{ width: `${lesson.percent}%` }}
             />
           </div>
-          <span className={cn("shrink-0 text-base leading-[1.3] text-gray-11", TEXT_TRIM)}>
+          <span
+            className={cn(
+              "shrink-0 text-base leading-[1.3] text-gray-11",
+              TEXT_TRIM,
+            )}
+          >
             {lesson.percent}% · {formatRemaining(lesson.remainingSec)}
           </span>
         </div>

@@ -25,7 +25,12 @@ import {
 } from "@/lib/api/walletReader";
 import { KOL_DETAIL_KEY, KOL_INDEX_KEY } from "@/lib/walletReader/useKolIndex";
 import { fileToAvatar } from "@/lib/walletReader/avatar";
-import { KOL_TYPES, memeAvatarFor, tierFor, type WalletRef } from "@/lib/walletReader/types";
+import {
+  KOL_TYPES,
+  memeAvatarFor,
+  tierFor,
+  type WalletRef,
+} from "@/lib/walletReader/types";
 import { KolCard } from "@/components/walletReader/KolCard";
 import { Modal } from "@/components/walletReader/Modal";
 import { useSession } from "@/lib/auth/useSession";
@@ -82,10 +87,18 @@ function draftToPatch(d: Draft): KolPresetPatch & { name: string } {
 }
 
 /** Campo rotulado do formulário. */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-11">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -114,7 +127,8 @@ function KolEditor({
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
 
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((p) => ({ ...p, [k]: v }));
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
+    setD((p) => ({ ...p, [k]: v }));
 
   const onUpload = async (file: File | undefined) => {
     if (!file) return;
@@ -134,7 +148,8 @@ function KolEditor({
       footer={
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-gray-11">
-            What you save here shows up for <b className="text-gray-12">everyone</b>.
+            What you save here shows up for{" "}
+            <b className="text-gray-12">everyone</b>.
           </p>
           <div className="flex gap-2">
             <button
@@ -203,7 +218,9 @@ function KolEditor({
         </div>
 
         {/* Relevância */}
-        <Field label={`Relevance — ${d.relevance}/100 · ${tierFor(d.relevance).label}`}>
+        <Field
+          label={`Relevance — ${d.relevance}/100 · ${tierFor(d.relevance).label}`}
+        >
           <input
             type="range"
             min={0}
@@ -224,7 +241,12 @@ function KolEditor({
                   key={t.id}
                   type="button"
                   onClick={() =>
-                    set("types", on ? d.types.filter((x) => x !== t.id) : d.types.concat([t.id]))
+                    set(
+                      "types",
+                      on
+                        ? d.types.filter((x) => x !== t.id)
+                        : d.types.concat([t.id]),
+                    )
                   }
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
@@ -284,7 +306,12 @@ function KolEditor({
                 <button
                   type="button"
                   aria-label={`Remove ${w.address}`}
-                  onClick={() => set("wallets", d.wallets.filter((_, j) => j !== i))}
+                  onClick={() =>
+                    set(
+                      "wallets",
+                      d.wallets.filter((_, j) => j !== i),
+                    )
+                  }
                   className="shrink-0 text-gray-11 transition-colors hover:text-vermelho-11"
                 >
                   <X className="size-4" strokeWidth={2} />
@@ -308,8 +335,14 @@ function KolEditor({
                 type="button"
                 onClick={() => {
                   const addr = wAddr.trim();
-                  if (!addr || d.wallets.some((w) => w.address === addr)) return;
-                  set("wallets", d.wallets.concat([{ name: wName.trim() || "Wallet", address: addr }]));
+                  if (!addr || d.wallets.some((w) => w.address === addr))
+                    return;
+                  set(
+                    "wallets",
+                    d.wallets.concat([
+                      { name: wName.trim() || "Wallet", address: addr },
+                    ]),
+                  );
                   setWName("");
                   setWAddr("");
                 }}
@@ -348,23 +381,21 @@ export function KolsAdmin() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const {
-    data,
-    isPending,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery({
-    queryKey: [...KOL_PRESET_ADMIN_KEY, search],
-    queryFn: ({ pageParam }) =>
-      getKolPresetAdmin({ search, offset: pageParam, limit: PAGE }),
-    initialPageParam: 0,
-    getNextPageParam: (last: KolPresetAdminPage, all: KolPresetAdminPage[]) => {
-      const loaded = all.reduce((n, p) => n + p.items.length, 0);
-      return loaded < last.total ? loaded : undefined;
-    },
-    enabled: profile?.role === "ADMIN",
-  });
+  const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteQuery({
+      queryKey: [...KOL_PRESET_ADMIN_KEY, search],
+      queryFn: ({ pageParam }) =>
+        getKolPresetAdmin({ search, offset: pageParam, limit: PAGE }),
+      initialPageParam: 0,
+      getNextPageParam: (
+        last: KolPresetAdminPage,
+        all: KolPresetAdminPage[],
+      ) => {
+        const loaded = all.reduce((n, p) => n + p.items.length, 0);
+        return loaded < last.total ? loaded : undefined;
+      },
+      enabled: profile?.role === "ADMIN",
+    });
 
   const filtered = useMemo(
     () => (data?.pages ?? []).flatMap((p) => p.items),
@@ -391,7 +422,8 @@ export function KolsAdmin() {
       afterWrite();
       toast.success("KOL added to the preset.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not create the KOL.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not create the KOL.")),
   });
 
   const updateMut = useMutation({
@@ -426,7 +458,8 @@ export function KolsAdmin() {
     if (!el || !hasNextPage) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && !isFetchingNextPage) void fetchNextPage();
+        if (entries[0]?.isIntersecting && !isFetchingNextPage)
+          void fetchNextPage();
       },
       { rootMargin: "600px" },
     );
@@ -435,7 +468,9 @@ export function KolsAdmin() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) {
-    return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
+    return (
+      <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />
+    );
   }
   if (!isAuthenticated) {
     return <p className="text-gray-11">Sign in to continue.</p>;
@@ -443,7 +478,9 @@ export function KolsAdmin() {
   if (profile?.role !== "ADMIN") {
     return (
       <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">Restricted access</h1>
+        <h1 className="text-lg font-semibold text-gray-12">
+          Restricted access
+        </h1>
         <p className="text-sm text-gray-11">This area is admins only.</p>
       </div>
     );
@@ -454,8 +491,9 @@ export function KolsAdmin() {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-gray-12">Preset de KOLs</h1>
         <p className="text-sm text-gray-11">
-          This is the list <b className="text-gray-12">every</b> user sees. Each user
-          can edit a KOL on their own account — that edit beats the preset for them only.
+          This is the list <b className="text-gray-12">every</b> user sees. Each
+          user can edit a KOL on their own account — that edit beats the preset
+          for them only.
         </p>
       </header>
 
@@ -490,7 +528,10 @@ export function KolsAdmin() {
       {isPending ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+            <div
+              key={i}
+              className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2"
+            />
           ))}
         </div>
       ) : (
@@ -513,9 +554,13 @@ export function KolsAdmin() {
                       >
                         Edit
                       </button>
-                      <span className="text-xs tabular-nums text-gray-11">{k.relevance}/100</span>
+                      <span className="text-xs tabular-nums text-gray-11">
+                        {k.relevance}/100
+                      </span>
                       {removed && (
-                        <span className="text-xs font-medium text-vermelho-11">removido</span>
+                        <span className="text-xs font-medium text-vermelho-11">
+                          removido
+                        </span>
                       )}
                       <div className="flex-1" />
                       {removed ? (

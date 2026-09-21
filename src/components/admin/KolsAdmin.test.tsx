@@ -98,7 +98,10 @@ function wireApi() {
 }
 
 /** Abre o editor de um KOL do preset (clique no card) e espera o form montar. */
-async function openEditor(user: ReturnType<typeof userEvent.setup>, name: string) {
+async function openEditor(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+) {
   await user.click(await screen.findByRole("button", { name: `Open ${name}` }));
   return await screen.findByRole("textbox", { name: /notes/i });
 }
@@ -270,18 +273,27 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     const notes = await openEditor(user, "Ansem");
 
     await user.clear(screen.getByRole("textbox", { name: /name/i }));
-    await user.type(screen.getByRole("textbox", { name: /name/i }), "Ansem Novo");
+    await user.type(
+      screen.getByRole("textbox", { name: /name/i }),
+      "Ansem Novo",
+    );
 
     await user.clear(notes);
     await user.type(notes, "descrição nova");
 
     // O handle vai sem "@" para o backend, mesmo digitado com ele.
     await user.clear(screen.getByRole("textbox", { name: /twitter/i }));
-    await user.type(screen.getByRole("textbox", { name: /twitter/i }), "@novohandle");
+    await user.type(
+      screen.getByRole("textbox", { name: /twitter/i }),
+      "@novohandle",
+    );
 
     // Squads viajam como lista: a string é quebrada na vírgula e aparada.
     await user.clear(screen.getByRole("textbox", { name: /squads/i }));
-    await user.type(screen.getByRole("textbox", { name: /squads/i }), " Lair , Pastel Alpha ");
+    await user.type(
+      screen.getByRole("textbox", { name: /squads/i }),
+      " Lair , Pastel Alpha ",
+    );
 
     // O range não responde a teclado do user-event de forma estável.
     fireEvent.change(screen.getByRole("slider"), { target: { value: "42" } });
@@ -293,7 +305,10 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     // Carteiras: remove a que existia e adiciona outra.
     await user.click(screen.getByRole("button", { name: "Remove So1ana111" }));
     await user.type(screen.getByPlaceholderText("apelido"), "cold");
-    await user.type(screen.getByPlaceholderText("on-chain address"), "So1ana222");
+    await user.type(
+      screen.getByPlaceholderText("on-chain address"),
+      "So1ana222",
+    );
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     return {
@@ -331,15 +346,25 @@ describe("KolsAdmin — todos os campos do KOL", () => {
 
     await openEditor(user, "Ansem Novo");
 
-    expect(screen.getByRole("textbox", { name: /name/i })).toHaveValue(expected.name);
-    expect(screen.getByRole("textbox", { name: /notes/i })).toHaveValue(expected.notes);
-    expect(screen.getByRole("textbox", { name: /twitter/i })).toHaveValue(expected.twitter);
-    expect(screen.getByRole("textbox", { name: /squads/i })).toHaveValue("Lair, Pastel Alpha");
+    expect(screen.getByRole("textbox", { name: /name/i })).toHaveValue(
+      expected.name,
+    );
+    expect(screen.getByRole("textbox", { name: /notes/i })).toHaveValue(
+      expected.notes,
+    );
+    expect(screen.getByRole("textbox", { name: /twitter/i })).toHaveValue(
+      expected.twitter,
+    );
+    expect(screen.getByRole("textbox", { name: /squads/i })).toHaveValue(
+      "Lair, Pastel Alpha",
+    );
     expect(screen.getByRole("slider")).toHaveValue("42");
-    expect(screen.getByRole("button", { name: "Whale" })).toHaveClass("bg-principal-3");
-    expect(screen.getByRole("button", { name: "Alpha Caller" })).not.toHaveClass(
+    expect(screen.getByRole("button", { name: "Whale" })).toHaveClass(
       "bg-principal-3",
     );
+    expect(
+      screen.getByRole("button", { name: "Alpha Caller" }),
+    ).not.toHaveClass("bg-principal-3");
     expect(screen.getByText("So1ana222")).toBeInTheDocument();
     expect(screen.queryByText("So1ana111")).toBeNull();
   });
@@ -367,7 +392,9 @@ describe("KolsAdmin — todos os campos do KOL", () => {
       document.querySelector<HTMLInputElement>('input[type="file"]')!,
       new File(["x"], "foto.png", { type: "image/png" }),
     );
-    await user.click(await screen.findByRole("button", { name: "Save preset" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Save preset" }),
+    );
 
     await waitFor(() =>
       expect(api.updateKolPreset).toHaveBeenCalledWith(
@@ -400,7 +427,10 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     expect(screen.getByText("Wallets (1)")).toBeInTheDocument();
 
     // Endereço repetido: nada é adicionado.
-    await user.type(screen.getByPlaceholderText("on-chain address"), "So1ana111");
+    await user.type(
+      screen.getByPlaceholderText("on-chain address"),
+      "So1ana111",
+    );
     await user.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByText("Wallets (1)")).toBeInTheDocument();
   });
@@ -414,7 +444,10 @@ describe("KolsAdmin — todos os campos do KOL", () => {
       await screen.findByRole("textbox", { name: /name/i }),
       "Novo KOL",
     );
-    await user.type(screen.getByRole("textbox", { name: /notes/i }), "primeira nota");
+    await user.type(
+      screen.getByRole("textbox", { name: /notes/i }),
+      "primeira nota",
+    );
     await user.type(screen.getByRole("textbox", { name: /twitter/i }), "novo");
     await user.click(screen.getByRole("button", { name: "Save preset" }));
 

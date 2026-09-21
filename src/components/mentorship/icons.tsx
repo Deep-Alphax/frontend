@@ -50,3 +50,27 @@ export function CheckCircleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/**
+ * Seta de download do card de material (Figma 1039:25828).
+ *
+ * Path exato do export; só o `stroke` fixo (#C0C2CE, a cor da variante clara)
+ * virou `currentColor` — senão o ícone não acompanha o hover nem o tema.
+ */
+export function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M7 8.75V1.75M9.91667 5.83333L7 8.75L4.08333 5.83333M12.25 8.75V11.0833C12.25 11.3928 12.1271 11.6895 11.9083 11.9083C11.6895 12.1271 11.3928 12.25 11.0833 12.25H2.91667C2.60725 12.25 2.3105 12.1271 2.09171 11.9083C1.87292 11.6895 1.75 11.3928 1.75 11.0833V8.75"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

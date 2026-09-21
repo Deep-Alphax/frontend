@@ -19,14 +19,19 @@ export function PromoteAdmin() {
       toast.success(`${u.email} is now ${u.role}`);
       setEmail("");
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, "Could not change the role")),
+    onError: (err) =>
+      toast.error(getApiErrorMessage(err, "Could not change the role")),
   });
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-12">Manage administrators</h2>
-        <p className="text-sm text-gray-11">Promote or demote a user by email.</p>
+        <h2 className="text-lg font-semibold text-gray-12">
+          Manage administrators
+        </h2>
+        <p className="text-sm text-gray-11">
+          Promote or demote a user by email.
+        </p>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">

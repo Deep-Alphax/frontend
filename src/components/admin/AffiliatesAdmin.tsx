@@ -91,8 +91,8 @@ function SettingsCard() {
         <p className="mt-1 text-sm text-gray-11">
           Level 1 is whoever referred the paying customer. Level 2 is whoever
           referred that person. Both come out of the company — a level 2 payout
-          never reduces level 1. Changing these only affects future
-          commissions; what is already accrued keeps the rate it was booked at.
+          never reduces level 1. Changing these only affects future commissions;
+          what is already accrued keeps the rate it was booked at.
         </p>
       </div>
 
@@ -115,7 +115,10 @@ function SettingsCard() {
           type="button"
           disabled={invalid || !dirty || save.isPending}
           onClick={() =>
-            save.mutate({ level1Bps: bps1 as number, level2Bps: bps2 as number })
+            save.mutate({
+              level1Bps: bps1 as number,
+              level2Bps: bps2 as number,
+            })
           }
           className="h-11 rounded-lg bg-principal-9 px-5 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -256,7 +259,8 @@ function AffiliateRow({ row }: { row: AdminAffiliateRow }) {
 
   // Vazio = "segue o padrão" (null no backend). Distinguir vazio de 0 é o que
   // permite zerar a comissão sem apagar a exceção.
-  const shown = (bps: number | null) => (bps === null ? "" : (bps / 100).toString());
+  const shown = (bps: number | null) =>
+    bps === null ? "" : (bps / 100).toString();
   const v1 = l1 ?? shown(row.level1Bps);
   const v2 = l2 ?? shown(row.level2Bps);
 
@@ -345,7 +349,9 @@ function RateInput({
       inputMode="decimal"
       className={cn(
         className,
-        invalid ? "border-danger-11" : "border-gray-6 focus:border-secundaria-11",
+        invalid
+          ? "border-danger-11"
+          : "border-gray-6 focus:border-secundaria-11",
       )}
     />
   );

@@ -27,10 +27,26 @@ export function HeroBanner() {
       {/* Ornamentos dourados: canto (169×21) e barra (464×8), no topo e espelhados embaixo. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         {/* eslint-disable @next/next/no-img-element */}
-        <img src="/mentorship/hero-corner.svg" alt="" className="absolute left-0 top-0 h-[21px] w-[169px]" />
-        <img src="/mentorship/hero-corner.svg" alt="" className="absolute bottom-0 left-0 h-[21px] w-[169px] -scale-y-100" />
-        <img src="/mentorship/hero-bar.svg" alt="" className="absolute left-0 top-0 h-2 w-[464px] max-w-[36%]" />
-        <img src="/mentorship/hero-bar.svg" alt="" className="absolute bottom-0 left-0 h-2 w-[464px] max-w-[36%] -scale-y-100" />
+        <img
+          src="/mentorship/hero-corner.svg"
+          alt=""
+          className="absolute left-0 top-0 h-[21px] w-[169px]"
+        />
+        <img
+          src="/mentorship/hero-corner.svg"
+          alt=""
+          className="absolute bottom-0 left-0 h-[21px] w-[169px] -scale-y-100"
+        />
+        <img
+          src="/mentorship/hero-bar.svg"
+          alt=""
+          className="absolute left-0 top-0 h-2 w-[464px] max-w-[36%]"
+        />
+        <img
+          src="/mentorship/hero-bar.svg"
+          alt=""
+          className="absolute bottom-0 left-0 h-2 w-[464px] max-w-[36%] -scale-y-100"
+        />
         {/* eslint-enable @next/next/no-img-element */}
       </div>
 

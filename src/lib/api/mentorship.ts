@@ -11,6 +11,19 @@ import { api } from "@/lib/api/client";
 /** Nome do token de cor do acento — o hex fica no CSS, não no banco. */
 export type MentorshipAccent = "PRINCIPAL" | "GREEN" | "AZUL" | "VIOLETA";
 
+/** Rótulo do quadradinho colorido do card de material. */
+export type MentorshipMaterialKind =
+  "PDF" | "XLS" | "DOC" | "JSON" | "ZIP" | "LINK";
+
+export interface MentorshipMaterial {
+  id: string;
+  title: string;
+  url: string;
+  kind: MentorshipMaterialKind;
+  /** Bytes. `0` = desconhecido — o front não mostra a linha do tamanho. */
+  sizeBytes: number;
+}
+
 export interface MentorshipLesson {
   id: string;
   title: string;
@@ -25,6 +38,8 @@ export interface MentorshipLesson {
   completed: boolean;
   /** 0–100, decidido no servidor. */
   percent: number;
+  /** Anexos da aula, na ordem do admin. */
+  materials: MentorshipMaterial[];
 }
 
 export interface MentorshipModule {
@@ -96,6 +111,19 @@ export interface AdminLesson {
   videoUrl: string;
   position: number;
   published: boolean;
+  /** Anexos da aula, gerenciados no mesmo editor. */
+  materials: AdminMaterial[];
+}
+
+/** Anexo como o admin edita. */
+export interface AdminMaterial {
+  id: string;
+  lessonId: string;
+  title: string;
+  url: string;
+  kind: MentorshipMaterialKind;
+  sizeBytes: number;
+  position: number;
 }
 
 /** Trilha na LISTA do admin (sem as aulas, com a contagem delas). */
@@ -113,7 +141,10 @@ export interface AdminModuleSummary {
 }
 
 /** Trilha ABERTA no editor — com as aulas, inclusive as não publicadas. */
-export interface AdminModuleDetail extends Omit<AdminModuleSummary, "lessonCount"> {
+export interface AdminModuleDetail extends Omit<
+  AdminModuleSummary,
+  "lessonCount"
+> {
   lessons: AdminLesson[];
 }
 
@@ -222,3 +253,87 @@ export async function reorderLessons(
     { ids },
   );
 }
+
+// ── Materiais ────────────────────────────────────────────────────────────────
+
+export interface MaterialPayload {
+  title: string;
+  url: string;
+  kind: MentorshipMaterialKind;
+  sizeBytes?: number;
+  position?: number;
+}
+
+export async function createMaterial(
+  lessonId: string,
+  payload: MaterialPayload,
+): Promise<AdminMaterial> {
+  const { data } = await api.post<AdminMaterial>(
+    `/api/v1/mentorship/admin/lessons/${lessonId}/materials`,
+    payload,
+  );
+  return data;
+}
+
+export async function updateMaterial(
+  id: string,
+  payload: Partial<MaterialPayload>,
+): Promise<AdminMaterial> {
+  const { data } = await api.patch<AdminMaterial>(
+    `/api/v1/mentorship/admin/materials/${id}`,
+    payload,
+  );
+  return data;
+}
+
+export async function deleteMaterial(id: string): Promise<void> {
+  await api.delete(`/api/v1/mentorship/admin/materials/${id}`);
+}
+
+// ── Métricas ─────────────────────────────────────────────────────────────────
+
+export interface StatsLesson {
+  id: string;
+  title: string;
+  episode: number;
+  published: boolean;
+  /** Quantos ABRIRAM a aula (têm linha de progresso). */
+  started: number;
+  completed: number;
+  /** `completed / started` — quanto da audiência da aula chega ao fim. */
+  completionRate: number;
+}
+
+export interface StatsModule {
+  id: string;
+  title: string;
+  label: string;
+  published: boolean;
+  lessonCount: number;
+  /** Usuários distintos que tocaram alguma aula deste módulo. */
+  learners: number;
+  completions: number;
+  /** `completions / (learners × aulas)` — quanto do módulo foi vencido. */
+  completionRate: number;
+  lessons: StatsLesson[];
+}
+
+export interface MentorshipStats {
+  totals: {
+    learners: number;
+    lessonsStarted: number;
+    lessonsCompleted: number;
+    activeLast30d: number;
+  };
+  modules: StatsModule[];
+}
+
+export const ADMIN_STATS_KEY = ["mentorship-admin-stats"] as const;
+
+export async function getMentorshipStats(): Promise<MentorshipStats> {
+  const { data } = await api.get<MentorshipStats>(
+    "/api/v1/mentorship/admin/stats",
+  );
+  return data;
+}
+

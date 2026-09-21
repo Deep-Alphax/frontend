@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+
+import { MaterialsEditor } from "@/components/admin/MaterialsEditor";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { getApiErrorMessage } from "@/lib/api/client";
@@ -84,18 +86,25 @@ export function MentorshipLessonsPanel({ moduleId }: { moduleId: string }) {
       afterWrite();
       toast.success("Lesson added.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the lesson.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not add the lesson.")),
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<LessonPayload> }) =>
-      updateLesson(id, patch),
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<LessonPayload>;
+    }) => updateLesson(id, patch),
     onSuccess: () => {
       setEditing(null);
       afterWrite();
       toast.success("Lesson saved.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not save the lesson.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not save the lesson.")),
   });
 
   const deleteMut = useMutation({
@@ -104,7 +113,8 @@ export function MentorshipLessonsPanel({ moduleId }: { moduleId: string }) {
       afterWrite();
       toast.success("Lesson deleted.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not delete the lesson.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not delete the lesson.")),
   });
 
   const reorderMut = useMutation({
@@ -128,6 +138,7 @@ export function MentorshipLessonsPanel({ moduleId }: { moduleId: string }) {
       <LessonForm
         key={editing?.id ?? "new"}
         lesson={editing}
+        onMaterialsChanged={afterWrite}
         nextEpisode={lessons.length + 1}
         saving={createMut.isPending || updateMut.isPending}
         onCancel={() => {
@@ -262,12 +273,15 @@ function LessonForm({
   saving,
   onCancel,
   onSubmit,
+  onMaterialsChanged,
 }: {
   lesson: AdminLesson | null;
   nextEpisode: number;
   saving: boolean;
   onCancel: () => void;
   onSubmit: (payload: LessonPayload) => void;
+  /** Revalida a trilha depois de anexar/remover material. */
+  onMaterialsChanged: () => void;
 }) {
   const [draft, setDraft] = useState(() => ({
     title: lesson?.title ?? "",
@@ -335,7 +349,10 @@ function LessonForm({
             onChange={(e) => set("episode", Number(e.target.value))}
           />
         </Field>
-        <Field label="Duration" hint={durationInvalid ? "Use mm:ss (e.g. 14:20)." : "mm:ss"}>
+        <Field
+          label="Duration"
+          hint={durationInvalid ? "Use mm:ss (e.g. 14:20)." : "mm:ss"}
+        >
           <input
             className={cn(inputCls, durationInvalid && "border-vermelho-8")}
             value={duration}
@@ -373,6 +390,12 @@ function LessonForm({
         />
         Published
       </label>
+
+      <MaterialsEditor
+        lessonId={lesson?.id ?? null}
+        materials={lesson?.materials ?? []}
+        onChanged={onMaterialsChanged}
+      />
 
       <div className="flex items-center justify-end gap-2">
         <button

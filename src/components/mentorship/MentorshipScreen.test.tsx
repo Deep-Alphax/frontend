@@ -17,7 +17,13 @@ vi.mock("@/lib/api/mentorship", async (importOriginal) => {
 vi.mock("@/components/home/Topbar", () => ({ Topbar: () => <header /> }));
 vi.mock("@/components/home/Footer", () => ({ Footer: () => <footer /> }));
 
-function lesson(over: Partial<api.MentorshipLesson> = {}): api.MentorshipLesson {
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+function lesson(
+  over: Partial<api.MentorshipLesson> = {},
+): api.MentorshipLesson {
   return {
     id: "l1",
     title: "How a Solana transaction really happens",
@@ -31,6 +37,7 @@ function lesson(over: Partial<api.MentorshipLesson> = {}): api.MentorshipLesson 
     positionSec: 0,
     completed: false,
     percent: 0,
+    materials: [],
     ...over,
   };
 }
@@ -58,7 +65,12 @@ function overview(over: Partial<MentorshipOverview> = {}): MentorshipOverview {
     ],
     totals: { modules: 1, lessons: 2, completed: 1 },
     continueLesson: {
-      ...lesson({ id: "l2", title: "Fee, gas and priority tip", episode: 2, percent: 36 }),
+      ...lesson({
+        id: "l2",
+        title: "Fee, gas and priority tip",
+        episode: 2,
+        percent: 36,
+      }),
       remainingSec: 360,
     },
     ...over,
@@ -79,7 +91,9 @@ describe("MentorshipScreen", () => {
     expect(await screen.findByText("Tracks and modules")).toBeInTheDocument();
     expect(screen.getByText("Continue where you left off")).toBeInTheDocument();
     // O título da trilha aparece no card da grade E no cabeçalho da esteira.
-    expect(screen.getAllByText("On-chain fundamentals").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("On-chain fundamentals").length).toBeGreaterThan(
+      1,
+    );
 
     // Uma chamada só: o progresso vem junto, não há um request por card.
     expect(getOverview).toHaveBeenCalledTimes(1);
@@ -136,6 +150,8 @@ describe("MentorshipScreen", () => {
     );
 
     renderWithQuery(<MentorshipScreen />);
-    expect(await screen.findByText(/no tracks published yet/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/no tracks published yet/i),
+    ).toBeInTheDocument();
   });
 });

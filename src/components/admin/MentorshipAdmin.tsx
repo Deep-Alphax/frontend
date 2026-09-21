@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { MentorshipStats } from "@/components/admin/MentorshipStats";
 import toast from "react-hot-toast";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 
@@ -61,14 +63,16 @@ function Field({
  * ponta direita — quem faz isso é `slugify`.
  */
 function slugifyLoose(value: string): string {
-  return value
-    .normalize("NFD")
-    // Tira os diacríticos que o NFD acabou de separar ("ç" → "c", "ã" → "a").
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+/, "")
-    .slice(0, 80);
+  return (
+    value
+      .normalize("NFD")
+      // Tira os diacríticos que o NFD acabou de separar ("ç" → "c", "ã" → "a").
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+/, "")
+      .slice(0, 80)
+  );
 }
 
 /**
@@ -107,6 +111,9 @@ export function MentorshipAdmin() {
 
   const [editing, setEditing] = useState<AdminModuleSummary | null>(null);
   const [creating, setCreating] = useState(false);
+  // Abas em estado local: o admin entra por "Content" quase sempre, e um
+  // parâmetro de URL para isto não paga a complexidade.
+  const [tab, setTab] = useState<"content" | "usage">("content");
 
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ADMIN_MODULES_KEY,
@@ -132,18 +139,25 @@ export function MentorshipAdmin() {
       afterWrite();
       toast.success("Track created.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not create the track.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not create the track.")),
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<ModulePayload> }) =>
-      updateModule(id, patch),
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<ModulePayload>;
+    }) => updateModule(id, patch),
     onSuccess: (_data, vars) => {
       setEditing(null);
       afterWrite(vars.id);
       toast.success("Track saved.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not save the track.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not save the track.")),
   });
 
   const deleteMut = useMutation({
@@ -152,7 +166,8 @@ export function MentorshipAdmin() {
       afterWrite();
       toast.success("Track deleted.");
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not delete the track.")),
+    onError: (e) =>
+      toast.error(getApiErrorMessage(e, "Could not delete the track.")),
   });
 
   const reorderMut = useMutation({
@@ -171,7 +186,9 @@ export function MentorshipAdmin() {
   };
 
   if (loadingSession) {
-    return <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />;
+    return (
+      <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />
+    );
   }
   if (!isAuthenticated) {
     return <p className="text-gray-11">Sign in to continue.</p>;
@@ -179,7 +196,9 @@ export function MentorshipAdmin() {
   if (profile?.role !== "ADMIN") {
     return (
       <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">Restricted access</h1>
+        <h1 className="text-lg font-semibold text-gray-12">
+          Restricted access
+        </h1>
         <p className="text-sm text-gray-11">This area is admins only.</p>
       </div>
     );
@@ -190,106 +209,148 @@ export function MentorshipAdmin() {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-gray-12">Mentorship</h1>
         <p className="text-sm text-gray-11">
-          Tracks and lessons shown on <b className="text-gray-12">/mentorship</b>.
-          Unpublished items stay visible here and nowhere else.
+          Tracks and lessons shown on{" "}
+          <b className="text-gray-12">/mentorship</b>. Unpublished items stay
+          visible here and nowhere else.
         </p>
       </header>
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm text-gray-11">
-          {modules.length} {modules.length === 1 ? "track" : "tracks"}
-        </span>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="flex h-10 items-center gap-2 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
-        >
-          <Plus className="size-4" strokeWidth={2.5} />
-          New track
-        </button>
+      <div className="flex items-center gap-1 border-b border-gray-6">
+        {(["content", "usage"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            aria-current={tab === t ? "page" : undefined}
+            className={
+              "-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors " +
+              (tab === t
+                ? "border-principal-9 text-gray-12"
+                : "border-transparent text-gray-11 hover:text-gray-12")
+            }
+          >
+            {t === "content" ? "Content" : "Usage"}
+          </button>
+        ))}
       </div>
 
-      {isLoading ? (
-        <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />
-      ) : null}
+      {tab === "usage" ? <MentorshipStats /> : null}
 
-      <ul className="flex flex-col gap-2">
-        {modules.map((m, index) => (
-          <li
-            key={m.id}
-            className="flex items-center gap-4 rounded-lg border border-gray-6 bg-gray-2 p-3"
-          >
-            <div className="size-14 shrink-0 overflow-hidden rounded-md bg-gray-3">
-              {m.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.coverUrl} alt="" className="size-full object-cover" />
-              ) : null}
-            </div>
+      {tab === "content" ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-gray-11">
+              {modules.length} {modules.length === 1 ? "track" : "tracks"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="flex h-10 items-center gap-2 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+            >
+              <Plus className="size-4" strokeWidth={2.5} />
+              New track
+            </button>
+          </div>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-sm font-semibold text-gray-12">
-                  {m.title}
-                </span>
-                {m.label ? (
-                  <span className="shrink-0 text-xs text-gray-11">{m.label}</span>
-                ) : null}
-                {!m.published ? (
-                  <span className="shrink-0 rounded-full border border-gray-6 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-11">
-                    Draft
+          {isLoading ? (
+            <div
+              className="h-40 animate-pulse rounded-lg bg-gray-2"
+              aria-hidden
+            />
+          ) : null}
+
+          <ul className="flex flex-col gap-2">
+            {modules.map((m, index) => (
+              <li
+                key={m.id}
+                className="flex items-center gap-4 rounded-lg border border-gray-6 bg-gray-2 p-3"
+              >
+                <div className="size-14 shrink-0 overflow-hidden rounded-md bg-gray-3">
+                  {m.coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.coverUrl}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  ) : null}
+                </div>
+
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm font-semibold text-gray-12">
+                      {m.title}
+                    </span>
+                    {m.label ? (
+                      <span className="shrink-0 text-xs text-gray-11">
+                        {m.label}
+                      </span>
+                    ) : null}
+                    {!m.published ? (
+                      <span className="shrink-0 rounded-full border border-gray-6 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-11">
+                        Draft
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="truncate text-xs text-gray-11">
+                    /{m.slug} · {m.lessonCount}{" "}
+                    {m.lessonCount === 1 ? "lesson" : "lessons"}
                   </span>
-                ) : null}
-              </div>
-              <span className="truncate text-xs text-gray-11">
-                /{m.slug} · {m.lessonCount}{" "}
-                {m.lessonCount === 1 ? "lesson" : "lessons"}
-              </span>
-            </div>
+                </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              <IconButton
-                label={`Move ${m.title} up`}
-                disabled={index === 0 || reorderMut.isPending}
-                onClick={() => move(index, -1)}
-              >
-                <ArrowUp className="size-4" />
-              </IconButton>
-              <IconButton
-                label={`Move ${m.title} down`}
-                disabled={index === modules.length - 1 || reorderMut.isPending}
-                onClick={() => move(index, 1)}
-              >
-                <ArrowDown className="size-4" />
-              </IconButton>
-              <IconButton label={`Edit ${m.title}`} onClick={() => setEditing(m)}>
-                <Pencil className="size-4" />
-              </IconButton>
-              <IconButton
-                label={`Delete ${m.title}`}
-                danger
-                disabled={deleteMut.isPending}
-                onClick={() => {
-                  // Cascata apaga as aulas e o progresso de todo mundo — por
-                  // isso a confirmação diz exatamente o que vai embora.
-                  const ok = window.confirm(
-                    `Delete "${m.title}"? Its ${m.lessonCount} lesson(s) and everyone's progress on them go with it.`,
-                  );
-                  if (ok) deleteMut.mutate(m.id);
-                }}
-              >
-                <Trash2 className="size-4" />
-              </IconButton>
-            </div>
-          </li>
-        ))}
-      </ul>
+                <div className="flex shrink-0 items-center gap-1">
+                  <IconButton
+                    label={`Move ${m.title} up`}
+                    disabled={index === 0 || reorderMut.isPending}
+                    onClick={() => move(index, -1)}
+                  >
+                    <ArrowUp className="size-4" />
+                  </IconButton>
+                  <IconButton
+                    label={`Move ${m.title} down`}
+                    disabled={
+                      index === modules.length - 1 || reorderMut.isPending
+                    }
+                    onClick={() => move(index, 1)}
+                  >
+                    <ArrowDown className="size-4" />
+                  </IconButton>
+                  <IconButton
+                    label={`Edit ${m.title}`}
+                    onClick={() => setEditing(m)}
+                  >
+                    <Pencil className="size-4" />
+                  </IconButton>
+                  <IconButton
+                    label={`Delete ${m.title}`}
+                    danger
+                    disabled={deleteMut.isPending}
+                    onClick={() => {
+                      // Cascata apaga as aulas e o progresso de todo mundo — por
+                      // isso a confirmação diz exatamente o que vai embora.
+                      const ok = window.confirm(
+                        `Delete "${m.title}"? Its ${m.lessonCount} lesson(s) and everyone's progress on them go with it.`,
+                      );
+                      if (ok) deleteMut.mutate(m.id);
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </IconButton>
+                </div>
+              </li>
+            ))}
+          </ul>
 
-      {!isLoading && modules.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-gray-6 p-6 text-center text-sm text-gray-11">
-          No tracks yet. Create the first one to fill the mentorship page.
-        </p>
+          {!isLoading && modules.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-gray-6 p-6 text-center text-sm text-gray-11">
+              No tracks yet. Create the first one to fill the mentorship page.
+            </p>
+          ) : null}
+        </>
       ) : null}
 
+      {/* Os editores ficam FORA da aba: um modal aberto não deve sumir
+          porque a aba mudou por baixo dele. */}
       <ModuleEditor
         open={creating}
         module={null}
@@ -443,7 +504,10 @@ function ModuleForm({
           />
         </Field>
 
-        <Field label="Slug" hint="Used in the URL. Changing it breaks old links.">
+        <Field
+          label="Slug"
+          hint="Used in the URL. Changing it breaks old links."
+        >
           <input
             className={inputCls}
             value={draft.slug}
@@ -456,7 +520,10 @@ function ModuleForm({
           />
         </Field>
 
-        <Field label="Label" hint='Short badge next to the title, e.g. "Module 1".'>
+        <Field
+          label="Label"
+          hint='Short badge next to the title, e.g. "Module 1".'
+        >
           <input
             className={inputCls}
             value={draft.label}
@@ -474,7 +541,10 @@ function ModuleForm({
           />
         </Field>
 
-        <Field label="Cover URL" hint="Full https URL or a path like /mentorship/module-market.webp">
+        <Field
+          label="Cover URL"
+          hint="Full https URL or a path like /mentorship/module-market.webp"
+        >
           <input
             className={inputCls}
             value={draft.coverUrl}

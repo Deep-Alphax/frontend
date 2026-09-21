@@ -89,12 +89,16 @@ export function formatEpisode(episode: number): string {
  * literal (e não `` `from-${x}-10` ``) porque o Tailwind varre o código por
  * strings estáticas — classe montada em runtime não é gerada no CSS.
  */
-const ACCENT_CLASSES: Record<MentorshipAccent, { fill: string; text: string }> = {
-  PRINCIPAL: { fill: "from-principal-10 to-principal-12", text: "text-principal-11" },
-  GREEN: { fill: "from-green-10 to-green-12", text: "text-green-11" },
-  AZUL: { fill: "from-azul-10 to-azul-12", text: "text-azul-11" },
-  VIOLETA: { fill: "from-violeta-10 to-violeta-12", text: "text-violeta-11" },
-};
+const ACCENT_CLASSES: Record<MentorshipAccent, { fill: string; text: string }> =
+  {
+    PRINCIPAL: {
+      fill: "from-principal-10 to-principal-12",
+      text: "text-principal-11",
+    },
+    GREEN: { fill: "from-green-10 to-green-12", text: "text-green-11" },
+    AZUL: { fill: "from-azul-10 to-azul-12", text: "text-azul-11" },
+    VIOLETA: { fill: "from-violeta-10 to-violeta-12", text: "text-violeta-11" },
+  };
 
 export function accentFill(accent: MentorshipAccent): string {
   return ACCENT_CLASSES[accent]?.fill ?? ACCENT_CLASSES.PRINCIPAL.fill;
