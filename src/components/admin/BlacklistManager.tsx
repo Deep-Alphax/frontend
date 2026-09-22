@@ -13,6 +13,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 const EMPTY = { discordUserId: "", username: "", reason: "" };
 
@@ -110,62 +111,62 @@ export function BlacklistManager() {
       ) : items.length === 0 ? (
         <p className="text-sm text-gray-11">Nobody on the blacklist.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-left text-sm">
-            <thead className="text-gray-11">
-              <tr className="border-b border-gray-6">
-                <th className="py-2 pr-4 font-medium">ID / Username</th>
-                <th className="py-2 pr-4 font-medium">Reason</th>
-                <th className="py-2 pr-4 font-medium">Active</th>
-                <th className="py-2 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((b) => (
-                <tr
-                  key={b.id}
-                  className="border-b border-gray-6/50 text-gray-12"
-                >
-                  <td className="py-3 pr-4">
-                    {b.discordUserId && (
-                      <div className="font-mono text-xs text-gray-11">
-                        {b.discordUserId}
-                      </div>
-                    )}
-                    {b.username && (
-                      <div className="font-medium">{b.username}</div>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 text-gray-11">{b.reason || "—"}</td>
-                  <td className="py-3 pr-4">
-                    <button
-                      onClick={() => toggleMutation.mutate(b)}
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs font-medium " +
-                        (b.isActive
-                          ? "bg-danger-10/20 text-danger-11"
-                          : "bg-gray-6/40 text-gray-11")
-                      }
-                    >
-                      {b.isActive ? "blocked" : "inactive"}
-                    </button>
-                  </td>
-                  <td className="py-3">
-                    <button
-                      onClick={() => {
-                        if (confirm("Remove from blacklist?"))
-                          deleteMutation.mutate(b.id);
-                      }}
-                      className="text-danger-11 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </td>
+        <ScrollArea orientation="horizontal">
+            <table className="w-full min-w-[600px] text-left text-sm">
+              <thead className="text-gray-11">
+                <tr className="border-b border-gray-6">
+                  <th className="py-2 pr-4 font-medium">ID / Username</th>
+                  <th className="py-2 pr-4 font-medium">Reason</th>
+                  <th className="py-2 pr-4 font-medium">Active</th>
+                  <th className="py-2 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((b) => (
+                  <tr
+                    key={b.id}
+                    className="border-b border-gray-6/50 text-gray-12"
+                  >
+                    <td className="py-3 pr-4">
+                      {b.discordUserId && (
+                        <div className="font-mono text-xs text-gray-11">
+                          {b.discordUserId}
+                        </div>
+                      )}
+                      {b.username && (
+                        <div className="font-medium">{b.username}</div>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 text-gray-11">{b.reason || "—"}</td>
+                    <td className="py-3 pr-4">
+                      <button
+                        onClick={() => toggleMutation.mutate(b)}
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs font-medium " +
+                          (b.isActive
+                            ? "bg-danger-10/20 text-danger-11"
+                            : "bg-gray-6/40 text-gray-11")
+                        }
+                      >
+                        {b.isActive ? "blocked" : "inactive"}
+                      </button>
+                    </td>
+                    <td className="py-3">
+                      <button
+                        onClick={() => {
+                          if (confirm("Remove from blacklist?"))
+                            deleteMutation.mutate(b.id);
+                        }}
+                        className="text-danger-11 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        </ScrollArea>
       )}
     </section>
   );

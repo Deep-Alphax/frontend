@@ -93,6 +93,8 @@ export interface CryptoPayment {
   expiresAt: string;
   confirmedAt: string | null;
   txHash: string | null;
+  /** Carteira que o usuário informou ter usado (null até clicar "enviei"). */
+  declaredPayer: string | null;
 }
 
 export async function getCryptoOptions(): Promise<CryptoOptions> {
@@ -105,6 +107,21 @@ export async function createCryptoPayment(chain: CryptoChain): Promise<CryptoPay
   const { data } = await api.post<CryptoPayment>("/api/v1/billing/crypto/payments", {
     chain,
   });
+  return data;
+}
+
+/**
+ * "Enviei": informa de qual carteira o usuário pagou e pede ao servidor para
+ * procurar o pagamento na hora. Volta CONFIRMED se achou; PENDING se ainda não.
+ */
+export async function submitCryptoPayment(
+  id: string,
+  payer: string,
+): Promise<CryptoPayment> {
+  const { data } = await api.post<CryptoPayment>(
+    `/api/v1/billing/crypto/payments/${encodeURIComponent(id)}/submit`,
+    { payer },
+  );
   return data;
 }
 

@@ -22,6 +22,7 @@ import {
 } from "@/lib/api/mentorship";
 import { formatClock, parseClock } from "@/lib/mentorship/format";
 import { cn } from "@/lib/cn";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 const inputCls =
   "h-10 w-full rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60";
@@ -175,57 +176,59 @@ export function MentorshipLessonsPanel({ moduleId }: { moduleId: string }) {
         <div className="h-40 animate-pulse rounded-lg bg-gray-3" aria-hidden />
       ) : null}
 
-      <ul className="flex max-h-[420px] flex-col gap-2 overflow-y-auto pr-1">
-        {lessons.map((l, index) => (
-          <li
-            key={l.id}
-            className="flex items-center gap-3 rounded-lg border border-gray-6 bg-gray-1 p-2"
-          >
-            <span className="w-10 shrink-0 text-center text-xs font-semibold text-gray-11">
-              EP {String(l.episode).padStart(2, "0")}
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm text-gray-12">{l.title}</span>
-              <span className="text-xs text-gray-11">
-                {formatClock(l.durationSec)}
-                {!l.published ? " · draft" : ""}
+      <ScrollArea viewportClassName="max-h-[420px]">
+        <ul className="flex flex-col gap-2 pr-3">
+          {lessons.map((l, index) => (
+            <li
+              key={l.id}
+              className="flex items-center gap-3 rounded-lg border border-gray-6 bg-gray-1 p-2"
+            >
+              <span className="w-10 shrink-0 text-center text-xs font-semibold text-gray-11">
+                EP {String(l.episode).padStart(2, "0")}
               </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <SmallButton
-                label="Move up"
-                disabled={index === 0 || reorderMut.isPending}
-                onClick={() => move(index, -1)}
-              >
-                <ArrowUp className="size-3.5" />
-              </SmallButton>
-              <SmallButton
-                label="Move down"
-                disabled={index === lessons.length - 1 || reorderMut.isPending}
-                onClick={() => move(index, 1)}
-              >
-                <ArrowDown className="size-3.5" />
-              </SmallButton>
-              <SmallButton label="Edit lesson" onClick={() => setEditing(l)}>
-                <Pencil className="size-3.5" />
-              </SmallButton>
-              <SmallButton
-                label="Delete lesson"
-                danger
-                disabled={deleteMut.isPending}
-                onClick={() => {
-                  const ok = window.confirm(
-                    `Delete "${l.title}"? Everyone's progress on it goes with it.`,
-                  );
-                  if (ok) deleteMut.mutate(l.id);
-                }}
-              >
-                <Trash2 className="size-3.5" />
-              </SmallButton>
-            </div>
-          </li>
-        ))}
-      </ul>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm text-gray-12">{l.title}</span>
+                <span className="text-xs text-gray-11">
+                  {formatClock(l.durationSec)}
+                  {!l.published ? " · draft" : ""}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <SmallButton
+                  label="Move up"
+                  disabled={index === 0 || reorderMut.isPending}
+                  onClick={() => move(index, -1)}
+                >
+                  <ArrowUp className="size-3.5" />
+                </SmallButton>
+                <SmallButton
+                  label="Move down"
+                  disabled={index === lessons.length - 1 || reorderMut.isPending}
+                  onClick={() => move(index, 1)}
+                >
+                  <ArrowDown className="size-3.5" />
+                </SmallButton>
+                <SmallButton label="Edit lesson" onClick={() => setEditing(l)}>
+                  <Pencil className="size-3.5" />
+                </SmallButton>
+                <SmallButton
+                  label="Delete lesson"
+                  danger
+                  disabled={deleteMut.isPending}
+                  onClick={() => {
+                    const ok = window.confirm(
+                      `Delete "${l.title}"? Everyone's progress on it goes with it.`,
+                    );
+                    if (ok) deleteMut.mutate(l.id);
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                </SmallButton>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </ScrollArea>
 
       {!isLoading && lessons.length === 0 ? (
         <p className="rounded-lg border border-dashed border-gray-6 p-4 text-center text-xs text-gray-11">

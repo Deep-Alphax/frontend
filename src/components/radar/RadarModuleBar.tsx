@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import {
   BarChart3,
   Check,
@@ -223,7 +224,7 @@ function WalletMenu({
 }) {
   return (
     <div className="w-64 overflow-hidden rounded-lg rounded-bl-sm border border-gray-6 bg-gray-2 py-1 shadow-2xl shadow-black/40">
-      <div className="max-h-72 overflow-y-auto">
+      <ScrollArea viewportClassName="max-h-72">
         <WalletMenuItem
           label="All wallets"
           sub={`${wallets.length} ${wallets.length === 1 ? "wallet" : "compared"}`}
@@ -239,7 +240,7 @@ function WalletMenu({
             onSelect={() => onSelect(w.id)}
           />
         ))}
-      </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -416,7 +417,13 @@ export function RadarModuleBar() {
   };
 
   return (
-    <div className="flex h-14 shrink-0 items-center gap-3 overflow-x-auto border-t border-gray-6 bg-gray-1 px-6">
+    // Barra rolável na horizontal: altura no Root; a linha de chips é
+    // `w-max min-w-full` para estourar a largura e o viewport rolar.
+    <ScrollArea
+      orientation="horizontal"
+      className="h-14 shrink-0 border-t border-gray-6 bg-gray-1"
+    >
+    <div className="flex h-14 w-max min-w-full items-center gap-3 px-6">
       <ModuleChipItem
         chip={selector}
         menu
@@ -472,5 +479,6 @@ export function RadarModuleBar() {
         </div>
       )}
     </div>
+    </ScrollArea>
   );
 }

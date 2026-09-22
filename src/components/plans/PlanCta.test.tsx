@@ -94,7 +94,7 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
 
     expect(screen.getByRole("button", { name: "Choose this plan" })).toBeInTheDocument();
     const cryptoBtn = await screen.findByRole("button", {
-      name: "Pay with USDC (prepaid)",
+      name: "Pay with USDC",
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
@@ -113,7 +113,7 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     // ele encolhe até o conteúdo e os botões ficam pela metade.
     setup();
     renderWithQuery(<PlanCta tone="pro" />);
-    const cryptoBtn = await screen.findByRole("button", { name: "Pay with USDC (prepaid)" });
+    const cryptoBtn = await screen.findByRole("button", { name: "Pay with USDC" });
     const cardBtn = screen.getByRole("button", { name: "Choose this plan" });
     const wrapper = cardBtn.parentElement!;
     expect(cryptoBtn.parentElement).toBe(wrapper);
@@ -130,7 +130,7 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     setup();
     renderWithQuery(<PlanCta tone="pro" />);
 
-    await user.click(await screen.findByRole("button", { name: "Pay with USDC (prepaid)" }));
+    await user.click(await screen.findByRole("button", { name: "Pay with USDC" }));
     const closes = screen.getAllByRole("button", { name: "Close" });
     await user.click(closes[closes.length - 1]);
 

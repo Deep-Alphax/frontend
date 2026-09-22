@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import type { RadarGroup, SourceSelection } from "@/components/radar/useRadarFeed";
 import { fmtCount, groupColorFor, groupInitial } from "@/components/radar/groupAvatar";
 
@@ -74,7 +75,8 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
         <h2 className="text-[12px] font-medium uppercase text-gray-11">Sources</h2>
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-3">
+      <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
+      <nav className="flex flex-col pb-3">
         {/* Todas as fontes (node 748:25277) */}
         <button
           type="button"
@@ -139,6 +141,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
           );
         })}
       </nav>
+      </ScrollArea>
 
       {/* Flyout dos canais (fixed → escapa o overflow da rail). */}
       {flyout && (
@@ -150,7 +153,11 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
           <div className="shrink-0 border-b border-gray-6 px-3 py-2">
             <p className="truncate text-sm font-semibold text-gray-12">{flyout.group.name}</p>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto py-1">
+          {/* Root e viewport como itens flex: sob um `max-h` (altura
+              indefinida) o `h-full` do viewport não resolveria e o conteúdo
+              seria cortado sem rolar. */}
+          <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
+          <div className="py-1">
             {/* Whole server */}
             {(() => {
               const active =
@@ -198,6 +205,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
               );
             })}
           </div>
+          </ScrollArea>
         </div>
       )}
     </aside>

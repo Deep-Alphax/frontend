@@ -8,6 +8,7 @@ import { LessonCard } from "@/components/mentorship/LessonCard";
 import { TEXT_TRIM } from "@/components/plans/textTrim";
 import type { MentorshipLesson, MentorshipModule } from "@/lib/api/mentorship";
 import { cn } from "@/lib/cn";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 /** Largura do card + gap (292 + 14) — o passo de rolagem da esteira. */
 const CARD_STEP = 306;
@@ -23,7 +24,7 @@ const EDGE_SLACK = 2;
  * Uma trilha em faixa horizontal (Figma 1011:25643): cabeçalho com título,
  * rótulo e controles, e a esteira de aulas rolável.
  *
- * A esteira rola de verdade (`overflow-x-auto`), então funciona no touch sem
+ * A esteira rola de verdade (viewport do `ScrollArea`), então funciona no touch sem
  * depender das setas; elas são o atalho de mouse e desligam nas pontas.
  */
 export function ModuleRow({
@@ -146,24 +147,23 @@ export function ModuleRow({
         </div>
       </header>
 
-      <div
-        ref={trackRef}
-        // `scrollbar-none` não existe no Tailwind: escondemos a barra com as
-        // propriedades nativas, mantendo a rolagem por touch/trackpad intacta.
-        className="flex gap-3.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {m.lessons.map((lesson) => (
-          <LessonCard
-            key={lesson.id}
-            lesson={lesson}
-            onOpen={(l) =>
-              onOpenLesson
-                ? onOpenLesson(l)
-                : router.push(`/mentorship/${m.slug}/${l.id}`)
-            }
-          />
-        ))}
-      </div>
+      {/* O ref aponta para o VIEWPORT (o elemento que rola): é nele que as
+          setas medem `clientWidth/scrollWidth` e chamam `scrollBy`. */}
+      <ScrollArea orientation="horizontal" viewportRef={trackRef}>
+        <div className="flex gap-3.5 pb-3">
+          {m.lessons.map((lesson) => (
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              onOpen={(l) =>
+                onOpenLesson
+                  ? onOpenLesson(l)
+                  : router.push(`/mentorship/${m.slug}/${l.id}`)
+              }
+            />
+          ))}
+        </div>
+      </ScrollArea>
     </section>
   );
 }

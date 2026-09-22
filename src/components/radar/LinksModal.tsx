@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 /** Rótulo curto (ticker-like) a partir da URL. */
 function labelFromLink(link: string): string {
@@ -178,13 +179,18 @@ export function LinksModal({ open, links, onClose }: LinksModalProps) {
             </div>
 
             {/* Lista */}
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            {/* Root e viewport como itens flex: o diálogo só tem `max-h`, então
+                `h-full` no viewport não resolveria (ver ScrollArea). */}
+            <ScrollArea
+              className="flex min-h-0 flex-1 flex-col"
+              viewportClassName="min-h-0 flex-1"
+            >
               {links.length === 0 ? (
                 <p className="p-6 text-center text-sm text-gray-11">No links.</p>
               ) : (
                 links.map((l, i) => <LinkRow key={l + i} link={l} index={i + 1} />)
               )}
-            </div>
+            </ScrollArea>
           </motion.div>
         </motion.div>
       )}

@@ -20,6 +20,7 @@ import {
   type AffiliateOverview,
 } from "@/lib/api/affiliates";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
 
 interface AffiliatesModalProps {
@@ -65,15 +66,20 @@ function AffiliatesDialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose(); // clique no backdrop fecha
-      }}
+    <ScrollArea
+      className="fixed inset-0 z-50 bg-black/60"
       role="dialog"
       aria-modal="true"
       aria-label="Affiliates"
     >
+      {/* O backdrop clicável é esta camada (ocupa a tela toda: `min-h-dvh`,
+          porque `min-h-full` não resolve dentro do viewport do ScrollArea). */}
+      <div
+        className="flex min-h-dvh items-start justify-center p-4 sm:items-center"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose(); // clique no backdrop fecha
+        }}
+      >
       <div className="my-auto w-full max-w-[1006px] overflow-hidden rounded-2xl border border-gray-6 bg-gray-2">
         {/* Header 48px, padding 12/16, régua embaixo. */}
         <header className="flex h-12 items-center justify-between border-b border-gray-6 px-4">
@@ -109,7 +115,8 @@ function AffiliatesDialog({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
 
@@ -347,7 +354,7 @@ function HistorySection({ data }: { data: AffiliateOverview }) {
           pay, for as long as they stay subscribed.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-6">
+        <ScrollArea orientation="horizontal" className="rounded-lg border border-gray-6">
           <table className="w-full min-w-[720px] border-collapse text-base">
             <thead>
               <tr className="bg-gray-3 text-left text-gray-11">
@@ -386,7 +393,7 @@ function HistorySection({ data }: { data: AffiliateOverview }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       )}
     </section>
   );

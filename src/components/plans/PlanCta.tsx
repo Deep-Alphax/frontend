@@ -152,7 +152,7 @@ export function PlanCta({ tone }: PlanCtaProps) {
           className="h-11 p-0"
           onClick={() => setCryptoOpen(true)}
         >
-          Pay with USDC (prepaid)
+          Pay with USDC
         </Button>
       )}
       {cryptoModal}

@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
 import { Avatar } from "@/components/ui/Avatar";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import type { FavoriteAuthor } from "@/lib/api/feed";
 import {
   FAVORITE_COLOR_KEYS,
@@ -180,7 +181,13 @@ function CustomizeForm({
       </div>
 
       {/* Corpo */}
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto border-b border-gray-6 p-4">
+      {/* Root e viewport como itens flex: o diálogo só tem `max-h`, então
+          `h-full` no viewport não resolveria (ver ScrollArea). */}
+      <ScrollArea
+        className="flex min-h-0 flex-1 flex-col border-b border-gray-6"
+        viewportClassName="min-h-0 flex-1"
+      >
+      <div className="flex flex-col gap-6 p-4">
         {/* Avatar + Mudar foto */}
         <div className="flex flex-col items-center gap-5">
           <div className="flex flex-col items-center gap-4">
@@ -261,6 +268,7 @@ function CustomizeForm({
           </div>
         </div>
       </div>
+      </ScrollArea>
 
       {/* Footer */}
       <div className="flex shrink-0 items-center gap-2 p-4">

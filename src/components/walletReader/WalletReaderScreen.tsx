@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { KolProfileModal } from "@/components/walletReader/KolProfileModal";
@@ -334,12 +335,16 @@ export function WalletReaderScreen() {
           />
         )}
 
-        <aside
+        {/* O Root é quem fica fixo/desliza no mobile; o viewport encolhe como
+            item flex para rolar dentro da altura esticada/fixa. */}
+        <ScrollArea
           className={cn(
-            "z-40 flex w-[203px] shrink-0 flex-col overflow-y-auto border-r border-gray-6 bg-gray-1 transition-transform max-lg:fixed max-lg:inset-y-0 max-lg:left-0",
+            "z-40 flex w-[203px] shrink-0 flex-col border-r border-gray-6 bg-gray-1 transition-transform max-lg:fixed max-lg:inset-y-0 max-lg:left-0",
             filtersOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
           )}
+          viewportClassName="min-h-0 flex-1"
         >
+        <aside className="flex flex-col">
           <div className="flex items-center justify-between border-b border-gray-6 px-3 py-2 lg:hidden">
             <span className="text-sm text-gray-11">Filters</span>
             <button
@@ -475,6 +480,7 @@ export function WalletReaderScreen() {
             </button>
           </div>
         </aside>
+        </ScrollArea>
 
         <main className="flex min-w-0 flex-1 flex-col">
           <header className="flex flex-wrap items-center justify-between gap-y-2.5 border-b border-gray-6 px-6 py-4">
@@ -518,7 +524,8 @@ export function WalletReaderScreen() {
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
+          <div className="p-6">
             {!loaded ? (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -548,6 +555,7 @@ export function WalletReaderScreen() {
               </>
             )}
           </div>
+          </ScrollArea>
         </main>
       </div>
 

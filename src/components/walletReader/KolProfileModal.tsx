@@ -7,6 +7,7 @@ import { Camera, Check, ChevronLeft, ChevronRight, Copy, Pencil, Trash2 } from "
 
 import { cn } from "@/lib/cn";
 import { Modal } from "@/components/walletReader/Modal";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { SidewalletBlock } from "@/components/walletReader/SidewalletBlock";
 import { TierPill, XIcon } from "@/components/walletReader/KolCard";
 import { kolDetailKey, type useKolIndex } from "@/lib/walletReader/useKolIndex";
@@ -406,7 +407,11 @@ function KolProfileForm({
    * Twitter no lugar do link.
    */
   const sidebar = (
-    <aside className="flex w-full shrink-0 flex-col overflow-y-auto border-b border-gray-6 md:w-[280px] md:self-stretch md:border-b-0 md:border-r">
+    <ScrollArea
+      className="flex w-full shrink-0 flex-col border-b border-gray-6 md:w-[280px] md:self-stretch md:border-b-0 md:border-r"
+      viewportClassName="min-h-0 flex-1"
+    >
+    <aside className="flex flex-col">
       {/* Fundo do nível: mesmo degradê do card (a cor vem toda do tier). */}
       <div className={cn("relative flex flex-col items-center gap-6 px-4 py-6", tier.card)}>
         <div
@@ -548,6 +553,7 @@ function KolProfileForm({
         )}
       </div>
     </aside>
+    </ScrollArea>
   );
 
   /** No FREE, carteiras e varredura viram um único convite ao Pro. */
@@ -582,7 +588,11 @@ function KolProfileForm({
 
   /** Coluna central do modo DETALHES (node 901:18393). */
   const mainView = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+    <ScrollArea
+      className="flex min-h-0 min-w-0 flex-1 flex-col"
+      viewportClassName="min-h-0 flex-1"
+    >
+    <div className="flex flex-col">
       <div className="flex flex-col gap-3 border-b border-gray-6 px-4 py-5">
         <p className="text-sm leading-[1.3] text-gray-11">About this trader</p>
         <p className="whitespace-pre-wrap text-base leading-[1.3] text-gray-12">
@@ -618,11 +628,16 @@ function KolProfileForm({
         </>
       )}
     </div>
+    </ScrollArea>
   );
 
   /** Coluna central do modo EDIÇÃO (node 901:20216). */
   const mainEdit = (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+    <ScrollArea
+      className="flex min-h-0 min-w-0 flex-1 flex-col"
+      viewportClassName="min-h-0 flex-1"
+    >
+    <div className="flex flex-col">
       <section className="flex flex-col gap-2 border-b border-gray-6 px-4 py-5">
         <p className="text-base leading-[1.3] text-gray-12">Notes</p>
         <textarea
@@ -812,6 +827,7 @@ function KolProfileForm({
         </div>
       </section>
     </div>
+    </ScrollArea>
   );
 
   return (
@@ -819,6 +835,7 @@ function KolProfileForm({
       open
       onClose={guardedClose}
       className="max-w-5xl rounded-2xl"
+      bodyScroll={false}
       bodyClassName="flex overflow-hidden"
       footer={
         editing ? (

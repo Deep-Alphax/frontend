@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { TradeSource, RecommendationKey } from "@/lib/analytics/sources";
 import { RECOMMENDATIONS, RecommendationBadge } from "@/components/home/dashboard/RecommendationBadge";
 import { formatPct, formatSignedUsd, signOf } from "@/lib/format";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 15;
@@ -157,7 +158,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <ScrollArea orientation="horizontal">
         <table className="w-full min-w-[880px] text-left">
           <thead>
             <tr className="border-b border-gray-6 text-sm text-gray-11">
@@ -182,7 +183,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollArea>
 
       <div className="flex items-center justify-between gap-4 border-t border-gray-6 p-6 text-sm text-gray-11">
         <span>

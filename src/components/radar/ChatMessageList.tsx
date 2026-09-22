@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
 import { RadarMessageCard } from "@/components/radar/RadarMessageCard";
 import { useChatScroll } from "@/components/radar/useChatScroll";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 /** Rótulo do divisor de dia: "Hoje", "Ontem" ou "DD/MM". */
 function dayLabel(iso: string): string {
@@ -114,7 +115,13 @@ export function ChatMessageList({
     // Wrapper relativo: o botão "ir para o fim" flutua SOBRE a lista (dentro do
     // rolável ele rolaria junto com o conteúdo).
     <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]">
+      {/* `scrollRef` é o VIEWPORT (o elemento que rola): o useChatScroll e o
+          IntersectionObserver da sentinela leem scrollTop/scrollHeight dele. */}
+      <ScrollArea
+        className="flex min-h-0 flex-1 flex-col"
+        viewportRef={scrollRef}
+        viewportClassName="min-h-0 flex-1 [overflow-anchor:none]"
+      >
         {/* Wrapper observado pelo ResizeObserver (mede o crescimento do conteúdo). */}
         <div ref={contentRef}>
           {/* Topo: sentinela + estado de "carregando antigas" */}
@@ -147,7 +154,7 @@ export function ChatMessageList({
             </Fragment>
           ))}
         </div>
-      </div>
+      </ScrollArea>
 
       <ScrollToBottomButton
         show={!atBottom && chrono.length > 0}

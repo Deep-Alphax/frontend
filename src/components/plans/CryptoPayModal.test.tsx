@@ -13,6 +13,7 @@ vi.mock("@/lib/api/billing", async (importOriginal) => {
     ...actual,
     createCryptoPayment: vi.fn(),
     getCryptoPayment: vi.fn(),
+    submitCryptoPayment: vi.fn(),
   };
 });
 vi.mock("react-hot-toast", () => ({
@@ -21,6 +22,7 @@ vi.mock("react-hot-toast", () => ({
 
 const createPay = vi.mocked(api.createCryptoPayment);
 const getPay = vi.mocked(api.getCryptoPayment);
+const submitPay = vi.mocked(api.submitCryptoPayment);
 
 const ALL: api.CryptoChain[] = [
   "SOLANA",
@@ -53,6 +55,7 @@ function payment(over: Partial<api.CryptoPayment> = {}): api.CryptoPayment {
     expiresAt: inOneHour(),
     confirmedAt: null,
     txHash: null,
+    declaredPayer: null,
     ...over,
   };
 }
@@ -210,24 +213,27 @@ describe("CryptoPayModal — tela de pagamento", () => {
     vi.clearAllMocks();
   });
 
-  it("Solana: QR, link para a carteira, sem endereço para colar e aviso da reference", async () => {
+  it("Solana: carteira de destino visível, valor exato e QR como atalho opcional", async () => {
     const user = userEvent.setup();
     createPay.mockResolvedValue(SOLANA_PAYMENT);
     renderModal();
 
     await pickChain(user, /USDC on Solana/);
 
-    const qr = await screen.findByAltText("Payment QR code for USDC on Solana");
+    // Envio à mão agora é detectado (carteira declarada + valor exato), então o
+    // endereço de destino aparece também na Solana.
+    expect(await screen.findByText("Send to this wallet (Solana)")).toBeInTheDocument();
+    expect(screen.getByTestId("receiver")).toHaveTextContent(SOLANA_PAYMENT.receiver);
+    expect(screen.getByText("50 USDC")).toBeInTheDocument();
+    expect(screen.getByText(/Send exactly 50 USDC on Solana/)).toBeInTheDocument();
+
+    expect(screen.getByText("Pay with QR code")).toBeInTheDocument();
+    const qr = screen.getByAltText("Payment QR code for USDC on Solana");
     expect(qr).toHaveAttribute("src", SOLANA_PAYMENT.qrDataUrl);
     expect(screen.getByRole("link", { name: "Open in wallet" })).toHaveAttribute(
       "href",
       SOLANA_PAYMENT.paymentUri,
     );
-    expect(screen.getByText("50 USDC")).toBeInTheDocument();
-    // Colar o endereço à mão perde a reference → o endereço nem é exibido.
-    expect(screen.queryByText("Send to")).not.toBeInTheDocument();
-    expect(screen.queryByText(SOLANA_PAYMENT.receiver)).not.toBeInTheDocument();
-    expect(screen.getByText(/sending to the address by hand will not be detected/)).toBeInTheDocument();
   });
 
   it("EVM: valor exato, endereço e aviso com TODAS as redes EVM ligadas", async () => {
@@ -239,8 +245,8 @@ describe("CryptoPayModal — tela de pagamento", () => {
     await pickChain(user, /USDC on Base/);
 
     expect(await screen.findByText("50.012345 USDC")).toBeInTheDocument();
-    expect(screen.getByText("Send to")).toBeInTheDocument();
-    expect(screen.getByText(p.receiver)).toBeInTheDocument();
+    expect(screen.getByText("Send to this wallet (Base)")).toBeInTheDocument();
+    expect(screen.getByTestId("receiver")).toHaveTextContent(p.receiver);
     expect(screen.getByRole("link", { name: "Open in wallet" })).toHaveAttribute(
       "href",
       p.paymentUri,
@@ -279,11 +285,12 @@ describe("CryptoPayModal — tela de pagamento", () => {
     const copies = await screen.findAllByRole("button", { name: "Copy" });
     expect(copies).toHaveLength(2);
 
+    // Ordem na tela: endereço de destino primeiro, depois o valor.
     await user.click(copies[0]);
     await user.click(copies[1]);
 
-    expect(writeText).toHaveBeenNthCalledWith(1, "50.012345");
-    expect(writeText).toHaveBeenNthCalledWith(2, p.receiver);
+    expect(writeText).toHaveBeenNthCalledWith(1, p.receiver);
+    expect(writeText).toHaveBeenNthCalledWith(2, "50.012345");
     expect(toast.success).toHaveBeenCalledWith("Amount copied");
     expect(toast.success).toHaveBeenCalledWith("Address copied");
   });
@@ -460,5 +467,119 @@ describe("CryptoPayModal — navegação e fechamento", () => {
       "Select a network",
     );
     expect(screen.queryByRole("link", { name: "Open in wallet" })).not.toBeInTheDocument();
+  });
+});
+
+describe("CryptoPayModal — \"I've sent the payment\"", () => {
+  const WALLET = "0x3a1b2c3d4e5f60718293a4b5c6d7e8f901a2b3c4";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createPay.mockResolvedValue(payment());
+    getPay.mockResolvedValue(payment());
+  });
+
+  async function openPayStep(user: User) {
+    renderModal();
+    await pickChain(user, /USDC on Base/);
+    return screen.findByLabelText("Your wallet (the one you are paying from)");
+  }
+
+  it("botão desabilitado até preencher a carteira", async () => {
+    const user = userEvent.setup();
+    const input = await openPayStep(user);
+    const btn = screen.getByRole("button", { name: "I've sent the payment" });
+    expect(btn).toBeDisabled();
+    await user.type(input, "   ");
+    expect(btn).toBeDisabled();
+    await user.type(input, WALLET);
+    expect(btn).toBeEnabled();
+  });
+
+  it("envia id da cobrança + carteira (sem espaços) e, se achou, mostra confirmado", async () => {
+    const user = userEvent.setup();
+    submitPay.mockResolvedValue(
+      payment({ status: "CONFIRMED", declaredPayer: WALLET, confirmedAt: new Date().toISOString() }),
+    );
+    const input = await openPayStep(user);
+    await user.type(input, `  ${WALLET}  `);
+    await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
+
+    expect(submitPay).toHaveBeenCalledWith("pay1", WALLET);
+    expect(await screen.findByText("Payment received")).toBeInTheDocument();
+  });
+
+  it("Enter no campo também envia", async () => {
+    const user = userEvent.setup();
+    submitPay.mockResolvedValue(payment({ declaredPayer: WALLET }));
+    const input = await openPayStep(user);
+    await user.type(input, `${WALLET}{Enter}`);
+    expect(submitPay).toHaveBeenCalledWith("pay1", WALLET);
+  });
+
+  it("ainda não achou: avisa que continua procurando e segue pendente", async () => {
+    const user = userEvent.setup();
+    submitPay.mockResolvedValue(payment({ declaredPayer: WALLET }));
+    const input = await openPayStep(user);
+    await user.type(input, WALLET);
+    await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
+
+    expect(
+      await screen.findByText(/We haven't found 50\.012345 USDC from this wallet yet/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Payment received")).not.toBeInTheDocument();
+  });
+
+  it("enquanto consulta, o botão mostra 'Checking…' e fica travado", async () => {
+    const user = userEvent.setup();
+    let resolve!: (p: api.CryptoPayment) => void;
+    submitPay.mockReturnValue(new Promise((r) => (resolve = r)));
+    const input = await openPayStep(user);
+    await user.type(input, WALLET);
+    await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
+
+    expect(await screen.findByRole("button", { name: "Checking…" })).toBeDisabled();
+    await act(async () => resolve(payment({ declaredPayer: WALLET })));
+  });
+
+  it("endereço recusado pelo servidor: mostra a mensagem no campo", async () => {
+    const user = userEvent.setup();
+    const { AxiosError } = await import("axios");
+    const err = new AxiosError("Bad Request", "ERR_BAD_REQUEST", undefined, undefined, {
+      status: 400,
+      data: { message: "Invalid EVM address (0x followed by 40 hex characters)." },
+    } as never);
+    submitPay.mockRejectedValue(err);
+    const input = await openPayStep(user);
+    await user.type(input, "0x123");
+    await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
+
+    expect(
+      await screen.findByText("Invalid EVM address (0x followed by 40 hex characters)."),
+    ).toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("erro de uma cobrança não aparece depois de trocar de rede", async () => {
+    const user = userEvent.setup();
+    const { AxiosError } = await import("axios");
+    submitPay.mockRejectedValue(
+      new AxiosError("Bad Request", "ERR_BAD_REQUEST", undefined, undefined, {
+        status: 400,
+        data: { message: "Invalid EVM address (0x followed by 40 hex characters)." },
+      } as never),
+    );
+    const input = await openPayStep(user);
+    await user.type(input, "0x123");
+    await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
+    await screen.findByText(/Invalid EVM address/);
+
+    await user.click(screen.getByRole("button", { name: "Change network" }));
+    createPay.mockResolvedValue(payment({ id: "pay2" }));
+    getPay.mockResolvedValue(payment({ id: "pay2" }));
+    await pickChain(user, /USDC on Base/);
+
+    await screen.findByLabelText("Your wallet (the one you are paying from)");
+    expect(screen.queryByText(/Invalid EVM address/)).not.toBeInTheDocument();
   });
 });

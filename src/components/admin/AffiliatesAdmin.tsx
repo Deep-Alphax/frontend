@@ -18,6 +18,7 @@ import {
 } from "@/lib/api/affiliates";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 /**
  * Configuração do programa de afiliados.
@@ -203,36 +204,36 @@ function AffiliatesTable() {
           No affiliates yet.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-6">
-          <table className="w-full min-w-[820px] border-collapse text-sm">
-            <thead>
-              <tr className="bg-gray-3 text-left text-gray-11">
-                {[
-                  "Affiliate",
-                  "Code",
-                  "Referrals",
-                  "Earned",
-                  "Level 1",
-                  "Level 2",
-                  "",
-                ].map((h, i) => (
-                  <th
-                    key={h || i}
-                    scope="col"
-                    className="border-b border-gray-6 px-4 py-3 font-medium"
-                  >
-                    {h}
-                  </th>
+        <ScrollArea orientation="horizontal" className="rounded-lg border border-gray-6">
+            <table className="w-full min-w-[820px] border-collapse text-sm">
+              <thead>
+                <tr className="bg-gray-3 text-left text-gray-11">
+                  {[
+                    "Affiliate",
+                    "Code",
+                    "Referrals",
+                    "Earned",
+                    "Level 1",
+                    "Level 2",
+                    "",
+                  ].map((h, i) => (
+                    <th
+                      key={h || i}
+                      scope="col"
+                      className="border-b border-gray-6 px-4 py-3 font-medium"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row) => (
+                  <AffiliateRow key={row.id} row={row} />
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row) => (
-                <AffiliateRow key={row.id} row={row} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+        </ScrollArea>
       )}
     </section>
   );

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 /*
  * Navegação entre as telas de admin.
@@ -45,29 +46,31 @@ export function AdminNav() {
 
         {/* Rola no horizontal em telas estreitas em vez de quebrar a linha: o
             header tem altura fixa e a quebra empurraria o conteúdo para fora. */}
-        <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-          {ADMIN_ITEMS.map((item) => {
-            // `startsWith` e não igualdade: uma sub-rota futura
-            // (/admin/kols/:id) deve manter o item pai marcado.
-            const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex shrink-0 items-center rounded-md px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "bg-gray-3 font-semibold text-gray-12"
-                    : "text-gray-11 hover:text-gray-12",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <ScrollArea orientation="horizontal" className="min-w-0 flex-1">
+          <nav className="flex items-center gap-1 py-2">
+            {ADMIN_ITEMS.map((item) => {
+              // `startsWith` e não igualdade: uma sub-rota futura
+              // (/admin/kols/:id) deve manter o item pai marcado.
+              const isActive =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex shrink-0 items-center rounded-md px-3 py-1.5 text-sm transition-colors",
+                    isActive
+                      ? "bg-gray-3 font-semibold text-gray-12"
+                      : "text-gray-11 hover:text-gray-12",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </ScrollArea>
 
         <span className="hidden shrink-0 rounded-full border border-gray-6 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-11 md:inline">
           Admin

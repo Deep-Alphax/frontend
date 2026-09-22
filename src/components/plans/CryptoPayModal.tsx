@@ -12,6 +12,7 @@ import {
   getCryptoPayment,
   PLAN_KEY,
   isEvmChain,
+  submitCryptoPayment,
   type CryptoChain,
   type CryptoPayment,
 } from "@/lib/api/billing";
@@ -22,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { ScrollArea } from "@/components/ui/ScrollArea";
+import { TextField } from "@/components/ui/TextField";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/cn";
@@ -149,6 +152,16 @@ export function CryptoPayModal({
     refetchInterval: (q) => (q.state.data?.status === "PENDING" ? POLL_MS : false),
   });
 
+  // "Enviei": grava a carteira e o servidor procura na hora. A resposta já é a
+  // cobrança atualizada — entra direto no cache, sem esperar o próximo polling.
+  // O id vai nas variáveis: o erro/estado de um envio só vale para a cobrança
+  // em que ele aconteceu (trocar de rede ou reabrir não herda erro antigo).
+  const submit = useMutation({
+    mutationFn: (v: { id: string; payer: string }) => submitCryptoPayment(v.id, v.payer),
+    onSuccess: (p) => qc.setQueryData(["crypto-payment", p.id], p),
+  });
+  const submitHere = submit.variables?.id === paymentId;
+
   const confirmed = payment.data?.status === "CONFIRMED";
   useEffect(() => {
     if (!confirmed) return;
@@ -179,60 +192,73 @@ export function CryptoPayModal({
             role="dialog"
             aria-modal="true"
             aria-label="Pay with USDC"
-            className="relative flex max-h-full w-full max-w-[420px] flex-col overflow-y-auto rounded-lg border border-gray-6 bg-gray-2 shadow-2xl"
+            className="relative flex max-h-full w-full max-w-[420px] flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2 shadow-2xl"
             initial={reduce ? false : { opacity: 0, scale: 0.98, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 8 }}
             transition={{ duration: DURATION.emphasis, ease: EASE.out }}
           >
-            <div className="border-b border-gray-6 px-5 py-4">
-              <h2 className="text-lg font-semibold leading-[1.2] text-gray-12">
-                Pay with USDC
-              </h2>
-              <p className="mt-1 text-sm leading-[1.4] text-gray-11">
-                Prepaid: {periodDays} days of Pro. It does not renew — when it ends
-                your account goes back to Free until you pay again.
-              </p>
-            </div>
+            {/* Conteúdo inteiro rola dentro do dialog. O teto é a altura da tela
+                menos o p-4 do container; vai no VIEWPORT (no Root não limitaria). */}
+            <ScrollArea viewportClassName="max-h-[calc(100dvh-2rem)]">
+              <div className="border-b border-gray-6 px-5 py-4">
+                <h2 className="text-lg font-semibold leading-[1.2] text-gray-12">
+                  Pay with USDC
+                </h2>
+                <p className="mt-1 text-sm leading-[1.4] text-gray-11">
+                  Prepaid: {periodDays} days of Pro. It does not renew — when it ends
+                  your account goes back to Free until you pay again.
+                </p>
+              </div>
 
-            {!paymentId && (
-              <ChainPicker
-                chains={chains}
-                amount={amount}
-                pending={create.isPending ? create.variables : undefined}
-                onPick={(chain) => create.mutate(chain)}
-                onOpenChange={onSelectOpenChange}
-              />
-            )}
+              {!paymentId && (
+                <ChainPicker
+                  chains={chains}
+                  amount={amount}
+                  pending={create.isPending ? create.variables : undefined}
+                  onPick={(chain) => create.mutate(chain)}
+                  onOpenChange={onSelectOpenChange}
+                />
+              )}
 
-            {paymentId && payment.data && !confirmed && (
-              <PayStep
-                payment={payment.data}
-                evmChains={chains.filter(isEvmChain)}
-                checkedAt={payment.dataUpdatedAt}
-              />
-            )}
+              {paymentId && payment.data && !confirmed && (
+                <PayStep
+                  payment={payment.data}
+                  evmChains={chains.filter(isEvmChain)}
+                  checkedAt={payment.dataUpdatedAt}
+                  submitting={submitHere && submit.isPending}
+                  submitError={
+                    submitHere && submit.isError ? getApiErrorMessage(submit.error) : null
+                  }
+                  onSubmit={(payer) => submit.mutate({ id: paymentId, payer })}
+                />
+              )}
 
-            {paymentId && !payment.data && (
-              <p className="px-5 py-8 text-center text-sm text-gray-11">Loading…</p>
-            )}
+              {paymentId && !payment.data && (
+                <p className="px-5 py-8 text-center text-sm text-gray-11">Loading…</p>
+              )}
 
-            {confirmed && payment.data && <Confirmed payment={payment.data} />}
+              {confirmed && payment.data && <Confirmed payment={payment.data} />}
 
-            <div className="flex gap-2 border-t border-gray-6 p-4">
-              {paymentId && !confirmed ? (
-                <button type="button" onClick={() => setPaymentId(null)} className={SECONDARY_BTN}>
-                  Change network
+              <div className="flex gap-2 border-t border-gray-6 p-4">
+                {paymentId && !confirmed ? (
+                  <button
+                    type="button"
+                    onClick={() => setPaymentId(null)}
+                    className={SECONDARY_BTN}
+                  >
+                    Change network
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={close}
+                  className={confirmed ? PRIMARY_BTN : SECONDARY_BTN}
+                >
+                  {confirmed ? "Done" : "Close"}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={close}
-                className={confirmed ? PRIMARY_BTN : SECONDARY_BTN}
-              >
-                {confirmed ? "Done" : "Close"}
-              </button>
-            </div>
+              </div>
+            </ScrollArea>
           </motion.div>
         </motion.div>
       )}
@@ -301,41 +327,49 @@ function PayStep({
   payment,
   evmChains,
   checkedAt,
+  submitting,
+  submitError,
+  onSubmit,
 }: {
   payment: CryptoPayment;
   /** Redes EVM ligadas — todas aceitam o mesmo pagamento (ver aviso). */
   evmChains: CryptoChain[];
   /** Hora da última consulta de status — o polling de 5s serve de relógio. */
   checkedAt: number;
+  submitting: boolean;
+  /** Erro do "enviei" (ex.: endereço inválido), já em texto para o usuário. */
+  submitError: string | null;
+  onSubmit: (payer: string) => void;
 }) {
   const expired = new Date(payment.expiresAt).getTime() < checkedAt;
   const isSolana = payment.chain === "SOLANA";
+  const [payer, setPayer] = useState(payment.declaredPayer ?? "");
+  const network = CHAIN_LABEL[payment.chain];
 
   return (
-    <div className="flex flex-col items-center gap-4 px-5 py-5">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={payment.qrDataUrl}
-        alt={`Payment QR code for USDC on ${CHAIN_LABEL[payment.chain]}`}
-        width={220}
-        height={220}
-        className="size-[220px] rounded-md bg-white"
-      />
-
-      <a
-        href={payment.paymentUri}
-        className={cn(PRIMARY_BTN, "w-full flex-none")}
-      >
-        Open in wallet
-      </a>
-
+    <div className="flex flex-col gap-4 px-5 py-5">
+      {/* 1. Para onde e quanto — o essencial primeiro. */}
       <dl className="flex w-full flex-col gap-3 text-sm">
-        <div className="flex items-center justify-between gap-3">
-          <dt className="text-gray-11">Network</dt>
-          <dd className="font-semibold text-gray-12">{CHAIN_LABEL[payment.chain]}</dd>
+        <div className="flex flex-col gap-1">
+          <dt className="text-gray-11">Send to this wallet ({network})</dt>
+          <dd className="flex items-center gap-2 rounded-md border border-gray-6 bg-gray-3 px-3 py-2">
+            <span
+              className="min-w-0 flex-1 break-all font-mono text-xs text-gray-12"
+              data-testid="receiver"
+            >
+              {payment.receiver}
+            </span>
+            <button
+              type="button"
+              onClick={() => copy(payment.receiver, "Address")}
+              className="shrink-0 text-xs font-semibold text-principal-11 hover:underline"
+            >
+              Copy
+            </button>
+          </dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="text-gray-11">Amount</dt>
+          <dt className="text-gray-11">Exact amount</dt>
           <dd className="flex items-center gap-2">
             <span className="font-mono font-semibold text-gray-12">
               {payment.amount} USDC
@@ -349,43 +383,78 @@ function PayStep({
             </button>
           </dd>
         </div>
-        {!isSolana && (
-          <div className="flex flex-col gap-1">
-            <dt className="text-gray-11">Send to</dt>
-            <dd className="flex items-center gap-2">
-              <span className="min-w-0 break-all font-mono text-xs text-gray-12">
-                {payment.receiver}
-              </span>
-              <button
-                type="button"
-                onClick={() => copy(payment.receiver, "Address")}
-                className="shrink-0 text-xs font-semibold text-principal-11 hover:underline"
-              >
-                Copy
-              </button>
-            </dd>
-          </div>
-        )}
       </dl>
 
-      {/* O aviso muda por família porque o que identifica o pagamento muda: na
-          Solana é a reference dentro do QR; nas EVM é o valor exato — que por
-          ser único vale em qualquer rede EVM ligada, não só na escolhida. */}
+      {/* O valor exato (centavos únicos) + a carteira informada identificam o
+          pagamento. Nas EVM o mesmo endereço recebe em todas as redes ligadas. */}
       <p className="w-full rounded-md border border-principal-7 bg-principal-3 px-3 py-2 text-xs leading-[1.4] text-principal-12">
         {isSolana
-          ? "Pay by scanning the QR or with “Open in wallet” (Phantom, Solflare). The QR carries a reference that links the payment to your account — sending to the address by hand will not be detected."
-          : `Send exactly ${payment.amount} USDC — the cents identify your payment, so any other amount or token cannot be matched. Same address on ${evmChains
+          ? `Send exactly ${payment.amount} USDC on Solana. The cents identify your payment — any other amount or token cannot be matched.`
+          : `Send exactly ${payment.amount} USDC. The cents identify your payment — any other amount or token cannot be matched. Same address on ${evmChains
               .map((c) => CHAIN_LABEL[c])
               .join(", ")}: paying on any of them works.`}
       </p>
 
-      <p className="flex items-center gap-2 text-sm text-gray-11" aria-live="polite">
-        <span className="size-2 animate-pulse rounded-full bg-principal-9" aria-hidden="true" />
-        {expired
-          ? "This window has expired. If you already paid, it will still be credited — otherwise start a new payment."
-          : `Waiting for payment… it confirms a few minutes after you send. Pay by ${new Date(
-              payment.expiresAt,
-            ).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}.`}
+      {/* 2. Atalho opcional: QR / link direto para a carteira. */}
+      <details className="group w-full rounded-md border border-gray-6 px-3 py-2 text-sm text-gray-11">
+        <summary className="cursor-pointer select-none font-semibold text-gray-12">
+          Pay with QR code
+        </summary>
+        <div className="mt-3 flex flex-col items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={payment.qrDataUrl}
+            alt={`Payment QR code for USDC on ${network}`}
+            width={200}
+            height={200}
+            className="size-[200px] rounded-md bg-white"
+          />
+          <a href={payment.paymentUri} className={cn(SECONDARY_BTN, "w-full flex-none")}>
+            Open in wallet
+          </a>
+        </div>
+      </details>
+
+      {/* 3. "Enviei": de qual carteira saiu o pagamento. */}
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (payer.trim()) onSubmit(payer.trim());
+        }}
+      >
+        <TextField
+          label="Your wallet (the one you are paying from)"
+          placeholder={isSolana ? "Solana address" : "0x…"}
+          value={payer}
+          onChange={(e) => setPayer(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          error={submitError ?? undefined}
+          className="font-mono text-sm"
+        />
+        <button
+          type="submit"
+          disabled={!payer.trim() || submitting}
+          className={cn(PRIMARY_BTN, "w-full flex-none disabled:cursor-not-allowed")}
+        >
+          {submitting ? "Checking…" : "I've sent the payment"}
+        </button>
+      </form>
+
+      <p className="flex items-start gap-2 text-sm text-gray-11" aria-live="polite">
+        <span
+          className="mt-1.5 size-2 shrink-0 animate-pulse rounded-full bg-principal-9"
+          aria-hidden="true"
+        />
+        {payment.declaredPayer && !submitting
+          ? `We haven't found ${payment.amount} USDC from this wallet yet. Transfers take a few minutes to confirm — we keep checking automatically, you can close this window.`
+          : expired
+            ? "This window has expired. If you already paid, it will still be credited — otherwise start a new payment."
+            : `Waiting for payment. Pay by ${new Date(payment.expiresAt).toLocaleTimeString(
+                "en-US",
+                { hour: "2-digit", minute: "2-digit" },
+              )}.`}
       </p>
     </div>
   );

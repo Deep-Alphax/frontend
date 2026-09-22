@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
 
 /** Overlay + painel centralizado. Fecha no X, clique fora e Esc. */
@@ -14,6 +15,7 @@ export function Modal({
   footer,
   className,
   bodyClassName,
+  bodyScroll = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -23,6 +25,8 @@ export function Modal({
   className?: string;
   /** Classes do corpo — p/ trocar a rolagem única por colunas que rolam sozinhas. */
   bodyClassName?: string;
+  /** `false` quando o corpo é um layout de colunas que rolam sozinhas. */
+  bodyScroll?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -61,7 +65,18 @@ export function Modal({
             <X className="size-5" strokeWidth={2} />
           </button>
         </div>
-        <div className={cn("min-h-0 flex-1 overflow-y-auto", bodyClassName)}>{children}</div>
+        {bodyScroll ? (
+          // Painel é `max-h` (altura não definida): o viewport encolhe como item
+          // flex (`flex-1 min-h-0`) em vez de `h-full`, que não resolveria.
+          <ScrollArea
+            className={cn("flex min-h-0 flex-1 flex-col", bodyClassName)}
+            viewportClassName="min-h-0 flex-1"
+          >
+            {children}
+          </ScrollArea>
+        ) : (
+          <div className={cn("min-h-0 flex-1", bodyClassName)}>{children}</div>
+        )}
         {footer && <div className="shrink-0 border-t border-gray-6 p-4">{footer}</div>}
       </div>
     </div>

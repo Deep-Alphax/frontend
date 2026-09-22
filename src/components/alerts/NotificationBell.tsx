@@ -25,6 +25,7 @@ import {
 } from "@/lib/api/alerts";
 import { timeAgo } from "@/lib/api/affiliates";
 import { useAccountEvents } from "@/lib/alerts/useAccountEvents";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
 
 /**
@@ -148,7 +149,8 @@ export function NotificationBell() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* Popover é `max-h`: o viewport encolhe como item flex, não `h-full`. */}
+          <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
             {list.isLoading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="size-5 animate-spin text-gray-11" />
@@ -217,7 +219,7 @@ export function NotificationBell() {
                 )}
               </ul>
             )}
-          </div>
+          </ScrollArea>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

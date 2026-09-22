@@ -14,6 +14,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
 interface FormState {
   id: string | null; // null = criando; setado = editando
@@ -238,119 +239,119 @@ export function MonitorsManager() {
           No rules yet. Create the first one.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="text-gray-11">
-              <tr className="border-b border-gray-6">
-                <th className="py-2 pr-4 font-medium">Rule</th>
-                <th className="py-2 pr-4 font-medium">Channel</th>
-                <th className="py-2 pr-4 font-medium">Telegram</th>
-                <th className="py-2 pr-4 font-medium">Active</th>
-                <th className="py-2 pr-4 font-medium">Plan</th>
-                <th className="py-2 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monitors.map((m) => (
-                <tr
-                  key={m.id}
-                  className="border-b border-gray-6/50 text-gray-12"
-                >
-                  <td className="py-3 pr-4">
-                    <div className="font-medium">{m.name || "—"}</div>
-                    {m.pattern ? (
-                      <code className="text-xs text-gray-11">{m.pattern}</code>
-                    ) : (
-                      <span className="text-xs text-green-11">
-                        espelha tudo
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 font-mono text-xs text-gray-11">
-                    {m.channelId ? (
-                      m.channelId
-                    ) : (
-                      <span className="text-secundaria-11">
-                        servidor {m.guildId}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 font-mono text-xs text-gray-11">
-                    {m.telegramChatId}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <button
-                      onClick={() => toggleMutation.mutate(m)}
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs font-medium " +
-                        (m.isActive
-                          ? "bg-green-10/20 text-green-11"
-                          : "bg-gray-6/40 text-gray-11")
-                      }
-                    >
-                      {m.isActive ? "ativa" : "inativa"}
-                    </button>
-                  </td>
-                  <td className="py-3 pr-4">
-                    {/* Um clique libera/tira do FREE. O feed do FREE (REST e
-                        socket) passa a refletir na requisição seguinte. */}
-                    <button
-                      onClick={() => tierMutation.mutate(m)}
-                      disabled={tierMutation.isPending}
-                      title={
-                        m.freeTier
-                          ? "Visible to Free and Pro"
-                          : "Visible to Pro only"
-                      }
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs font-medium " +
-                        (m.freeTier
-                          ? "bg-secundaria-11/15 text-secundaria-11"
-                          : "bg-principal-9/15 text-principal-9")
-                      }
-                    >
-                      {m.freeTier ? "Free + Pro" : "Pro only"}
-                    </button>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          setForm({
-                            id: m.id,
-                            name: m.name ?? "",
-                            channelId: m.channelId ?? "",
-                            guildId: m.guildId ?? "",
-                            pattern: m.pattern ?? "",
-                            telegramChatId: m.telegramChatId,
-                            waitForBotReply: m.waitForBotReply,
-                            isActive: m.isActive,
-                            freeTier: m.freeTier,
-                          })
-                        }
-                        className="text-secundaria-11 hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            confirm(`Remove the rule "${m.name || m.pattern}"?`)
-                          ) {
-                            deleteMutation.mutate(m.id);
-                          }
-                        }}
-                        className="text-danger-11 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </td>
+        <ScrollArea orientation="horizontal">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="text-gray-11">
+                <tr className="border-b border-gray-6">
+                  <th className="py-2 pr-4 font-medium">Rule</th>
+                  <th className="py-2 pr-4 font-medium">Channel</th>
+                  <th className="py-2 pr-4 font-medium">Telegram</th>
+                  <th className="py-2 pr-4 font-medium">Active</th>
+                  <th className="py-2 pr-4 font-medium">Plan</th>
+                  <th className="py-2 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {monitors.map((m) => (
+                  <tr
+                    key={m.id}
+                    className="border-b border-gray-6/50 text-gray-12"
+                  >
+                    <td className="py-3 pr-4">
+                      <div className="font-medium">{m.name || "—"}</div>
+                      {m.pattern ? (
+                        <code className="text-xs text-gray-11">{m.pattern}</code>
+                      ) : (
+                        <span className="text-xs text-green-11">
+                          espelha tudo
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 font-mono text-xs text-gray-11">
+                      {m.channelId ? (
+                        m.channelId
+                      ) : (
+                        <span className="text-secundaria-11">
+                          servidor {m.guildId}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 font-mono text-xs text-gray-11">
+                      {m.telegramChatId}
+                    </td>
+                    <td className="py-3 pr-4">
+                      <button
+                        onClick={() => toggleMutation.mutate(m)}
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs font-medium " +
+                          (m.isActive
+                            ? "bg-green-10/20 text-green-11"
+                            : "bg-gray-6/40 text-gray-11")
+                        }
+                      >
+                        {m.isActive ? "ativa" : "inativa"}
+                      </button>
+                    </td>
+                    <td className="py-3 pr-4">
+                      {/* Um clique libera/tira do FREE. O feed do FREE (REST e
+                          socket) passa a refletir na requisição seguinte. */}
+                      <button
+                        onClick={() => tierMutation.mutate(m)}
+                        disabled={tierMutation.isPending}
+                        title={
+                          m.freeTier
+                            ? "Visible to Free and Pro"
+                            : "Visible to Pro only"
+                        }
+                        className={
+                          "rounded-full px-2 py-0.5 text-xs font-medium " +
+                          (m.freeTier
+                            ? "bg-secundaria-11/15 text-secundaria-11"
+                            : "bg-principal-9/15 text-principal-9")
+                        }
+                      >
+                        {m.freeTier ? "Free + Pro" : "Pro only"}
+                      </button>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            setForm({
+                              id: m.id,
+                              name: m.name ?? "",
+                              channelId: m.channelId ?? "",
+                              guildId: m.guildId ?? "",
+                              pattern: m.pattern ?? "",
+                              telegramChatId: m.telegramChatId,
+                              waitForBotReply: m.waitForBotReply,
+                              isActive: m.isActive,
+                              freeTier: m.freeTier,
+                            })
+                          }
+                          className="text-secundaria-11 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (
+                              confirm(`Remove the rule "${m.name || m.pattern}"?`)
+                            ) {
+                              deleteMutation.mutate(m.id);
+                            }
+                          }}
+                          className="text-danger-11 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        </ScrollArea>
       )}
     </section>
   );
