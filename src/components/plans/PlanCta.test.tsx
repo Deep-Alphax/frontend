@@ -101,8 +101,28 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     await user.click(cryptoBtn);
 
     expect(screen.getByRole("dialog", { name: "Pay with USDC" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /USDC on Solana/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /USDC on Base/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: "Network" }));
+    const options = Array.from(
+      (await screen.findByRole("listbox")).querySelectorAll('[role="option"]'),
+    ).map((o) => o.textContent);
+    expect(options).toEqual(["USDC on Solana", "USDC on Base"]);
+  });
+
+  it("os dois botões ocupam a largura toda do card, um embaixo do outro", async () => {
+    // O container do CTA no PlanCard é `items-start`: sem `w-full` no wrapper
+    // ele encolhe até o conteúdo e os botões ficam pela metade.
+    setup();
+    renderWithQuery(<PlanCta tone="pro" />);
+    const cryptoBtn = await screen.findByRole("button", { name: "Pay with USDC (prepaid)" });
+    const cardBtn = screen.getByRole("button", { name: "Choose this plan" });
+    const wrapper = cardBtn.parentElement!;
+    expect(cryptoBtn.parentElement).toBe(wrapper);
+    expect(wrapper.className).toMatch(/\bw-full\b/);
+    expect(wrapper.className).toMatch(/\bflex-col\b/);
+    for (const btn of [cardBtn, cryptoBtn]) {
+      expect(btn.className).toMatch(/\bw-full\b/);
+      expect(btn.className).toMatch(/\bh-11\b/);
+    }
   });
 
   it("fechar o modal pelo Close some com ele", async () => {

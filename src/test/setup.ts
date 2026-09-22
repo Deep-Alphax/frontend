@@ -29,6 +29,17 @@ if (!("IntersectionObserver" in globalThis)) {
  * motivo do anterior: em jsdom `clientWidth`/`scrollWidth` são sempre 0, então
  * um observer de verdade não teria nada de real para medir.
  */
+/**
+ * O Select (Radix) usa pointer capture e `scrollIntoView` ao abrir/navegar o
+ * painel — nenhum dos dois existe no jsdom. Sem os stubs, abrir o dropdown num
+ * teste lança "hasPointerCapture is not a function".
+ */
+if (typeof Element !== "undefined") {
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
+}
+
 if (!("ResizeObserver" in globalThis)) {
   class ResizeObserverStub implements ResizeObserver {
     observe() {}

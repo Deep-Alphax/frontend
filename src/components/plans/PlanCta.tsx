@@ -93,7 +93,7 @@ export function PlanCta({ tone }: PlanCtaProps) {
       ? formatDate(billing.data.currentPeriodEnd)
       : null;
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex w-full flex-col gap-2">
         {billing.data?.provider === "CRYPTO" && canPayCrypto ? (
           <Button variant="primary" onClick={() => setCryptoOpen(true)}>
             Renew with USDC
@@ -130,7 +130,7 @@ export function PlanCta({ tone }: PlanCtaProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <Button
         variant="primary"
         disabled={isLoading || checkout.isPending}
@@ -147,7 +147,11 @@ export function PlanCta({ tone }: PlanCtaProps) {
         {checkout.isPending ? "Opening checkout…" : "Choose this plan"}
       </Button>
       {canPayCrypto && (
-        <Button variant="secondary" onClick={() => setCryptoOpen(true)}>
+        <Button
+          variant="secondary"
+          className="h-11 p-0"
+          onClick={() => setCryptoOpen(true)}
+        >
           Pay with USDC (prepaid)
         </Button>
       )}

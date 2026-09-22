@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,13 @@ import {
   type CryptoChain,
   type CryptoPayment,
 } from "@/lib/api/billing";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/cn";
@@ -102,10 +109,19 @@ export function CryptoPayModal({
     onClose();
   }, [onClose]);
 
+  // Esc com o dropdown de rede aberto fecha SÓ o dropdown. O Radix trata o Esc
+  // em captura (antes deste listener) e já avisa "fechou"; por isso a baixa do
+  // flag vai para o próximo tick — senão o mesmo Esc fecharia o modal junto.
+  const selectOpen = useRef(false);
+  const onSelectOpenChange = useCallback((isOpen: boolean) => {
+    if (isOpen) selectOpen.current = true;
+    else setTimeout(() => (selectOpen.current = false), 0);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape" && !selectOpen.current) close();
     };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -185,6 +201,7 @@ export function CryptoPayModal({
                 amount={amount}
                 pending={create.isPending ? create.variables : undefined}
                 onPick={(chain) => create.mutate(chain)}
+                onOpenChange={onSelectOpenChange}
               />
             )}
 
@@ -229,41 +246,53 @@ function ChainPicker({
   amount,
   pending,
   onPick,
+  onOpenChange,
 }: {
   chains: CryptoChain[];
   amount: string;
   pending?: CryptoChain;
   onPick: (chain: CryptoChain) => void;
+  /** Avisa o modal quando o dropdown abre/fecha (o Esc é do dropdown, não do modal). */
+  onOpenChange: (open: boolean) => void;
 }) {
+  const [chain, setChain] = useState<CryptoChain | undefined>(undefined);
+  const note = chain ? CHAIN_NOTE[chain] : undefined;
+
   return (
     <div className="flex flex-col gap-3 px-5 py-5">
       <p className="text-sm text-gray-11">
         Choose the network you will pay from. Only <strong className="text-gray-12">USDC</strong>{" "}
         is accepted — about ${amount}.
       </p>
-      {chains.map((chain) => (
-        <button
-          key={chain}
-          type="button"
-          disabled={pending !== undefined}
-          onClick={() => onPick(chain)}
-          className={cn(
-            "flex min-h-12 items-center justify-between rounded-lg border border-gray-6 bg-gray-3 px-4 py-2",
-            "text-base font-semibold text-gray-12 transition-colors hover:border-gray-8",
-            "outline-none focus-visible:ring-2 focus-visible:ring-secundaria-11/60 disabled:opacity-60",
-          )}
-        >
-          <span className="flex flex-col items-start">
-            <span>USDC on {CHAIN_LABEL[chain]}</span>
-            {CHAIN_NOTE[chain] && (
-              <span className="text-xs font-normal text-gray-11">{CHAIN_NOTE[chain]}</span>
-            )}
-          </span>
-          <span className="text-sm font-normal text-gray-11">
-            {pending === chain ? "Preparing…" : "→"}
-          </span>
-        </button>
-      ))}
+
+      <Select
+        value={chain}
+        onValueChange={(v) => setChain(v as CryptoChain)}
+        onOpenChange={onOpenChange}
+        disabled={pending !== undefined}
+      >
+        <SelectTrigger aria-label="Network">
+          <SelectValue placeholder="Select a network" />
+        </SelectTrigger>
+        <SelectContent>
+          {chains.map((c) => (
+            <SelectItem key={c} value={c}>
+              USDC on {CHAIN_LABEL[c]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {note && <p className="-mt-1 text-xs text-gray-11">{note}</p>}
+
+      <button
+        type="button"
+        disabled={!chain || pending !== undefined}
+        onClick={() => chain && onPick(chain)}
+        className={cn(PRIMARY_BTN, "w-full flex-none disabled:cursor-not-allowed")}
+      >
+        {pending ? "Preparing…" : "Continue"}
+      </button>
     </div>
   );
 }

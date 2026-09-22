@@ -85,21 +85,86 @@ function renderModal(
   return { ...utils, onClose };
 }
 
+type User = ReturnType<typeof userEvent.setup>;
+
+/** Abre o dropdown de rede e escolhe a opção (sem confirmar). */
+async function selectChain(user: User, label: RegExp) {
+  await user.click(screen.getByRole("combobox", { name: "Network" }));
+  await user.click(await screen.findByRole("option", { name: label }));
+}
+
+/** Escolhe a rede no dropdown e confirma em "Continue". */
+async function pickChain(user: User, label: RegExp) {
+  await selectChain(user, label);
+  await user.click(screen.getByRole("button", { name: "Continue" }));
+}
+
+/** Opções visíveis no dropdown aberto. */
+async function openOptions(user: User) {
+  await user.click(screen.getByRole("combobox", { name: "Network" }));
+  const list = await screen.findByRole("listbox");
+  return Array.from(list.querySelectorAll('[role="option"]')).map((o) => o.textContent);
+}
+
 describe("CryptoPayModal — seletor de rede", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("lista SÓ as redes recebidas, com rótulos e notas", () => {
+  it("é um dropdown (combobox) que lista SÓ as redes recebidas, com rótulos", async () => {
+    const user = userEvent.setup();
     renderModal({ chains: ["SOLANA", "ETHEREUM", "BSC"] });
 
-    expect(screen.getByRole("button", { name: /USDC on Solana/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /USDC on Ethereum/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /USDC on BNB Chain/ })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Network" })).toHaveTextContent(
+      "Select a network",
+    );
+    expect(await openOptions(user)).toEqual([
+      "USDC on Solana",
+      "USDC on Ethereum",
+      "USDC on BNB Chain",
+    ]);
+  });
+
+  it("mostra a nota da rede escolhida (Ethereum: taxa; BSC: Binance-Peg)", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    expect(screen.queryByText("higher network fee")).not.toBeInTheDocument();
+
+    await selectChain(user, /USDC on Ethereum/);
     expect(screen.getByText("higher network fee")).toBeInTheDocument();
+
+    await selectChain(user, /USDC on BNB Chain/);
     expect(screen.getByText("Binance-Peg USDC (BEP-20)")).toBeInTheDocument();
-    expect(screen.queryByText(/USDC on Base/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/USDC on Arbitrum/)).not.toBeInTheDocument();
+    expect(screen.queryByText("higher network fee")).not.toBeInTheDocument();
+  });
+
+  it("Continue fica desabilitado até escolher uma rede, e escolher NÃO cria cobrança", async () => {
+    const user = userEvent.setup();
+    renderModal();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+    await selectChain(user, /USDC on Base/);
+    expect(screen.getByRole("combobox", { name: "Network" })).toHaveTextContent("USDC on Base");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    expect(createPay).not.toHaveBeenCalled();
+  });
+
+  it("Esc com o dropdown aberto fecha só o dropdown, não o modal", async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderModal();
+    await user.click(screen.getByRole("combobox", { name: "Network" }));
+    await screen.findByRole("listbox");
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // Com o dropdown já fechado, o próximo Esc fecha o modal.
+    await new Promise((r) => setTimeout(r, 0));
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("fechado não renderiza nada", () => {
@@ -113,13 +178,11 @@ describe("CryptoPayModal — seletor de rede", () => {
     createPay.mockReturnValue(new Promise((r) => (resolve = r)));
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Arbitrum/ }));
+    await pickChain(user, /USDC on Arbitrum/);
 
     expect(createPay.mock.calls[0][0]).toBe("ARBITRUM");
-    expect(await screen.findByText("Preparing…")).toBeInTheDocument();
-    for (const label of [/USDC on Solana/, /USDC on Base/, /USDC on Arbitrum/]) {
-      expect(screen.getByRole("button", { name: label })).toBeDisabled();
-    }
+    expect(await screen.findByRole("button", { name: "Preparing…" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Network" })).toBeDisabled();
 
     await act(async () => resolve(payment({ chain: "ARBITRUM" })));
     expect(await screen.findByRole("link", { name: "Open in wallet" })).toBeInTheDocument();
@@ -130,13 +193,15 @@ describe("CryptoPayModal — seletor de rede", () => {
     createPay.mockRejectedValue(new Error("boom"));
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
     expect(vi.mocked(toast.error).mock.calls[0][0]).toBe(
       "Something went wrong. Please try again.",
     );
-    expect(screen.getByRole("button", { name: /USDC on Base/ })).toBeEnabled();
+    // Continua no seletor, com a rede escolhida, pronto para tentar de novo.
+    expect(screen.getByRole("combobox", { name: "Network" })).toHaveTextContent("USDC on Base");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
   });
 });
 
@@ -150,7 +215,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(SOLANA_PAYMENT);
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Solana/ }));
+    await pickChain(user, /USDC on Solana/);
 
     const qr = await screen.findByAltText("Payment QR code for USDC on Solana");
     expect(qr).toHaveAttribute("src", SOLANA_PAYMENT.qrDataUrl);
@@ -171,7 +236,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(p);
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
 
     expect(await screen.findByText("50.012345 USDC")).toBeInTheDocument();
     expect(screen.getByText("Send to")).toBeInTheDocument();
@@ -192,7 +257,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(payment());
     renderModal({ chains: ["SOLANA", "BASE", "POLYGON"] });
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
 
     expect(
       await screen.findByText(/Same address on Base, Polygon: paying on any of them works\./),
@@ -210,7 +275,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(p);
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     const copies = await screen.findAllByRole("button", { name: "Copy" });
     expect(copies).toHaveLength(2);
 
@@ -232,7 +297,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(payment());
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     await user.click((await screen.findAllByRole("button", { name: "Copy" }))[0]);
 
     await waitFor(() =>
@@ -249,7 +314,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     );
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
 
     expect(await screen.findByText(/This window has expired/)).toBeInTheDocument();
     expect(screen.queryByText(/Waiting for payment/)).not.toBeInTheDocument();
@@ -260,7 +325,7 @@ describe("CryptoPayModal — tela de pagamento", () => {
     createPay.mockResolvedValue(payment());
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
 
     expect(await screen.findByText(/Waiting for payment/)).toBeInTheDocument();
   });
@@ -286,7 +351,7 @@ describe("CryptoPayModal — polling e confirmação", () => {
     const { client } = renderModal();
     const invalidate = vi.spyOn(client, "invalidateQueries");
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     expect(await screen.findByText(/Waiting for payment/)).toBeInTheDocument();
 
     // 1º ciclo: ainda pendente.
@@ -323,7 +388,7 @@ describe("CryptoPayModal — polling e confirmação", () => {
     getPay.mockResolvedValue(payment());
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     await screen.findByText(/Waiting for payment/);
 
     await act(async () => {
@@ -343,10 +408,10 @@ describe("CryptoPayModal — navegação e fechamento", () => {
     const user = userEvent.setup();
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     await user.click(await screen.findByRole("button", { name: "Change network" }));
 
-    expect(screen.getByRole("button", { name: /USDC on Solana/ })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Network" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open in wallet" })).not.toBeInTheDocument();
   });
 
@@ -379,7 +444,7 @@ describe("CryptoPayModal — navegação e fechamento", () => {
       <CryptoPayModal open chains={ALL} amount="50" periodDays={30} onClose={onClose} />,
     );
 
-    await user.click(screen.getByRole("button", { name: /USDC on Base/ }));
+    await pickChain(user, /USDC on Base/);
     await screen.findByRole("link", { name: "Open in wallet" });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -391,7 +456,9 @@ describe("CryptoPayModal — navegação e fechamento", () => {
       <CryptoPayModal open chains={ALL} amount="50" periodDays={30} onClose={onClose} />,
     );
 
-    expect(await screen.findByRole("button", { name: /USDC on Solana/ })).toBeInTheDocument();
+    expect(await screen.findByRole("combobox", { name: "Network" })).toHaveTextContent(
+      "Select a network",
+    );
     expect(screen.queryByRole("link", { name: "Open in wallet" })).not.toBeInTheDocument();
   });
 });
