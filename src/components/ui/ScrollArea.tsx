@@ -29,6 +29,10 @@ import { cn } from "@/lib/cn";
  *     sem rolar. Deixe o flex dar a altura:
  *       <ScrollArea className="flex min-h-0 flex-1 flex-col"
  *                   viewportClassName="min-h-0 flex-1">
+ *  5. POSIÇÃO: o Radix força `position: relative` inline na raiz. O componente
+ *     anula isso (classe `fixed`/`absolute` funciona), mas prefira deixar
+ *     overlays e painéis deslizantes num wrapper próprio e o ScrollArea dentro
+ *     com `size-full` — fica explícito quem posiciona e quem rola.
  */
 
 type Orientation = "vertical" | "horizontal" | "both";
@@ -56,6 +60,7 @@ export function ScrollArea({
   viewportClassName,
   viewportProps,
   type = "hover",
+  style,
   ...props
 }: ScrollAreaProps) {
   return (
@@ -63,6 +68,11 @@ export function ScrollArea({
       data-slot="scroll-area"
       type={type}
       className={cn("relative overflow-hidden", className)}
+      // O Radix grava `position: relative` INLINE na raiz, e inline vence
+      // classe: `fixed`/`absolute`/`sticky` no className eram ignorados (o modal
+      // de afiliados virou uma caixa solta no meio da página por isso). Anulado
+      // aqui, quem decide é a classe — `relative` por padrão, acima.
+      style={{ position: undefined, ...style }}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport

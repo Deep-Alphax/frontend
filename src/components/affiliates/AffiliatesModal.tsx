@@ -66,12 +66,16 @@ function AffiliatesDialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <ScrollArea
+    <div
       className="fixed inset-0 z-50 bg-black/60"
       role="dialog"
       aria-modal="true"
       aria-label="Affiliates"
     >
+      {/* O fundo fixo é o div acima — NÃO o ScrollArea: o Radix grava
+          `position: relative` inline na raiz dele, o que anulava o `fixed`
+          e deixava o modal solto no meio da página. */}
+      <ScrollArea className="size-full">
       {/* O backdrop clicável é esta camada (ocupa a tela toda: `min-h-dvh`,
           porque `min-h-full` não resolve dentro do viewport do ScrollArea). */}
       <div
@@ -116,7 +120,8 @@ function AffiliatesDialog({ onClose }: { onClose: () => void }) {
         )}
       </div>
       </div>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 }
 

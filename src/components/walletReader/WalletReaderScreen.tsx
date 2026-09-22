@@ -335,15 +335,16 @@ export function WalletReaderScreen() {
           />
         )}
 
-        {/* O Root é quem fica fixo/desliza no mobile; o viewport encolhe como
-            item flex para rolar dentro da altura esticada/fixa. */}
-        <ScrollArea
+        {/* O WRAPPER é quem fica fixo/desliza no mobile. O ScrollArea não pode
+            ter posição própria: o Radix grava `position: relative` inline na
+            raiz e isso vence qualquer classe (ver armadilha 5 no ScrollArea). */}
+        <div
           className={cn(
             "z-40 flex w-[203px] shrink-0 flex-col border-r border-gray-6 bg-gray-1 transition-transform max-lg:fixed max-lg:inset-y-0 max-lg:left-0",
             filtersOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
           )}
-          viewportClassName="min-h-0 flex-1"
         >
+        <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
         <aside className="flex flex-col">
           <div className="flex items-center justify-between border-b border-gray-6 px-3 py-2 lg:hidden">
             <span className="text-sm text-gray-11">Filters</span>
@@ -481,6 +482,7 @@ export function WalletReaderScreen() {
           </div>
         </aside>
         </ScrollArea>
+        </div>
 
         <main className="flex min-w-0 flex-1 flex-col">
           <header className="flex flex-wrap items-center justify-between gap-y-2.5 border-b border-gray-6 px-6 py-4">
