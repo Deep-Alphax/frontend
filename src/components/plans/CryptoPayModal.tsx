@@ -1,19 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import toast from "react-hot-toast";
 
 import {
   BILLING_DETAILS_KEY,
   createCryptoPayment,
   getCryptoPayment,
+  isEvmChain,
   PLAN_KEY,
   submitCryptoPayment,
   type CryptoChain,
   type CryptoPayment,
+  type SentCryptoTx,
 } from "@/lib/api/billing";
 import {
   Select,
@@ -23,19 +26,28 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { ScrollArea } from "@/components/ui/ScrollArea";
-import { TextField } from "@/components/ui/TextField";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { clearSentTx, loadSentTx, saveSentTx } from "@/lib/crypto/sentTx";
 import { DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/cn";
+import { PRIMARY_BTN, SECONDARY_BTN } from "@/components/plans/crypto/walletUi";
 
 /*
- * Pré-pago em USDC. Três estados: escolher a rede → pagar (QR + valor) →
- * confirmado.
+ * Pré-pago em USDC pela carteira do usuário. Uma etapa por vez: rede →
+ * carteira → pagar → confirmando → confirmado.
  *
- * O front não fala com blockchain nenhuma: o servidor reserva a cobrança, gera
- * o QR e confirma o pagamento varrendo a rede. Aqui só se consulta o status —
- * então não há carteira conectada, assinatura nem RPC no navegador.
+ * A carteira assina e transmite a transferência; o front só repassa o hash
+ * (e, nas EVM, a assinatura de posse da carteira) ao servidor. Quem decide se
+ * pagou é o backend, lendo a transação na rede (contrato do USDC, destino,
+ * valor, confirmações) — o hash vindo do navegador nunca é prova por si só.
+ *
+ * As libs de carteira (wagmi/viem para EVM, web3.js para Solana) ficam em
+ * chunks próprios, carregados só quando a etapa de pagar abre. O navegador não
+ * fala com RPC nenhum: tudo passa pelo provider da carteira ou pela nossa API.
  */
+
+const EvmWalletPay = lazy(() => import("@/components/plans/crypto/EvmWalletPay"));
+const SolanaWalletPay = lazy(() => import("@/components/plans/crypto/SolanaWalletPay"));
 
 const CHAIN_LABEL: Record<CryptoChain, string> = {
   SOLANA: "Solana",
@@ -47,25 +59,14 @@ const CHAIN_LABEL: Record<CryptoChain, string> = {
   BSC: "BNB Chain",
 };
 
-/** Nota por rede no seletor — o que o usuário precisa saber antes de escolher. */
+/** Nota curta por rede, dentro do próprio item do seletor. */
 const CHAIN_NOTE: Partial<Record<CryptoChain, string>> = {
-  ETHEREUM: "higher network fee",
-  BSC: "Binance-Peg USDC (BEP-20)",
+  ETHEREUM: "higher fee",
+  BSC: "Binance-Peg",
 };
 
 /** Consulta de status enquanto a cobrança está aberta. */
 const POLL_MS = 5_000;
-
-const SECONDARY_BTN = cn(
-  "flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg px-4",
-  "border border-gray-6 bg-gray-3 text-base font-semibold leading-[1.1] text-gray-12",
-  "outline-none transition-colors hover:border-gray-8 focus-visible:ring-2 focus-visible:ring-secundaria-11/60",
-);
-const PRIMARY_BTN = cn(
-  "flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg px-4",
-  "bg-principal-9 text-base font-semibold leading-[1.1] text-gray-1 hover:bg-principal-10",
-  "outline-none focus-visible:ring-2 focus-visible:ring-principal-11 disabled:opacity-60",
-);
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -76,13 +77,15 @@ function formatDate(iso: string | null): string {
   });
 }
 
-async function copy(text: string, what: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success(`${what} copied`);
-  } catch {
-    toast.error("Could not copy — select and copy it manually.");
-  }
+/**
+ * O servidor leu a transação e ela NÃO paga esta cobrança (4xx de validação).
+ * Rede caída, 5xx, timeout e 429 não são definitivos: o hash continua guardado
+ * para reenviar — o dinheiro pode já ter saído.
+ */
+function isDefinitiveRejection(error: unknown): boolean {
+  if (!(error instanceof AxiosError)) return false;
+  const status = error.response?.status ?? 0;
+  return status >= 400 && status < 500 && status !== 408 && status !== 429;
 }
 
 export function CryptoPayModal({
@@ -105,7 +108,8 @@ export function CryptoPayModal({
   const [paymentId, setPaymentId] = useState<string | null>(null);
 
   // Fechar zera o fluxo: reabrir começa na escolha de rede. Uma cobrança já
-  // aberta não se perde — o servidor a devolve de novo ao escolher a mesma rede.
+  // aberta não se perde — o servidor a devolve de novo ao escolher a mesma rede
+  // (inclusive a que está confirmando, que então aparece como "confirmando").
   const close = useCallback(() => {
     setPaymentId(null);
     onClose();
@@ -151,15 +155,62 @@ export function CryptoPayModal({
     refetchInterval: (q) => (q.state.data?.status === "PENDING" ? POLL_MS : false),
   });
 
-  // "Enviei": grava a carteira e o servidor procura na hora. A resposta já é a
-  // cobrança atualizada — entra direto no cache, sem esperar o próximo polling.
+  // Cobrança cuja transação em confirmação o servidor descartou (aviso).
+  const [lostTx, setLostTx] = useState<string | null>(null);
+
   // O id vai nas variáveis: o erro/estado de um envio só vale para a cobrança
   // em que ele aconteceu (trocar de rede ou reabrir não herda erro antigo).
   const submit = useMutation({
-    mutationFn: (v: { id: string; payer: string }) => submitCryptoPayment(v.id, v.payer),
-    onSuccess: (p) => qc.setQueryData(["crypto-payment", p.id], p),
+    mutationFn: (v: { id: string; tx: SentCryptoTx }) => submitCryptoPayment(v.id, v.tx),
+    onSuccess: (p, v) => {
+      clearSentTx(v.id);
+      qc.setQueryData(["crypto-payment", p.id], p);
+    },
+    onError: (error, v) => {
+      if (isDefinitiveRejection(error)) clearSentTx(v.id);
+    },
   });
   const submitHere = submit.variables?.id === paymentId;
+  // Transação que a carteira já transmitiu e o servidor ainda não registrou
+  // (enviando, ou falhou sem ser recusa definitiva). Enquanto existir, NUNCA se
+  // oferece pagar de novo — seria pagar em dobro.
+  const sentHere =
+    submitHere &&
+    (submit.isPending || (submit.isError && !isDefinitiveRejection(submit.error)))
+      ? submit.variables!.tx
+      : null;
+  const { mutate: submitMutate } = submit;
+
+  const onSent = useCallback(
+    (tx: SentCryptoTx) => {
+      if (!paymentId) return;
+      // Grava ANTES do POST: se a aba cair agora, reabrir reenvia daqui.
+      saveSentTx(paymentId, tx);
+      setLostTx(null);
+      submitMutate({ id: paymentId, tx });
+    },
+    [paymentId, submitMutate],
+  );
+
+  // Retomada: a carteira devolveu o hash numa visita anterior, mas o servidor
+  // nunca o recebeu (aba fechada, rede caiu). Reenvia uma vez por cobrança.
+  const resumed = useRef(new Set<string>());
+  const data = payment.data;
+  useEffect(() => {
+    if (!data || resumed.current.has(data.id)) return;
+    if (data.status !== "PENDING") {
+      clearSentTx(data.id);
+      return;
+    }
+    resumed.current.add(data.id);
+    if (data.submittedTxHash) {
+      clearSentTx(data.id);
+      return;
+    }
+    const stored = loadSentTx(data.id);
+    if (!stored) return;
+    submitMutate({ id: data.id, tx: stored });
+  }, [data, submitMutate]);
 
   const confirmed = payment.data?.status === "CONFIRMED";
   useEffect(() => {
@@ -168,7 +219,21 @@ export function CryptoPayModal({
     void qc.invalidateQueries({ queryKey: BILLING_DETAILS_KEY });
   }, [confirmed, qc]);
 
+  // O servidor descartou a transação em confirmação (não achou/não pagava):
+  // a cobrança volta a aceitar pagamento, com um aviso.
+  const lastSubmitted = useRef<{ id: string; hash: string | null } | null>(null);
+  useEffect(() => {
+    if (!data) return;
+    const prev = lastSubmitted.current;
+    if (prev?.id === data.id && prev.hash && !data.submittedTxHash && data.status === "PENDING") {
+      setLostTx(data.id);
+    }
+    lastSubmitted.current = { id: data.id, hash: data.submittedTxHash };
+  }, [data]);
+
   if (typeof document === "undefined") return null;
+
+  const locked = !!payment.data?.submittedTxHash || sentHere !== null;
 
   return createPortal(
     <AnimatePresence>
@@ -204,16 +269,14 @@ export function CryptoPayModal({
                 <h2 className="text-lg font-semibold leading-[1.2] text-gray-12">
                   Pay with USDC
                 </h2>
-                <p className="mt-1 text-sm leading-[1.4] text-gray-11">
-                  Prepaid: {periodDays} days of Pro. It does not renew — when it ends
-                  your account goes back to Free until you pay again.
+                <p className="mt-1 text-sm text-gray-11">
+                  {amount} USDC · {periodDays} days of Pro · doesn&apos;t renew
                 </p>
               </div>
 
               {!paymentId && (
                 <ChainPicker
                   chains={chains}
-                  amount={amount}
                   pending={create.isPending ? create.variables : undefined}
                   onPick={(chain) => create.mutate(chain)}
                   onOpenChange={onSelectOpenChange}
@@ -223,13 +286,15 @@ export function CryptoPayModal({
               {paymentId && payment.data && !confirmed && (
                 <PayStep
                   payment={payment.data}
-                  baseAmount={amount}
                   checkedAt={payment.dataUpdatedAt}
+                  sent={sentHere}
                   submitting={submitHere && submit.isPending}
                   submitError={
                     submitHere && submit.isError ? getApiErrorMessage(submit.error) : null
                   }
-                  onSubmit={(payer) => submit.mutate({ id: paymentId, payer })}
+                  lostTx={lostTx === paymentId}
+                  onSent={onSent}
+                  onRetry={() => sentHere && paymentId && submitMutate({ id: paymentId, tx: sentHere })}
                 />
               )}
 
@@ -240,13 +305,13 @@ export function CryptoPayModal({
               {confirmed && payment.data && <Confirmed payment={payment.data} />}
 
               <div className="flex gap-2 border-t border-gray-6 p-4">
-                {paymentId && !confirmed ? (
+                {paymentId && !confirmed && !locked ? (
                   <button
                     type="button"
                     onClick={() => setPaymentId(null)}
                     className={SECONDARY_BTN}
                   >
-                    Change network
+                    Back
                   </button>
                 ) : null}
                 <button
@@ -268,28 +333,20 @@ export function CryptoPayModal({
 
 function ChainPicker({
   chains,
-  amount,
   pending,
   onPick,
   onOpenChange,
 }: {
   chains: CryptoChain[];
-  amount: string;
   pending?: CryptoChain;
   onPick: (chain: CryptoChain) => void;
   /** Avisa o modal quando o dropdown abre/fecha (o Esc é do dropdown, não do modal). */
   onOpenChange: (open: boolean) => void;
 }) {
   const [chain, setChain] = useState<CryptoChain | undefined>(undefined);
-  const note = chain ? CHAIN_NOTE[chain] : undefined;
 
   return (
     <div className="flex flex-col gap-3 px-5 py-5">
-      <p className="text-sm text-gray-11">
-        Choose the network you will pay from. Only <strong className="text-gray-12">USDC</strong>{" "}
-        is accepted — about ${amount}.
-      </p>
-
       <Select
         value={chain}
         onValueChange={(v) => setChain(v as CryptoChain)}
@@ -303,12 +360,11 @@ function ChainPicker({
           {chains.map((c) => (
             <SelectItem key={c} value={c}>
               USDC on {CHAIN_LABEL[c]}
+              {CHAIN_NOTE[c] && <span className="text-gray-11"> · {CHAIN_NOTE[c]}</span>}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-
-      {note && <p className="-mt-1 text-xs text-gray-11">{note}</p>}
 
       <button
         type="button"
@@ -324,161 +380,102 @@ function ChainPicker({
 
 function PayStep({
   payment,
-  baseAmount,
   checkedAt,
+  sent,
   submitting,
   submitError,
-  onSubmit,
+  lostTx,
+  onSent,
+  onRetry,
 }: {
   payment: CryptoPayment;
-  /** Preço cheio ("50") — o que o usuário envia. Os centavos únicos são do QR. */
-  baseAmount: string;
   /** Hora da última consulta de status — o polling de 5s serve de relógio. */
   checkedAt: number;
+  /** Transação já transmitida pela carteira, ainda não registrada no servidor. */
+  sent: SentCryptoTx | null;
   submitting: boolean;
-  /** Erro do "enviei" (ex.: endereço inválido), já em texto para o usuário. */
+  /** Erro ao registrar o envio, já em texto para o usuário. */
   submitError: string | null;
-  onSubmit: (payer: string) => void;
+  /** O servidor descartou a transação que estava confirmando. */
+  lostTx: boolean;
+  onSent: (tx: SentCryptoTx) => void;
+  onRetry: () => void;
 }) {
-  const expired = new Date(payment.expiresAt).getTime() < checkedAt;
-  const isSolana = payment.chain === "SOLANA";
-  const [payer, setPayer] = useState(payment.declaredPayer ?? "");
   const network = CHAIN_LABEL[payment.chain];
 
-  /*
-   * Ordem pensada para o usuário que paga à mão: 1) diz de qual carteira vai
-   * pagar, 2) envia 50 redondos, 3) avisa que enviou. É a carteira declarada
-   * que liga um pagamento redondo à conta — por isso ela vem ANTES do envio.
-   * Os centavos únicos (payment.amount) seguem valendo, mas só pelo QR, que os
-   * preenche sozinho.
-   */
-  return (
-    <form
-      className="flex flex-col gap-5 px-5 py-5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (payer.trim()) onSubmit(payer.trim());
-      }}
-    >
-      <Step n={1} title="Your wallet — the one you will pay from">
-        <TextField
-          label="Your wallet address"
-          placeholder={isSolana ? "Solana address" : "0x…"}
-          value={payer}
-          onChange={(e) => setPayer(e.target.value)}
-          autoComplete="off"
-          spellCheck={false}
-          error={submitError ?? undefined}
-          className="font-mono text-sm"
+  // Registrado no servidor: só faltam confirmações.
+  if (payment.submittedTxHash) {
+    return (
+      <div className="flex flex-col items-center gap-2 px-5 py-8 text-center" aria-live="polite">
+        <span
+          className="size-6 animate-spin rounded-full border-2 border-gray-6 border-t-principal-9"
+          aria-hidden="true"
         />
-      </Step>
-
-      <Step n={2} title={`Send ${baseAmount} USDC on ${network}`}>
-        <div className="flex items-center gap-2 rounded-md border border-gray-6 bg-gray-3 px-3 py-2">
-          <span
-            className="min-w-0 flex-1 break-all font-mono text-xs text-gray-12"
-            data-testid="receiver"
-          >
-            {payment.receiver}
-          </span>
-          <button
-            type="button"
-            onClick={() => copy(payment.receiver, "Address")}
-            className="shrink-0 text-xs font-semibold text-principal-11 hover:underline"
-          >
-            Copy
-          </button>
-        </div>
-        <p className="w-full rounded-md border border-principal-7 bg-principal-3 px-3 py-2 text-xs leading-[1.4] text-principal-12">
-          {`Send at least ${baseAmount} USDC on ${network}, from the wallet above. Only USDC counts — other tokens or networks cannot be matched.`}
+        <p className="text-base font-semibold text-gray-12">Confirming on {network}…</p>
+        <p className="text-sm text-gray-11">
+          You can close this window — we&apos;ll credit it automatically.
         </p>
+      </div>
+    );
+  }
 
-        {/* Atalho: o QR já leva o valor exato (com os centavos únicos), que
-            identifica o pagamento mesmo sem a carteira informada. */}
-        <details className="w-full rounded-md border border-gray-6 px-3 py-2 text-sm text-gray-11">
-          <summary className="cursor-pointer select-none font-semibold text-gray-12">
-            Pay with QR code
-          </summary>
-          <div className="mt-3 flex flex-col items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={payment.qrDataUrl}
-              alt={`Payment QR code for USDC on ${network}`}
-              width={200}
-              height={200}
-              className="size-[200px] rounded-md bg-white"
-            />
-            <p className="text-center text-xs text-gray-11">
-              The QR fills in {payment.amount} USDC — the extra cents identify your
-              payment.
+  // A carteira transmitiu; o servidor ainda não registrou. Nunca oferece pagar
+  // de novo aqui — o dinheiro pode já ter saído.
+  if (sent) {
+    const failed = submitError !== null && !submitting;
+    return (
+      <div className="flex flex-col gap-3 px-5 py-6" aria-live="polite">
+        <p className="text-center text-sm font-semibold text-gray-12">
+          {failed ? "Payment sent — we couldn't register it yet." : "Payment sent — registering…"}
+        </p>
+        {failed && (
+          <>
+            <button type="button" onClick={onRetry} className={cn(PRIMARY_BTN, "w-full flex-none")}>
+              Retry
+            </button>
+            <p role="alert" className="text-sm text-danger-11">
+              {submitError} Don&apos;t pay again.
             </p>
-            <a href={payment.paymentUri} className={cn(SECONDARY_BTN, "w-full flex-none")}>
-              Open in wallet
-            </a>
-          </div>
-        </details>
-      </Step>
+          </>
+        )}
+      </div>
+    );
+  }
 
-      <Step n={3} title="Tell us you've sent it">
-        <button
-          type="submit"
-          disabled={!payer.trim() || submitting}
-          className={cn(PRIMARY_BTN, "w-full flex-none disabled:cursor-not-allowed")}
-        >
-          {submitting ? "Checking…" : "I've sent the payment"}
-        </button>
-      </Step>
-
-      <p className="flex items-start gap-2 text-sm text-gray-11" aria-live="polite">
-        <span
-          className="mt-1.5 size-2 shrink-0 animate-pulse rounded-full bg-principal-9"
-          aria-hidden="true"
-        />
-        {payment.declaredPayer && !submitting
-          ? "We haven't found your payment from this wallet yet. Transfers take a few minutes to confirm — we keep checking automatically, you can close this window."
-          : expired
-            ? "This window has expired. If you already paid, it will still be credited — otherwise start a new payment."
-            : `Waiting for payment. Pay by ${new Date(payment.expiresAt).toLocaleTimeString(
-                "en-US",
-                { hour: "2-digit", minute: "2-digit" },
-              )}.`}
+  // Janela vencida sem envio: não oferece pagar numa cobrança velha.
+  if (new Date(payment.expiresAt).getTime() < checkedAt) {
+    return (
+      <p className="px-5 py-6 text-sm text-gray-11" aria-live="polite">
+        This payment expired. Go back to start a new one.
       </p>
-    </form>
-  );
-}
+    );
+  }
 
-/** Passo numerado do pagamento. */
-function Step({
-  n,
-  title,
-  children,
-}: {
-  n: number;
-  title: string;
-  children: React.ReactNode;
-}) {
+  const WalletPay = isEvmChain(payment.chain) ? EvmWalletPay : SolanaWalletPay;
+  const error = lostTx
+    ? "We couldn't verify your last transaction. If USDC left your wallet, contact support."
+    : submitError;
   return (
-    <section className="flex flex-col gap-2" aria-label={`Step ${n}`}>
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-12">
-        <span
-          className="flex size-5 shrink-0 items-center justify-center rounded-full bg-principal-9 text-xs text-gray-1"
-          aria-hidden="true"
-        >
-          {n}
-        </span>
-        {title}
-      </h3>
-      {children}
-    </section>
+    <div className="px-5 py-5">
+      <Suspense fallback={<p className="text-sm text-gray-11">Loading wallets…</p>}>
+        <WalletPay
+          payment={payment}
+          network={network}
+          busy={submitting}
+          error={error}
+          onSent={onSent}
+        />
+      </Suspense>
+    </div>
   );
 }
 
 function Confirmed({ payment }: { payment: CryptoPayment }) {
   return (
-    <div className="flex flex-col items-center gap-3 px-5 py-8 text-center" aria-live="polite">
+    <div className="flex flex-col items-center gap-2 px-5 py-8 text-center" aria-live="polite">
       <h3 className="text-xl font-semibold text-gray-12">Payment received</h3>
-      <p className="text-sm leading-[1.4] text-gray-11">
-        {payment.periodDays} days of Pro were added to your account
+      <p className="text-sm text-gray-11">
+        {payment.periodDays} days of Pro added
         {payment.confirmedAt ? ` on ${formatDate(payment.confirmedAt)}` : ""}.
       </p>
     </div>

@@ -81,20 +81,32 @@ export interface CryptoPayment {
   chain: CryptoChain;
   status: "PENDING" | "CONFIRMED" | "EXPIRED";
   token: "USDC";
+  /** Contrato do USDC (EVM) ou mint (Solana) na rede da cobrança. */
   tokenAddress: string;
-  /** Valor EXATO a enviar ("50.012345" na Base). */
+  /** Casas do token NA REDE: 6, exceto BSC (Binance-Peg, 18). */
+  tokenDecimals: number;
+  /** Chain id EVM; `null` na Solana. */
+  chainId: number | null;
+  /** Valor a enviar, em decimal ("50"). A carteira envia exatamente isto. */
   amount: string;
   receiver: string;
+  /** Solana Pay: chave que vai na transferência (conta só-leitura). */
   reference: string | null;
-  paymentUri: string;
-  /** QR gerado no servidor (data URL de PNG). */
-  qrDataUrl: string;
   periodDays: number;
   expiresAt: string;
   confirmedAt: string | null;
   txHash: string | null;
-  /** Carteira que o usuário informou ter usado (null até clicar "enviei"). */
+  /** Transação já enviada e em confirmação — não oferecer pagar de novo. */
+  submittedTxHash: string | null;
+  /** Carteira que enviou (a conectada no momento do envio). */
   declaredPayer: string | null;
+  /**
+   * EVM: mensagem que a carteira assina ANTES de pagar. Prova ao servidor que
+   * quem registra o hash é o dono da carteira de origem — sem isso, qualquer um
+   * que visse a transferência pública poderia reivindicá-la. `null` na Solana
+   * (lá a `reference` na própria transação faz esse papel).
+   */
+  ownershipMessage: string | null;
 }
 
 export async function getCryptoOptions(): Promise<CryptoOptions> {
@@ -110,17 +122,31 @@ export async function createCryptoPayment(chain: CryptoChain): Promise<CryptoPay
   return data;
 }
 
+export interface SentCryptoTx {
+  /** Hash (EVM) ou assinatura base58 (Solana) devolvida pela carteira. */
+  txHash: string;
+  /** Carteira conectada que assinou. */
+  payer: string;
+  /** EVM: assinatura de `ownershipMessage` pela `payer`. */
+  signature?: string;
+}
+
 /**
- * "Enviei": informa de qual carteira o usuário pagou e pede ao servidor para
- * procurar o pagamento na hora. Volta CONFIRMED se achou; PENDING se ainda não.
+ * Informa a transação que a carteira acabou de enviar. O servidor confere na
+ * própria rede (o front não é autoridade): volta CONFIRMED, PENDING enquanto
+ * confirma, ou 400 se a transação não paga esta cobrança.
  */
 export async function submitCryptoPayment(
   id: string,
-  payer: string,
+  sent: SentCryptoTx,
 ): Promise<CryptoPayment> {
   const { data } = await api.post<CryptoPayment>(
     `/api/v1/billing/crypto/payments/${encodeURIComponent(id)}/submit`,
-    { payer },
+    {
+      txHash: sent.txHash,
+      payer: sent.payer,
+      ...(sent.signature ? { signature: sent.signature } : {}),
+    },
   );
   return data;
 }
@@ -128,6 +154,22 @@ export async function submitCryptoPayment(
 export async function getCryptoPayment(id: string): Promise<CryptoPayment> {
   const { data } = await api.get<CryptoPayment>(
     `/api/v1/billing/crypto/payments/${encodeURIComponent(id)}`,
+  );
+  return data;
+}
+
+export interface SolanaBlockhash {
+  blockhash: string;
+  lastValidBlockHeight: number;
+}
+
+/**
+ * Blockhash recente para montar a transferência Solana. Vem do backend para o
+ * navegador não falar com RPC nenhum (CSP só libera a API).
+ */
+export async function getSolanaBlockhash(): Promise<SolanaBlockhash> {
+  const { data } = await api.get<SolanaBlockhash>(
+    "/api/v1/billing/crypto/solana/blockhash",
   );
   return data;
 }
