@@ -13,10 +13,10 @@ describe("AdminNav", () => {
     pathname.current = "/admin/mentorship";
   });
 
-  it("dá acesso às quatro telas de admin e ao caminho de volta", () => {
+  it("dá acesso às telas de admin e ao caminho de volta", () => {
     render(<AdminNav />);
 
-    for (const label of ["Mentorship", "KOLs", "Discord feed", "Affiliates"]) {
+    for (const label of ["Mentorship", "KOLs", "Discord feed", "Affiliates", "Payments", "Logs"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: /Back to app/ })).toHaveAttribute(

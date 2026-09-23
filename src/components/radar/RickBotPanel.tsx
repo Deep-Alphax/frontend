@@ -7,6 +7,8 @@ import { getFeedMessages, type CapturedMessage } from "@/lib/api/feed";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
 import { fmtCount } from "@/components/radar/groupAvatar";
 import { RICK_BOT_TAG } from "@/components/radar/rickBot";
+import { ProLock } from "@/components/plans/ProLock";
+import { usePlan } from "@/lib/billing/usePlan";
 
 /**
  * A chave de query espelha a do perfil (`["feed-author", tag]`), então o realtime
@@ -59,6 +61,9 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
 
   const items = useMemo(() => flattenUnique(query.data?.pages), [query.data]);
   const total = query.data?.pages[0]?.total ?? 0;
+  // Mesmo critério do Feed principal: sem oferta enquanto o plano carrega.
+  const { isPro, isLoading: planLoading } = usePlan();
+  const freeEmpty = !isPro && !planLoading;
 
   return (
     <aside className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
@@ -78,11 +83,22 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-          <p className="text-sm font-semibold text-gray-12">Nothing from Rick yet</p>
-          <p className="max-w-xs text-xs text-gray-11">
-            Rick Bot captures show up here in real time.
-          </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-3 py-16 text-center">
+          <div className="flex flex-col items-center gap-2 px-3">
+            <p className="text-sm font-semibold text-gray-12">Nothing from Rick yet</p>
+            <p className="max-w-xs text-xs text-gray-11">
+              {freeEmpty
+                ? "On Free, Rick only shows up from the groups open to Free."
+                : "Rick Bot captures show up here in real time."}
+            </p>
+          </div>
+          {/* Coluna estreita: o bloco de upgrade empilha em vez de ficar lado a lado. */}
+          {freeEmpty && (
+            <ProLock
+              title="Rick on every group"
+              className="w-full flex-col items-stretch text-left"
+            />
+          )}
         </div>
       ) : (
         <ChatMessageList

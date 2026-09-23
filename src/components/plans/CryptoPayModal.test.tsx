@@ -213,30 +213,34 @@ describe("CryptoPayModal — tela de pagamento", () => {
     vi.clearAllMocks();
   });
 
-  it("Solana: carteira de destino visível, valor exato e QR como atalho opcional", async () => {
+  it("passos na ordem: 1) sua carteira, 2) enviar 50 USDC para o destino, 3) avisar", async () => {
     const user = userEvent.setup();
     createPay.mockResolvedValue(SOLANA_PAYMENT);
     renderModal();
 
     await pickChain(user, /USDC on Solana/);
 
-    // Envio à mão agora é detectado (carteira declarada + valor exato), então o
-    // endereço de destino aparece também na Solana.
-    expect(await screen.findByText("Send to this wallet (Solana)")).toBeInTheDocument();
+    const steps = await screen.findAllByRole("region", { name: /^Step [0-9]$/ });
+    expect(steps.map((s) => s.getAttribute("aria-label"))).toEqual([
+      "Step 1",
+      "Step 2",
+      "Step 3",
+    ]);
+    // 1: a carteira vem ANTES do envio (é ela que liga o pagamento redondo à conta).
+    expect(steps[0]).toContainElement(screen.getByLabelText("Your wallet address"));
+    // 2: pede o valor cheio, na rede escolhida, com o destino copiável.
+    expect(steps[1]).toHaveTextContent("Send 50 USDC on Solana");
     expect(screen.getByTestId("receiver")).toHaveTextContent(SOLANA_PAYMENT.receiver);
-    expect(screen.getByText("50 USDC")).toBeInTheDocument();
-    expect(screen.getByText(/Send exactly 50 USDC on Solana/)).toBeInTheDocument();
-
-    expect(screen.getByText("Pay with QR code")).toBeInTheDocument();
-    const qr = screen.getByAltText("Payment QR code for USDC on Solana");
-    expect(qr).toHaveAttribute("src", SOLANA_PAYMENT.qrDataUrl);
-    expect(screen.getByRole("link", { name: "Open in wallet" })).toHaveAttribute(
-      "href",
-      SOLANA_PAYMENT.paymentUri,
+    expect(
+      screen.getByText(/Send at least 50 USDC on Solana, from the wallet above/),
+    ).toBeInTheDocument();
+    // 3: o botão de avisar.
+    expect(steps[2]).toContainElement(
+      screen.getByRole("button", { name: "I've sent the payment" }),
     );
   });
 
-  it("EVM: valor exato, endereço e aviso com TODAS as redes EVM ligadas", async () => {
+  it("EVM: pede 50 USDC na rede escolhida; o QR leva o valor exato com os centavos", async () => {
     const user = userEvent.setup();
     const p = payment();
     createPay.mockResolvedValue(p);
@@ -244,33 +248,22 @@ describe("CryptoPayModal — tela de pagamento", () => {
 
     await pickChain(user, /USDC on Base/);
 
-    expect(await screen.findByText("50.012345 USDC")).toBeInTheDocument();
-    expect(screen.getByText("Send to this wallet (Base)")).toBeInTheDocument();
+    expect(await screen.findByText("Send 50 USDC on Base")).toBeInTheDocument();
     expect(screen.getByTestId("receiver")).toHaveTextContent(p.receiver);
+    // Os centavos únicos não são pedidos ao usuário; aparecem só no atalho do QR.
+    expect(screen.queryByText(/Send exactly/)).not.toBeInTheDocument();
+    expect(screen.getByText(/The QR fills in 50.012345 USDC/)).toBeInTheDocument();
+    expect(screen.getByAltText("Payment QR code for USDC on Base")).toHaveAttribute(
+      "src",
+      p.qrDataUrl,
+    );
     expect(screen.getByRole("link", { name: "Open in wallet" })).toHaveAttribute(
       "href",
       p.paymentUri,
     );
-    expect(
-      screen.getByText(
-        /Send exactly 50\.012345 USDC.*Same address on Ethereum, Base, Arbitrum, Optimism, Polygon, BNB Chain: paying on any of them works\./,
-      ),
-    ).toBeInTheDocument();
   });
 
-  it("aviso EVM lista só as EVM ligadas (sem Solana, sem as desligadas)", async () => {
-    const user = userEvent.setup();
-    createPay.mockResolvedValue(payment());
-    renderModal({ chains: ["SOLANA", "BASE", "POLYGON"] });
-
-    await pickChain(user, /USDC on Base/);
-
-    expect(
-      await screen.findByText(/Same address on Base, Polygon: paying on any of them works\./),
-    ).toBeInTheDocument();
-  });
-
-  it("Copy copia o valor e o endereço exatos", async () => {
+  it("Copy copia o endereço de destino exato", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -282,16 +275,9 @@ describe("CryptoPayModal — tela de pagamento", () => {
     renderModal();
 
     await pickChain(user, /USDC on Base/);
-    const copies = await screen.findAllByRole("button", { name: "Copy" });
-    expect(copies).toHaveLength(2);
+    await user.click(await screen.findByRole("button", { name: "Copy" }));
 
-    // Ordem na tela: endereço de destino primeiro, depois o valor.
-    await user.click(copies[0]);
-    await user.click(copies[1]);
-
-    expect(writeText).toHaveBeenNthCalledWith(1, p.receiver);
-    expect(writeText).toHaveBeenNthCalledWith(2, "50.012345");
-    expect(toast.success).toHaveBeenCalledWith("Amount copied");
+    expect(writeText).toHaveBeenCalledWith(p.receiver);
     expect(toast.success).toHaveBeenCalledWith("Address copied");
   });
 
@@ -482,7 +468,7 @@ describe("CryptoPayModal — \"I've sent the payment\"", () => {
   async function openPayStep(user: User) {
     renderModal();
     await pickChain(user, /USDC on Base/);
-    return screen.findByLabelText("Your wallet (the one you are paying from)");
+    return screen.findByLabelText("Your wallet address");
   }
 
   it("botão desabilitado até preencher a carteira", async () => {
@@ -525,7 +511,7 @@ describe("CryptoPayModal — \"I've sent the payment\"", () => {
     await user.click(screen.getByRole("button", { name: "I've sent the payment" }));
 
     expect(
-      await screen.findByText(/We haven't found 50\.012345 USDC from this wallet yet/),
+      await screen.findByText(/We haven't found your payment from this wallet yet/),
     ).toBeInTheDocument();
     expect(screen.queryByText("Payment received")).not.toBeInTheDocument();
   });
@@ -579,7 +565,7 @@ describe("CryptoPayModal — \"I've sent the payment\"", () => {
     getPay.mockResolvedValue(payment({ id: "pay2" }));
     await pickChain(user, /USDC on Base/);
 
-    await screen.findByLabelText("Your wallet (the one you are paying from)");
+    await screen.findByLabelText("Your wallet address");
     expect(screen.queryByText(/Invalid EVM address/)).not.toBeInTheDocument();
   });
 });

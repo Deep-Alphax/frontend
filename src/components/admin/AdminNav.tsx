@@ -23,6 +23,8 @@ const ADMIN_ITEMS: { href: string; label: string }[] = [
   { href: "/admin/kols", label: "KOLs" },
   { href: "/admin/feed", label: "Discord feed" },
   { href: "/admin/affiliates", label: "Affiliates" },
+  { href: "/admin/payments", label: "Payments" },
+  { href: "/admin/logs", label: "Logs" },
 ];
 
 export function AdminNav() {

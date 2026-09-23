@@ -11,7 +11,6 @@ import {
   createCryptoPayment,
   getCryptoPayment,
   PLAN_KEY,
-  isEvmChain,
   submitCryptoPayment,
   type CryptoChain,
   type CryptoPayment,
@@ -224,7 +223,7 @@ export function CryptoPayModal({
               {paymentId && payment.data && !confirmed && (
                 <PayStep
                   payment={payment.data}
-                  evmChains={chains.filter(isEvmChain)}
+                  baseAmount={amount}
                   checkedAt={payment.dataUpdatedAt}
                   submitting={submitHere && submit.isPending}
                   submitError={
@@ -325,15 +324,15 @@ function ChainPicker({
 
 function PayStep({
   payment,
-  evmChains,
+  baseAmount,
   checkedAt,
   submitting,
   submitError,
   onSubmit,
 }: {
   payment: CryptoPayment;
-  /** Redes EVM ligadas — todas aceitam o mesmo pagamento (ver aviso). */
-  evmChains: CryptoChain[];
+  /** Preço cheio ("50") — o que o usuário envia. Os centavos únicos são do QR. */
+  baseAmount: string;
   /** Hora da última consulta de status — o polling de 5s serve de relógio. */
   checkedAt: number;
   submitting: boolean;
@@ -346,85 +345,24 @@ function PayStep({
   const [payer, setPayer] = useState(payment.declaredPayer ?? "");
   const network = CHAIN_LABEL[payment.chain];
 
+  /*
+   * Ordem pensada para o usuário que paga à mão: 1) diz de qual carteira vai
+   * pagar, 2) envia 50 redondos, 3) avisa que enviou. É a carteira declarada
+   * que liga um pagamento redondo à conta — por isso ela vem ANTES do envio.
+   * Os centavos únicos (payment.amount) seguem valendo, mas só pelo QR, que os
+   * preenche sozinho.
+   */
   return (
-    <div className="flex flex-col gap-4 px-5 py-5">
-      {/* 1. Para onde e quanto — o essencial primeiro. */}
-      <dl className="flex w-full flex-col gap-3 text-sm">
-        <div className="flex flex-col gap-1">
-          <dt className="text-gray-11">Send to this wallet ({network})</dt>
-          <dd className="flex items-center gap-2 rounded-md border border-gray-6 bg-gray-3 px-3 py-2">
-            <span
-              className="min-w-0 flex-1 break-all font-mono text-xs text-gray-12"
-              data-testid="receiver"
-            >
-              {payment.receiver}
-            </span>
-            <button
-              type="button"
-              onClick={() => copy(payment.receiver, "Address")}
-              className="shrink-0 text-xs font-semibold text-principal-11 hover:underline"
-            >
-              Copy
-            </button>
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <dt className="text-gray-11">Exact amount</dt>
-          <dd className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-gray-12">
-              {payment.amount} USDC
-            </span>
-            <button
-              type="button"
-              onClick={() => copy(payment.amount, "Amount")}
-              className="text-xs font-semibold text-principal-11 hover:underline"
-            >
-              Copy
-            </button>
-          </dd>
-        </div>
-      </dl>
-
-      {/* O valor exato (centavos únicos) + a carteira informada identificam o
-          pagamento. Nas EVM o mesmo endereço recebe em todas as redes ligadas. */}
-      <p className="w-full rounded-md border border-principal-7 bg-principal-3 px-3 py-2 text-xs leading-[1.4] text-principal-12">
-        {isSolana
-          ? `Send exactly ${payment.amount} USDC on Solana. The cents identify your payment — any other amount or token cannot be matched.`
-          : `Send exactly ${payment.amount} USDC. The cents identify your payment — any other amount or token cannot be matched. Same address on ${evmChains
-              .map((c) => CHAIN_LABEL[c])
-              .join(", ")}: paying on any of them works.`}
-      </p>
-
-      {/* 2. Atalho opcional: QR / link direto para a carteira. */}
-      <details className="group w-full rounded-md border border-gray-6 px-3 py-2 text-sm text-gray-11">
-        <summary className="cursor-pointer select-none font-semibold text-gray-12">
-          Pay with QR code
-        </summary>
-        <div className="mt-3 flex flex-col items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={payment.qrDataUrl}
-            alt={`Payment QR code for USDC on ${network}`}
-            width={200}
-            height={200}
-            className="size-[200px] rounded-md bg-white"
-          />
-          <a href={payment.paymentUri} className={cn(SECONDARY_BTN, "w-full flex-none")}>
-            Open in wallet
-          </a>
-        </div>
-      </details>
-
-      {/* 3. "Enviei": de qual carteira saiu o pagamento. */}
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (payer.trim()) onSubmit(payer.trim());
-        }}
-      >
+    <form
+      className="flex flex-col gap-5 px-5 py-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (payer.trim()) onSubmit(payer.trim());
+      }}
+    >
+      <Step n={1} title="Your wallet — the one you will pay from">
         <TextField
-          label="Your wallet (the one you are paying from)"
+          label="Your wallet address"
           placeholder={isSolana ? "Solana address" : "0x…"}
           value={payer}
           onChange={(e) => setPayer(e.target.value)}
@@ -433,6 +371,55 @@ function PayStep({
           error={submitError ?? undefined}
           className="font-mono text-sm"
         />
+      </Step>
+
+      <Step n={2} title={`Send ${baseAmount} USDC on ${network}`}>
+        <div className="flex items-center gap-2 rounded-md border border-gray-6 bg-gray-3 px-3 py-2">
+          <span
+            className="min-w-0 flex-1 break-all font-mono text-xs text-gray-12"
+            data-testid="receiver"
+          >
+            {payment.receiver}
+          </span>
+          <button
+            type="button"
+            onClick={() => copy(payment.receiver, "Address")}
+            className="shrink-0 text-xs font-semibold text-principal-11 hover:underline"
+          >
+            Copy
+          </button>
+        </div>
+        <p className="w-full rounded-md border border-principal-7 bg-principal-3 px-3 py-2 text-xs leading-[1.4] text-principal-12">
+          {`Send at least ${baseAmount} USDC on ${network}, from the wallet above. Only USDC counts — other tokens or networks cannot be matched.`}
+        </p>
+
+        {/* Atalho: o QR já leva o valor exato (com os centavos únicos), que
+            identifica o pagamento mesmo sem a carteira informada. */}
+        <details className="w-full rounded-md border border-gray-6 px-3 py-2 text-sm text-gray-11">
+          <summary className="cursor-pointer select-none font-semibold text-gray-12">
+            Pay with QR code
+          </summary>
+          <div className="mt-3 flex flex-col items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={payment.qrDataUrl}
+              alt={`Payment QR code for USDC on ${network}`}
+              width={200}
+              height={200}
+              className="size-[200px] rounded-md bg-white"
+            />
+            <p className="text-center text-xs text-gray-11">
+              The QR fills in {payment.amount} USDC — the extra cents identify your
+              payment.
+            </p>
+            <a href={payment.paymentUri} className={cn(SECONDARY_BTN, "w-full flex-none")}>
+              Open in wallet
+            </a>
+          </div>
+        </details>
+      </Step>
+
+      <Step n={3} title="Tell us you've sent it">
         <button
           type="submit"
           disabled={!payer.trim() || submitting}
@@ -440,7 +427,7 @@ function PayStep({
         >
           {submitting ? "Checking…" : "I've sent the payment"}
         </button>
-      </form>
+      </Step>
 
       <p className="flex items-start gap-2 text-sm text-gray-11" aria-live="polite">
         <span
@@ -448,7 +435,7 @@ function PayStep({
           aria-hidden="true"
         />
         {payment.declaredPayer && !submitting
-          ? `We haven't found ${payment.amount} USDC from this wallet yet. Transfers take a few minutes to confirm — we keep checking automatically, you can close this window.`
+          ? "We haven't found your payment from this wallet yet. Transfers take a few minutes to confirm — we keep checking automatically, you can close this window."
           : expired
             ? "This window has expired. If you already paid, it will still be credited — otherwise start a new payment."
             : `Waiting for payment. Pay by ${new Date(payment.expiresAt).toLocaleTimeString(
@@ -456,7 +443,33 @@ function PayStep({
                 { hour: "2-digit", minute: "2-digit" },
               )}.`}
       </p>
-    </div>
+    </form>
+  );
+}
+
+/** Passo numerado do pagamento. */
+function Step({
+  n,
+  title,
+  children,
+}: {
+  n: number;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-2" aria-label={`Step ${n}`}>
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-12">
+        <span
+          className="flex size-5 shrink-0 items-center justify-center rounded-full bg-principal-9 text-xs text-gray-1"
+          aria-hidden="true"
+        >
+          {n}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 

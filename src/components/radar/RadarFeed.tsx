@@ -5,6 +5,8 @@ import { Search, X } from "lucide-react";
 import type { CapturedMessage } from "@/lib/api/feed";
 import { cn } from "@/lib/cn";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
+import { ProLock } from "@/components/plans/ProLock";
+import { usePlan } from "@/lib/billing/usePlan";
 
 interface RadarFeedProps {
   messages: CapturedMessage[];
@@ -83,6 +85,10 @@ export function RadarFeed({
   dragHandle,
 }: RadarFeedProps) {
   const searching = search.trim().length > 0;
+  // Enquanto o plano carrega, vale o vazio neutro: não oferecer upgrade a quem
+  // talvez já seja PRO. Busca sem resultado também não é assunto de plano.
+  const { isPro, isLoading: planLoading } = usePlan();
+  const freeEmpty = !isPro && !planLoading && !searching;
 
   return (
     <div className="flex max-h-[85dvh] min-h-0 flex-col lg:max-h-none lg:h-full">
@@ -103,6 +109,25 @@ export function RadarFeed({
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-32 animate-pulse rounded-xl border border-gray-6 bg-gray-2" />
           ))}
+        </div>
+      ) : messages.length === 0 && freeEmpty ? (
+        // FREE sem capturas: quase sempre é o recorte do plano (só os grupos
+        // marcados como Free), não um feed quebrado — e a tela tem que dizer isso.
+        <div className="mx-4 mb-4 flex flex-col gap-3">
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-gray-6 bg-gray-2 px-6 py-12 text-center">
+            <p className="text-sm font-semibold text-gray-12">
+              The Free plan shows a selection of groups
+            </p>
+            <p className="max-w-sm text-xs text-gray-11">
+              {selectedName
+                ? `"${selectedName}" has no captures available on Free right now.`
+                : "None of the groups open to Free has captures right now. New ones show up here in real time."}
+            </p>
+          </div>
+          <ProLock
+            title="See every group we monitor"
+            detail="Pro gets the full feed, the second each capture lands."
+          />
         </div>
       ) : messages.length === 0 ? (
         <div className="mx-4 mb-4 flex flex-col items-center gap-2 rounded-xl border border-gray-6 bg-gray-2 px-6 py-16 text-center">

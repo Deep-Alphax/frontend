@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 
+import { PageViewTracker } from "@/components/audit/PageViewTracker";
 import { captureReferralFromUrl } from "@/lib/referral";
 
 /**
@@ -37,6 +38,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Dentro do provider: o rastreador usa `useSession` (React Query). */}
+      <PageViewTracker />
       {children}
       <Toaster
         position="top-center"
