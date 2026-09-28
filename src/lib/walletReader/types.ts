@@ -87,11 +87,11 @@ export const KOL_TYPE_MAP: Record<string, { id: string; label: string; hue: numb
 /**
  * Níveis ("Level") do KOL — 7 faixas de relevância, do Wood ao Super alpha
  * (o Bronze foi fundido no Wood).
- * Skins do Silver ao Super alpha conforme o componente "Card-kols" do Figma
- * (frame Wallet Reader, node 879:16472). As variantes do Figma se chamam
- * "level 3..7", mas esse número NÃO é a posição no ranking — o mapeamento foi
- * feito pelo EMBLEMA de cada variante (level 6 = emblema do Gold, level 3 = o
- * do Platinum etc.). O Wood não tem card no Figma e mantém o skin anterior. Espelha `TIERS` em
+ * Skins conforme o componente "Card-kols" do Figma (frame Wallet Reader, node
+ * 879:16472; o Wood é a variante cinza-escura, node 1259:30753). As variantes
+ * do Figma se chamam "level 3..7", mas esse número NÃO é a posição no ranking
+ * — o mapeamento foi feito pelo EMBLEMA de cada variante (level 6 = emblema do
+ * Gold, level 3 = o do Platinum etc.). Espelha `TIERS` em
  * `backend/src/app/wallet-reader/kol-index.service.ts`: os `id` e as faixas TÊM
  * que bater, senão o filtro por tier e as contagens da rail divergem.
  *
@@ -136,10 +136,12 @@ export const KOL_TIERS: TierSpec[] = [
     // Bronze foi fundido aqui (2026-09-28): o nível mais baixo cobre 0–25.
     id: "wood", label: "Wood", min: 0, max: 25,
     emblem: "/wallet-reader/tiers/wood.webp",
-    text: "text-bronze-11", chipBg: "bg-bronze-3", chipBorder: "border-bronze-6", meter: "bg-bronze-9",
-    card: "border-bronze-4 bg-[linear-gradient(112.5deg,var(--color-bronze-3)_0%,var(--color-bronze-1)_100%)]",
-    ring: "border-bronze-6", bar: "from-bronze-6 to-bronze-9", corner: "from-laranja-6 to-laranja-6/55",
-    pill: "border-bronze-8 from-bronze-3 to-bronze-2", pillText: "text-bronze-12",
+    // Cinza ESCURO do Figma (node 1259:30753) — um degrau abaixo do Silver:
+    // fundo gray-2→1 (Silver é 4→2), barra 4→6 e cantoneira gray-7.
+    text: "text-gray-11", chipBg: "bg-gray-3", chipBorder: "border-gray-6", meter: "bg-gray-7",
+    card: "border-gray-6 bg-[linear-gradient(112.5deg,var(--color-gray-2)_0%,var(--color-gray-1)_100%)]",
+    ring: "border-gray-6", bar: "from-gray-4 to-gray-6", corner: "from-gray-7 to-gray-7",
+    pill: "border-gray-9 from-gray-7 to-gray-3", pillText: "text-gray-12",
   },
   {
     id: "silver", label: "Silver", min: 26, max: 37,
