@@ -11,7 +11,9 @@ import {
 import {
   getFeedGroups,
   getFeedMessages,
+  nextFeedPage,
   type CapturedMessage,
+  type FeedPageParam,
   type FavoriteAuthor,
   type FeedPage,
 } from "@/lib/api/feed";
@@ -22,9 +24,9 @@ import {
 } from "@/components/radar/useFavorites";
 
 const PAGE_LIMIT = 20;
-/** Chave do feed central por canal ativo + termo de busca (`null`/"" = todos). */
-const feedKey = (channelId: string | null, search: string) =>
-  ["radar-feed", channelId, search] as const;
+/** Chave do feed central por recorte (`feedScope().key`) + termo de busca. */
+const feedKey = (scopeKey: string | null, search: string) =>
+  ["radar-feed", scopeKey, search] as const;
 const GROUPS_KEY = ["radar-groups"] as const;
 
 /** Subgrupo (canal do Discord) dentro de um grupo/servidor. */
@@ -60,6 +62,32 @@ export type SourceSelection =
   | null
   | { kind: "guild"; guild: string | null }
   | { kind: "channel"; channelId: string };
+
+/** Recorte do feed central que o SERVIDOR aplica, e a chave de cache dele. */
+export interface FeedScope {
+  key: string | null;
+  channelId?: string;
+  guildName?: string;
+}
+
+/**
+ * Seleção da rail → filtro do backend. Servidor e canal são recortados NO
+ * BANCO: antes o servidor era filtrado sobre o pool "todas", então um servidor
+ * de pouco volume aparecia vazio e o usuário tinha de rolar dezenas de páginas
+ * de OUTROS servidores até achar as mensagens dele.
+ *
+ * A única exceção é o grupo "sem servidor" (`guild: null`): não há valor para
+ * mandar na query, então ele continua sendo recortado do pool no cliente.
+ */
+export function feedScope(selection: SourceSelection): FeedScope {
+  if (selection?.kind === "channel") {
+    return { key: `c:${selection.channelId}`, channelId: selection.channelId };
+  }
+  if (selection?.kind === "guild" && selection.guild !== null) {
+    return { key: `g:${selection.guild}`, guildName: selection.guild };
+  }
+  return { key: null };
+}
 
 /** Grupo (servidor Discord) — árvore agregada no backend (contagens totais). */
 export interface RadarGroup {
@@ -108,26 +136,30 @@ const GROUP_FALLBACK = "No group";
  * chega por WebSocket.
  */
 export function useRadarFeed(
-  activeChannelId: string | null = null,
+  selection: SourceSelection = null,
   search = "",
 ): RadarFeed {
+  const scope = feedScope(selection);
   const queryClient = useQueryClient();
   // IDs chegados em tempo real (para animar a entrada). Estado imutável: cada
   // captura gera um novo Set — barato (teto MAX_NEW_IDS) e re-renderiza a lista.
   const [newIds, setNewIds] = useState<Set<string>>(() => new Set());
 
   const query = useInfiniteQuery({
-    queryKey: feedKey(activeChannelId, search),
+    queryKey: feedKey(scope.key, search),
     queryFn: ({ pageParam }) =>
       getFeedMessages({
-        page: pageParam,
+        before: pageParam ?? undefined,
         limit: PAGE_LIMIT,
-        channelId: activeChannelId ?? undefined,
+        channelId: scope.channelId,
+        guildName: scope.guildName,
         search: search.trim() || undefined,
+        // O total da tela vem da árvore de grupos; o COUNT por página era
+        // uma varredura inteira do filtro só para calcular `totalPages`.
+        withTotal: false,
       }),
-    initialPageParam: 1,
-    getNextPageParam: (last) =>
-      last.page < last.totalPages ? last.page + 1 : undefined,
+    initialPageParam: null as FeedPageParam,
+    getNextPageParam: nextFeedPage,
   });
 
   // Árvore grupos→canais (contagens totais, agregadas no backend).
@@ -147,7 +179,7 @@ export function useRadarFeed(
     const prependInfinite = (key: readonly unknown[], msg: CapturedMessage): boolean => {
       if (!queryClient.getQueryData(key)) return false;
       let didPrepend = false;
-      queryClient.setQueryData<InfiniteData<FeedPage, number>>(key, (prev) => {
+      queryClient.setQueryData<InfiniteData<FeedPage, FeedPageParam>>(key, (prev) => {
         if (!prev || prev.pages.length === 0) return prev;
         if (prev.pages.some((p) => p.items.some((m) => m.id === msg.id))) return prev;
         didPrepend = true;
@@ -155,7 +187,12 @@ export function useRadarFeed(
         return {
           ...prev,
           pages: [
-            { ...first, items: [msg, ...first.items], total: first.total + 1 },
+            {
+              ...first,
+              items: [msg, ...first.items],
+              // Página sem COUNT (`withTotal: false`) não tem total a somar.
+              ...(first.total !== undefined && { total: first.total + 1 }),
+            },
             ...rest,
           ],
         };
@@ -167,8 +204,10 @@ export function useRadarFeed(
       // Feed central "todos" + feed do canal correspondente (o que estiver em cache).
       // Só nos feeds SEM busca ("" ); feeds de busca são snapshots do termo.
       const prependedAll = prependInfinite(feedKey(null, ""), msg);
-      const prependedChannel = prependInfinite(feedKey(msg.channelId, ""), msg);
-      if (prependedAll || prependedChannel) {
+      const prependedChannel = prependInfinite(feedKey(`c:${msg.channelId}`, ""), msg);
+      const prependedGuild =
+        msg.guildName !== null && prependInfinite(feedKey(`g:${msg.guildName}`, ""), msg);
+      if (prependedAll || prependedChannel || prependedGuild) {
         // Marca como "novo" p/ a animação de entrada; poda o conjunto se crescer.
         setNewIds((prev) => {
           const next = new Set(prev);

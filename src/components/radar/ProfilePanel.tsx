@@ -7,13 +7,16 @@ import { ArrowLeft, Pencil, Star } from "lucide-react";
 import {
   getAuthorStats,
   getFeedMessages,
+  nextFeedPage,
   type CapturedMessage,
+  type FeedPageParam,
 } from "@/lib/api/feed";
 import { Avatar } from "@/components/ui/Avatar";
 import { useFavorites } from "@/components/radar/useFavorites";
 import { starFor, toneFor } from "@/components/radar/favoriteColors";
 import { UserCustomizeModal } from "@/components/radar/UserCustomizeModal";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
+import { MessageSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 interface ProfilePanelProps {
   /** Tag do autor selecionado (identidade de perfil/favorito). */
@@ -79,9 +82,15 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
   const query = useInfiniteQuery({
     queryKey: ["feed-author", author],
     queryFn: ({ pageParam }) =>
-      getFeedMessages({ authorTag: author, page: pageParam, limit: 20 }),
-    initialPageParam: 1,
-    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+      // Contagem do perfil vem de `author-stats`; aqui só a paginação.
+      getFeedMessages({
+        authorTag: author,
+        before: pageParam ?? undefined,
+        limit: 20,
+        withTotal: false,
+      }),
+    initialPageParam: null as FeedPageParam,
+    getNextPageParam: nextFeedPage,
   });
 
   const messages = useMemo(() => flattenUnique(query.data?.pages), [query.data]);
@@ -140,7 +149,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
         <div className="flex items-stretch gap-1 px-3 py-1">
           <Stat value={stats.messages} label="Messages" />
           <Stat value={stats.tokens} label="tokens" />
-          <Stat value={stats.radar} label="no radar" />
+          <Stat value={stats.radar} label="on radar" />
         </div>
 
         <div className="p-3">
@@ -153,7 +162,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
                 className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-6 bg-gray-3 px-2 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
               >
                 <Pencil className="size-4 shrink-0" strokeWidth={2} />
-                Personalizar
+                Customize
               </button>
               <button
                 type="button"
@@ -163,7 +172,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
                 className="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-6 bg-gray-3 px-2 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:opacity-60"
               >
                 <Star className="size-4 shrink-0 fill-principal-9 text-principal-9" strokeWidth={2} />
-                Deixar de seguir
+                Unfollow
               </button>
             </div>
           ) : (
@@ -175,7 +184,7 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
               className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-principal-9 px-8 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:opacity-60"
             >
               <Star className="size-4" strokeWidth={2} />
-              Seguir
+              Follow
             </button>
           )}
         </div>
@@ -183,11 +192,11 @@ export function ProfilePanel({ author, authorName, onBack, dragHandle }: Profile
 
       {/* Mensagens do autor — mesmo design das outras colunas (lista, compact). */}
       {query.isLoading ? (
-        <div className="flex flex-col gap-3 p-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+        <SkeletonGroup className="flex flex-col">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <MessageSkeleton key={i} />
           ))}
-        </div>
+        </SkeletonGroup>
       ) : messages.length === 0 ? (
         <p className="p-4 text-sm text-gray-11">No recent messages.</p>
       ) : (

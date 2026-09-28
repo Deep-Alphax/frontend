@@ -15,6 +15,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 interface FormState {
   id: string | null; // null = criando; setado = editando
@@ -129,7 +130,7 @@ export function MonitorsManager() {
         </div>
         {!form && (
           <Button className="w-auto" onClick={() => setForm({ ...EMPTY_FORM })}>
-            Nova regra
+            New rule
           </Button>
         )}
       </div>
@@ -142,7 +143,7 @@ export function MonitorsManager() {
               label="Name (optional)"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ex.: Alpha calls #1"
+              placeholder="e.g. Alpha calls #1"
             />
             <TextField
               label="Channel ID (or use the server →)"
@@ -154,7 +155,7 @@ export function MonitorsManager() {
               label="Server ID (empty channel = whole server)"
               value={form.guildId}
               onChange={(e) => setForm({ ...form, guildId: e.target.value })}
-              placeholder="guild id (opcional)"
+              placeholder="guild id (optional)"
             />
             <TextField
               label="Pattern — empty = mirrors EVERYTHING"
@@ -193,7 +194,7 @@ export function MonitorsManager() {
                 }
                 className="size-4 accent-principal-9"
               />
-              Ativa
+              Active
             </label>
             <label className="flex items-center gap-2 text-sm text-gray-12">
               <input
@@ -233,7 +234,9 @@ export function MonitorsManager() {
 
       {/* Tabela de regras */}
       {monitorsQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Loading…</p>
+        <SkeletonGroup className="py-2">
+          <TableSkeleton rows={5} cols={6} />
+        </SkeletonGroup>
       ) : monitors.length === 0 ? (
         <p className="text-sm text-gray-11">
           No rules yet. Create the first one.
@@ -263,7 +266,7 @@ export function MonitorsManager() {
                         <code className="text-xs text-gray-11">{m.pattern}</code>
                       ) : (
                         <span className="text-xs text-green-11">
-                          espelha tudo
+                          mirrors everything
                         </span>
                       )}
                     </td>
@@ -272,7 +275,7 @@ export function MonitorsManager() {
                         m.channelId
                       ) : (
                         <span className="text-secundaria-11">
-                          servidor {m.guildId}
+                          server {m.guildId}
                         </span>
                       )}
                     </td>
@@ -289,7 +292,7 @@ export function MonitorsManager() {
                             : "bg-gray-6/40 text-gray-11")
                         }
                       >
-                        {m.isActive ? "ativa" : "inativa"}
+                        {m.isActive ? "active" : "inactive"}
                       </button>
                     </td>
                     <td className="py-3 pr-4">

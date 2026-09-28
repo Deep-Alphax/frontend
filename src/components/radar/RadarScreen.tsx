@@ -69,10 +69,9 @@ export function RadarScreen() {
   // Seleção da rail: `null` (todas) · servidor (guild) · canal. Default = todas.
   const [selection, setSelection] = useState<SourceSelection>(null);
 
-  // Canal selecionado → o feed central é buscado JÁ FILTRADO no backend (completo,
-  // não só o que caiu no pool agregado). "Todas"/servidor usam o pool agregado.
-  const activeChannelId = selection?.kind === "channel" ? selection.channelId : null;
-  const feed = useRadarFeed(activeChannelId, search);
+  // Servidor ou canal selecionado → o feed central já vem FILTRADO do backend
+  // (completo, não só o que caiu no pool "todas"). Ver `feedScope`.
+  const feed = useRadarFeed(selection, search);
 
   // Autor selecionado → coluna direita mostra o perfil no lugar dos favoritos.
   const [selectedAuthor, setSelectedAuthor] = useState<{
@@ -165,9 +164,9 @@ export function RadarScreen() {
   // Feed central conforme a seleção: todas · servidor (guildName, recorte do pool)
   // · canal (o feed já vem filtrado do backend por channelId).
   const centerMessages = useMemo(() => {
-    if (selection === null) return feed.messages;
-    if (selection.kind === "guild")
-      return feed.messages.filter((m) => (m.guildName ?? null) === selection.guild);
+    // Só o grupo "sem servidor" ainda é recortado aqui (não há valor p/ a query).
+    if (selection?.kind === "guild" && selection.guild === null)
+      return feed.messages.filter((m) => m.guildName === null);
     return feed.messages;
   }, [feed.messages, selection]);
 
@@ -215,7 +214,7 @@ export function RadarScreen() {
         onSelectAuthor={onSelectAuthor}
         search={searchInput}
         onSearchChange={setSearchInput}
-        dragHandle={dragHandle("feed", "Feed principal")}
+        dragHandle={dragHandle("feed", "Main feed")}
       />
     ),
     favorites: selectedAuthor ? (

@@ -168,7 +168,7 @@ function RadarMessageCardBase({
   // usuário só customizou (`followed: false`), e esses não ganham estrela.
   const following = Boolean(fav?.followed);
   const authorTag = m.authorTag;
-  const author = authorTag || "Desconhecido";
+  const author = authorTag || "Unknown";
   // Tratamento das capturas do Rick (CA em destaque + só os links de análise):
   // vale pelo AUTOR, não pela coluna — as mensagens dele aparecem também no feed
   // principal e no perfil, e antes só a coluna dele ganhava isso.
@@ -260,7 +260,10 @@ function RadarMessageCardBase({
         // (compact) não têm divisória entre cards.
         isList
           ? cn(
-            !compact && "last:border-none border-b border-gray-6/70",
+            // Sem divisória no ÚLTIMO card: quem decide é a lista (`ChatMessageList`),
+            // porque na lista virtual cada card é filho único do próprio wrapper
+            // e `last:` casaria com todos.
+            !compact && "border-b border-gray-6/70",
             colorBg ? colorBg : roleGrad || "bg-transparent",
           )
           : cn(
@@ -339,7 +342,7 @@ function RadarMessageCardBase({
                 openCustomize({ authorTag, name: displayName, group: m.guildName ?? null })
               }
               title="Customize user"
-              aria-label={`Personalizar ${displayName}`}
+              aria-label={`Customize ${displayName}`}
               className={cn(
                 "flex size-6 items-center justify-center rounded-md text-gray-11",
                 "transition-[opacity,color,background-color] hover:bg-gray-4 hover:text-gray-12",

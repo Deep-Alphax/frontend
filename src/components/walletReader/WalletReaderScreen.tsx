@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { KolCardSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
 import { KolProfileModal } from "@/components/walletReader/KolProfileModal";
@@ -35,6 +36,27 @@ import { AddKolModal } from "@/components/walletReader/AddKolModal";
 import { KolCard } from "@/components/walletReader/KolCard";
 import { KOL_TIERS, KOL_TYPES } from "@/lib/walletReader/types";
 import type { KolIndexParams } from "@/lib/api/walletReader";
+import { getApiErrorMessage } from "@/lib/api/client";
+import { backupFilename, KolBackupError, parseKolBackup } from "@/lib/walletReader/backup";
+import toast from "react-hot-toast";
+
+/**
+ * Baixa `data` como arquivo. O link entra no DOM (o Firefox ignora `click()`
+ * em âncora solta) e o blob só é revogado DEPOIS do clique ser processado —
+ * revogar na mesma volta do event loop cancelava o download em alguns
+ * navegadores, e o "Exportar" parecia não fazer nada.
+ */
+function downloadFile(filename: string, data: string, mime: string) {
+  const url = URL.createObjectURL(new Blob([data], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 /** Chave de seleção de carteira (kolId|address). `squads` viaja junto porque a
  * tela não carrega mais o KOL inteiro — só a página que está mostrando. */
@@ -46,7 +68,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "relevance", label: "Relevance ↓" },
   { value: "name", label: "Name A–Z" },
   { value: "wallets", label: "Wallet count ↓" },
-  { value: "tier", label: "Categoria ↓" },
+  { value: "tier", label: "Level ↓" },
 ];
 
 /** Ícone do X (Twitter) — a lucide não traz o mark novo; SVG inline do logo oficial. */
@@ -63,8 +85,8 @@ type ViewId = "all" | "unclassified" | "alphaUp" | "noTwitter" | "pendingScan";
 
 const QUICK_VIEWS: { id: ViewId; label: string; Icon: (p: { className?: string }) => React.ReactElement }[] = [
   { id: "all", label: "All", Icon: (p) => <LayoutGrid {...p} strokeWidth={1.75} /> },
-  { id: "unclassified", label: "Falta classificar", Icon: (p) => <Pin {...p} strokeWidth={1.75} /> },
-  { id: "alphaUp", label: "Alpha e acima", Icon: (p) => <Star {...p} strokeWidth={1.75} /> },
+  { id: "unclassified", label: "Unclassified", Icon: (p) => <Pin {...p} strokeWidth={1.75} /> },
+  { id: "alphaUp", label: "Alpha & above", Icon: (p) => <Star {...p} strokeWidth={1.75} /> },
   { id: "noTwitter", label: "No Twitter", Icon: (p) => <XIcon {...p} /> },
   { id: "pendingScan", label: "Scan pending", Icon: (p) => <QrCode {...p} strokeWidth={1.75} /> },
 ];
@@ -225,6 +247,7 @@ export function WalletReaderScreen() {
   const index = useKolIndex(params);
   const {
     loaded,
+    refreshing,
     items,
     total,
     counts,
@@ -236,6 +259,7 @@ export function WalletReaderScreen() {
     addKol,
     exportBackup,
     importBackup,
+    importing,
     reset,
   } = index;
 
@@ -299,26 +323,37 @@ export function WalletReaderScreen() {
     return JSON.stringify(arr, null, 2);
   };
 
-  const downloadFile = (filename: string, data: string, mime: string) => {
-    const url = URL.createObjectURL(new Blob([data], { type: mime }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+  const [exporting, setExporting] = useState(false);
+  const onExport = async () => {
+    setExporting(true);
+    try {
+      const backup = await exportBackup();
+      downloadFile(backupFilename(), JSON.stringify(backup, null, 2), "application/json");
+      toast.success(`Backup exported (${Object.keys(backup.overrides ?? {}).length} KOLs).`);
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Could not export the backup."));
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const onImportFile = (file: File | undefined) => {
+  const onImportFile = async (file: File | undefined) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        void importBackup(JSON.parse(String(e.target?.result ?? "{}")));
-      } catch {
-        // arquivo inválido — silencioso
-      }
-    };
-    reader.readAsText(file);
+    let payload: ReturnType<typeof parseKolBackup>;
+    try {
+      payload = parseKolBackup(await file.text());
+    } catch (e) {
+      toast.error(e instanceof KolBackupError ? e.message : "Could not read this file.");
+      return;
+    }
+    if (payload.overrides.length === 0) {
+      toast.error("This backup has no KOL edits to import.");
+      return;
+    }
+    const { imported, failed } = await importBackup(payload);
+    if (failed) return; // o hook já avisou o motivo
+    const skipped = payload.skipped ? ` (${payload.skipped} invalid entries skipped)` : "";
+    toast.success(`Imported ${imported} KOLs${skipped}.`);
   };
 
   return (
@@ -437,31 +472,30 @@ export function WalletReaderScreen() {
             </button>
             <button
               type="button"
-              onClick={async () =>
-                downloadFile(
-                  "kol-index-backup.json",
-                  JSON.stringify(await exportBackup(), null, 2),
-                  "application/json",
-                )
-              }
-              className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11 transition-colors hover:border-gray-8 hover:text-gray-12"
+              onClick={() => void onExport()}
+              disabled={exporting}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11 transition-colors hover:border-gray-8 hover:text-gray-12 disabled:opacity-50"
             >
-              <Download className="size-4" strokeWidth={1.75} /> Exportar backup
+              <Download className="size-4" strokeWidth={1.75} />{" "}
+              {exporting ? "Exporting..." : "Export backup"}
             </button>
             <button
               type="button"
               onClick={() => importRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11 transition-colors hover:border-gray-8 hover:text-gray-12"
+              disabled={importing}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-xs font-medium text-gray-11 transition-colors hover:border-gray-8 hover:text-gray-12 disabled:opacity-50"
             >
-              <Upload className="size-4" strokeWidth={1.75} /> Importar
+              <Upload className="size-4" strokeWidth={1.75} />{" "}
+              {importing ? "Importing..." : "Import backup"}
             </button>
             <input
               ref={importRef}
               type="file"
-              accept="application/json"
+              accept=".json,application/json"
+              aria-label="Import backup file"
               className="hidden"
               onChange={(e) => {
-                onImportFile(e.target.files?.[0]);
+                void onImportFile(e.target.files?.[0]);
                 e.target.value = "";
               }}
             />
@@ -493,7 +527,7 @@ export function WalletReaderScreen() {
                 aria-label="Open filters"
                 className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 py-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12 lg:hidden"
               >
-                <SlidersHorizontal className="size-4" strokeWidth={1.75} /> Filtros
+                <SlidersHorizontal className="size-4" strokeWidth={1.75} /> Filters
               </button>
               <h1 className="text-base text-gray-11 tabular-nums">
                 {total.toLocaleString("en-US")} KOLs
@@ -528,12 +562,15 @@ export function WalletReaderScreen() {
 
           <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
           <div className="p-6">
-            {!loaded ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+            {/* Carga inicial E troca de filtro: skeleton no formato do card.
+                Na troca, as contagens da rail continuam as anteriores
+                (`keepPreviousData`) — só a grade vira skeleton. */}
+            {!loaded || refreshing ? (
+              <SkeletonGroup className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+                  <KolCardSkeleton key={i} />
                 ))}
-              </div>
+              </SkeletonGroup>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-lg border border-gray-6 bg-gray-2 px-6 py-16 text-center">
                 <p className="text-sm font-semibold text-gray-12">No KOL found</p>
@@ -547,11 +584,18 @@ export function WalletReaderScreen() {
                   ))}
                 </div>
                 {/* Gatilho da próxima página — só existe enquanto houver mais. */}
+                {/* Gatilho da próxima página — só existe enquanto houver mais. */}
                 {hasNextPage && (
-                  <div ref={sentinel} className="flex justify-center py-6">
-                    <span className="text-xs text-gray-11">
-                      {isFetchingNextPage ? "Loading more…" : " "}
-                    </span>
+                  <div ref={sentinel} className="flex justify-center pt-4">
+                    {isFetchingNextPage ? (
+                      <SkeletonGroup className="grid w-full grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <KolCardSkeleton key={i} />
+                        ))}
+                      </SkeletonGroup>
+                    ) : (
+                      <span className="h-px" />
+                    )}
                   </div>
                 )}
               </>
@@ -572,21 +616,21 @@ export function WalletReaderScreen() {
             onClick={() => setSelected(new Map())}
             className="rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-sm font-medium text-gray-11 transition-colors hover:text-gray-12"
           >
-            Limpar
+            Clear
           </button>
           <button
             type="button"
             onClick={() => navigator.clipboard?.writeText(buildSelectionPayload())}
             className="flex items-center gap-1.5 rounded-lg border border-gray-6 bg-gray-3 px-3 py-1.5 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
           >
-            <Copy className="size-4" strokeWidth={1.75} /> Copiar
+            <Copy className="size-4" strokeWidth={1.75} /> Copy
           </button>
           <button
             type="button"
-            onClick={() => downloadFile("wallets-selecionadas.txt", buildSelectionPayload(), "text/plain")}
+            onClick={() => downloadFile("selected-wallets.txt", buildSelectionPayload(), "text/plain")}
             className="flex items-center gap-1.5 rounded-lg bg-principal-9 px-3 py-1.5 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
           >
-            <Download className="size-4" strokeWidth={2} /> Exportar
+            <Download className="size-4" strokeWidth={2} /> Export
           </button>
         </div>
       )}

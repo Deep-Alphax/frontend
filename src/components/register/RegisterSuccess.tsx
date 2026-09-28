@@ -51,7 +51,7 @@ export function RegisterSuccess() {
         </div>
 
         <Button asChild>
-          <Link href="/">Acessar plataforma</Link>
+          <Link href="/">Access platform</Link>
         </Button>
       </div>
 

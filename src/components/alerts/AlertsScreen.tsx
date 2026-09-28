@@ -21,6 +21,7 @@ import { getFavorites, getFeedGroups } from "@/lib/api/feed";
 import { disablePush, enablePush, getPushState, type PushState } from "@/lib/alerts/push";
 import { toastApiError } from "@/lib/billing/planErrors";
 import { cn } from "@/lib/cn";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 const KINDS: { id: AlertKind; label: string; hint: string; Icon: typeof AtSign }[] = [
   { id: "AUTHOR", label: "Caller", hint: "Someone posts", Icon: AtSign },
@@ -75,9 +76,12 @@ export function AlertsScreen() {
           <PushCard />
 
           {isLoading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="size-5 animate-spin text-gray-11" />
-            </div>
+            <SkeletonGroup className="flex flex-col gap-3 rounded-xl border border-gray-6 bg-gray-2 p-4">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-32 self-end rounded-lg" />
+            </SkeletonGroup>
           ) : atLimit ? (
             <ProLock
               title="Unlimited alerts with Pro"

@@ -185,7 +185,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
     await user.type(screen.getByRole("textbox", { name: /twitter/i }), "@handlenovo");
 
     // Nível: grava a relevância no meio da faixa escolhida.
-    await user.click(screen.getByRole("button", { name: "Tier Bronze" }));
+    await user.click(screen.getByRole("button", { name: "Tier Wood" }));
 
     // Tipos: troca Alpha Caller por Whale.
     await user.click(screen.getByRole("button", { name: "Alpha Caller" }));
@@ -210,7 +210,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
     expect(api.patchKolOverride).toHaveBeenCalledWith("k1", {
       notes: "nota nova",
       twitter: "handlenovo",
-      relevance: 19,
+      relevance: 13, // meio da faixa do Wood (0–25)
       types: ["whale"],
       // Só os squads DA CONTA sobem: "Lair" é do preset e não é do usuário.
       squads: ["Outro Squad"],
@@ -223,7 +223,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
 
     expect(await screen.findByText("nota nova")).toBeInTheDocument();
     expect(screen.getByText("@handlenovo")).toBeInTheDocument();
-    expect(screen.getByText("Bronze")).toBeInTheDocument();
+    expect(screen.getByText("Wood")).toBeInTheDocument();
     expect(screen.getByText("Whale")).toBeInTheDocument();
     expect(screen.getByText("So1ana222")).toBeInTheDocument();
     expect(screen.queryByText("So1ana111")).toBeNull();
@@ -421,7 +421,7 @@ describe("KolProfileModal — limites da UI", () => {
 
     await user.clear(notes);
     fireEvent.change(notes, { target: { value: "a".repeat(30) } });
-    expect(screen.getByText("30/200 caracteres")).toBeInTheDocument();
+    expect(screen.getByText("30/200 characters")).toBeInTheDocument();
   });
 });
 

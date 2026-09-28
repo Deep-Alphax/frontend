@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/client";
 import type { KolState, ScanResult, ScanSummary, WalletRef } from "@/lib/walletReader/types";
+import type { KolImportPayload } from "@/lib/walletReader/backup";
 
 /*
  * KOL Index — espelha os DTOs de `backend/src/app/wallet-reader/*`.
@@ -197,10 +198,9 @@ export async function resetKolAccount(): Promise<void> {
  * usa a tabela para traduzir os ids de `fnfGroups` em nomes de squad. Arquivos
  * novos não trazem nem um nem outro.
  */
-export async function importKolBackup(input: {
-  overrides: (KolOverridePatch & { kolId: string })[];
-  groups?: { id: string; name: string }[];
-}): Promise<{ imported: number }> {
+export async function importKolBackup(
+  input: KolImportPayload,
+): Promise<{ imported: number }> {
   const { data } = await api.post<{ imported: number }>(
     "/api/v1/wallet-reader/kols/import",
     input,

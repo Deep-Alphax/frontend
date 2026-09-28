@@ -31,6 +31,7 @@ import { clearSentTx, loadSentTx, saveSentTx } from "@/lib/crypto/sentTx";
 import { DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/cn";
 import { PRIMARY_BTN, SECONDARY_BTN } from "@/components/plans/crypto/walletUi";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /*
  * Pré-pago em USDC pela carteira do usuário. Uma etapa por vez: rede →
@@ -299,7 +300,11 @@ export function CryptoPayModal({
               )}
 
               {paymentId && !payment.data && (
-                <p className="px-5 py-8 text-center text-sm text-gray-11">Loading…</p>
+                <SkeletonGroup className="flex flex-col items-center gap-4 px-5 py-8">
+                  <Skeleton className="size-40 rounded-lg" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                </SkeletonGroup>
               )}
 
               {confirmed && payment.data && <Confirmed payment={payment.data} />}

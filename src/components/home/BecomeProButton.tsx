@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { FlashIcon } from "@/components/icons/hugeicons";
 import { usePlan } from "@/lib/billing/usePlan";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /**
  * CTA de upsell no header (Figma `1056:27771` — "Assinar Pro").
  *
  * Substitui o antigo link "Plans" da navegação. Some para quem JÁ é PRO: oferecer
- * assinatura a assinante é ruído. Estado padrão (carregando ou deslogado) = FREE,
- * o mesmo piso seguro do `PlanCta` — no máximo mostra a oferta a mais, nunca
- * esconde de quem não assina.
+ * assinatura a assinante é ruído. Enquanto o plano carrega, um skeleton do
+ * mesmo tamanho — antes o botão aparecia e sumia para quem já era PRO.
+ * Deslogado = FREE (mostra a oferta).
  *
  * Usa o mesmo `usePlan` do `PlanCta`, então o header e a tela de planos
  * dividem a MESMA entrada de cache (uma requisição, não duas).
  */
 export function BecomeProButton() {
-  const { isPro } = usePlan();
+  const { isPro, isLoading } = usePlan();
+  if (isLoading) return <Skeleton className="h-9 w-[132px] rounded-lg" />;
   if (isPro) return null;
 
   return (

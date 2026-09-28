@@ -16,6 +16,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { toastApiError } from "@/lib/billing/planErrors";
 import type { BackendChain } from "@/lib/api/wallets";
 import { cn } from "@/lib/cn";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 const CHAINS: BackendChain[] = [
   "SOLANA",
@@ -235,7 +236,11 @@ export function SourcesManager() {
 
       {/* Lista de fontes */}
       {isLoading ? (
-        <div className="h-16 animate-pulse rounded-lg bg-gray-1" aria-hidden />
+        <SkeletonGroup className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-lg bg-gray-1" />
+          ))}
+        </SkeletonGroup>
       ) : sources.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {sources.map((s) => (

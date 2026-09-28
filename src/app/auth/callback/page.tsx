@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { AuthCallback } from "@/components/auth/AuthCallback";
 
 export const metadata: Metadata = {
-  title: "Concluindo login — Deep Alpha",
+  title: "Completing sign-in — Deep Alpha",
   robots: { index: false, follow: false },
 };
 
@@ -13,7 +13,7 @@ function CallbackFallback() {
   return (
     <main className="flex min-h-dvh items-center justify-center gap-3 bg-gray-1 text-gray-11">
       <Loader2 className="size-5 animate-spin" aria-hidden />
-      <span className="text-base">Concluindo login…</span>
+      <span className="text-base">Completing sign-in…</span>
     </main>
   );
 }

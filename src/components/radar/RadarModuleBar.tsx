@@ -23,6 +23,7 @@ import { getDiscordSourcesAnalytics } from "@/lib/api/sources";
 import { formatCompactUsd, formatPct, formatSignedUsd, signOf } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { MetricTooltip } from "@/components/radar/MetricTooltip";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type Tone = "green" | "red" | "neutral";
 
@@ -126,7 +127,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "win",
       icon: Target,
-      title: "Taxa de acerto",
+      title: "Win rate",
       value: formatPct(a.winRate.winRatePct, 1),
       tone: "green",
       grip: true,
@@ -147,7 +148,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "dd",
       icon: TrendingDown,
-      title: "Maior Drawdown",
+      title: "Max Drawdown",
       value:
         a.bankroll.maxDrawdownPct != null
           ? formatPct(Math.abs(a.bankroll.maxDrawdownPct))
@@ -159,7 +160,7 @@ function buildMetricChips(a: PortfolioAnalytics, topSourceName: string | null): 
     {
       key: "vol",
       icon: BarChart3,
-      title: "Volume operado",
+      title: "Traded volume",
       value: formatCompactUsd(a.volumeUsd),
       tone: "green",
       grip: true,
@@ -375,7 +376,7 @@ export function RadarModuleBar() {
     title: selectedWallet ? selectedWallet.label?.trim() || shortAddr(selectedWallet.address) : "All wallets",
     value: selectedWallet
       ? selectedWallet.chain.toLowerCase()
-      : `${walletCount} ${walletCount === 1 ? "comparada" : "comparadas"}`,
+      : `${walletCount} compared`,
     tone: "neutral",
   };
   const metrics = a ? buildMetricChips(a, topSourceName) : [];
@@ -434,7 +435,7 @@ export function RadarModuleBar() {
 
       {analyticsQuery.isLoading && walletCount > 0 ? (
         Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-10 w-40 shrink-0 animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+          <Skeleton key={i} className="h-10 w-40 shrink-0 rounded-lg border border-gray-6 bg-gray-2" />
         ))
       ) : (
         orderedMetrics.map((chip) => (

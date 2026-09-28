@@ -11,12 +11,12 @@ interface RecMeta {
 /** Rótulo + cor de cada recomendação (ordem = a dos chips de filtro do design). */
 export const RECOMMENDATIONS: { key: RecommendationKey; meta: RecMeta }[] = [
   { key: "usar_mais", meta: { label: "Use more", tone: "green" } },
-  { key: "manter", meta: { label: "Manter", tone: "green" } },
-  { key: "reduzir_size", meta: { label: "Reduzir size", tone: "amber" } },
+  { key: "manter", meta: { label: "Keep", tone: "green" } },
+  { key: "reduzir_size", meta: { label: "Reduce size", tone: "amber" } },
   { key: "revisar_entrada", meta: { label: "Review entry", tone: "amber" } },
-  { key: "observar", meta: { label: "Observar", tone: "neutral" } },
-  { key: "cortar", meta: { label: "Cortar", tone: "red" } },
-  { key: "aposta_curta", meta: { label: "Aposta curta", tone: "blue" } },
+  { key: "observar", meta: { label: "Watch", tone: "neutral" } },
+  { key: "cortar", meta: { label: "Cut", tone: "red" } },
+  { key: "aposta_curta", meta: { label: "Short play", tone: "blue" } },
 ];
 
 export const RECOMMENDATION_META: Record<RecommendationKey, RecMeta> = Object.fromEntries(

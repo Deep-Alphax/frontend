@@ -51,7 +51,7 @@ function DashboardError({ onRetry }: { onRetry: () => void }) {
         onClick={onRetry}
         className="rounded-lg bg-principal-9 px-6 py-2.5 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
       >
-        Tentar de novo
+        Try again
       </button>
     </div>
   );

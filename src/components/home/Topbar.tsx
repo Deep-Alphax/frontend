@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/alerts/NotificationBell";
 import { AccountMenu } from "@/components/home/AccountMenu";
 import { BecomeProButton } from "@/components/home/BecomeProButton";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import { WalletChip } from "@/components/home/WalletChip";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
@@ -78,13 +79,20 @@ export function Topbar() {
         </div>
 
         {/* Direita: depende da sessão.
-          - carregando → nada (evita flash de "Sign in" para quem está logado);
+          - carregando → skeleton no formato de carteira + sino + conta (nem
+            flash de "Sign in" para quem está logado, nem o header pulando);
           - logado → carteiras + notificações + conta;
           - deslogado → só o CTA "Sign in" (nenhuma conta no header). */}
         <div className="flex items-center gap-4">
           <BecomeProButton />
 
-          {isLoading ? null : isAuthenticated ? (
+          {isLoading ? (
+            <SkeletonGroup label="Loading account" className="flex items-center gap-4">
+              <Skeleton className="h-9 w-32 rounded-lg" />
+              <Skeleton className="size-9 rounded-full" />
+              <Skeleton className="h-9 w-24 rounded-full" />
+            </SkeletonGroup>
+          ) : isAuthenticated ? (
             <>
               <WalletChip />
 

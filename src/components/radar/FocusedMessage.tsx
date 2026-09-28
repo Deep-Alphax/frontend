@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { Modal } from "@/components/walletReader/Modal";
 import { RadarMessageCard } from "@/components/radar/RadarMessageCard";
+import { MessageSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import { getFeedMessage } from "@/lib/api/feed";
 import { isNotFoundError } from "@/lib/api/client";
 
@@ -49,7 +50,17 @@ export function FocusedMessage({
     router.replace(pathname, { scroll: false });
   }, [query.isError, query.error, pathname, router]);
 
-  if (!id || !query.data) return null;
+  if (!id || query.isError) return null;
+
+  if (!query.data) {
+    return (
+      <Modal open onClose={close} title="From your alert" className="max-w-xl">
+        <SkeletonGroup className="p-4">
+          <MessageSkeleton className="rounded-xl border border-gray-6" />
+        </SkeletonGroup>
+      </Modal>
+    );
+  }
 
   return (
     <Modal open onClose={close} title="From your alert" className="max-w-xl">

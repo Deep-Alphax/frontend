@@ -3,12 +3,18 @@
 import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { getFavoriteMessages, type CapturedMessage } from "@/lib/api/feed";
+import {
+  getFavoriteMessages,
+  nextFeedPage,
+  type CapturedMessage,
+  type FeedPageParam,
+} from "@/lib/api/feed";
 import {
   FAVORITE_MESSAGES_KEY,
   useFavorites,
 } from "@/components/radar/useFavorites";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
+import { MessageSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /** Badge de contagem do header (tokens do DS: principal 3/8/11). */
 function CountBadge({ children }: { children: React.ReactNode }) {
@@ -50,9 +56,10 @@ export function FavoritesPanel({ onSelectAuthor, dragHandle }: FavoritesPanelPro
 
   const query = useInfiniteQuery({
     queryKey: FAVORITE_MESSAGES_KEY,
-    queryFn: ({ pageParam }) => getFavoriteMessages({ page: pageParam, limit: 20 }),
-    initialPageParam: 1,
-    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    queryFn: ({ pageParam }) =>
+      getFavoriteMessages({ before: pageParam ?? undefined, limit: 20 }),
+    initialPageParam: null as FeedPageParam,
+    getNextPageParam: nextFeedPage,
   });
 
   const items = useMemo(() => flattenUnique(query.data?.pages), [query.data]);
@@ -70,11 +77,11 @@ export function FavoritesPanel({ onSelectAuthor, dragHandle }: FavoritesPanelPro
       </div>
 
       {query.isLoading ? (
-        <div className="flex flex-col gap-3 p-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-lg border border-gray-6 bg-gray-1" />
+        <SkeletonGroup className="flex flex-col">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <MessageSkeleton key={i} />
           ))}
-        </div>
+        </SkeletonGroup>
       ) : hasItems ? (
         <ChatMessageList
           messages={items}

@@ -259,7 +259,7 @@ function compile(
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const kind = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
     console.error(
-      `[lightRays] ${kind} shader: ${gl.getShaderInfoLog(shader) ?? "(sem log)"}`,
+      `[lightRays] ${kind} shader: ${gl.getShaderInfoLog(shader) ?? "(no log)"}`,
     );
     gl.deleteShader(shader);
     return null;
@@ -325,7 +325,7 @@ export function createLightRays(
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
     console.error(
-      `[lightRays] link: ${gl.getProgramInfoLog(prog) ?? "(sem log)"}`,
+      `[lightRays] link: ${gl.getProgramInfoLog(prog) ?? "(no log)"}`,
     );
     return null;
   }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import {
   CopyIcon,
@@ -22,6 +22,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/client";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 interface AffiliatesModalProps {
   open: boolean;
@@ -99,9 +100,15 @@ function AffiliatesDialog({ onClose }: { onClose: () => void }) {
         </header>
 
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center text-gray-11">
-            <Loader2 className="size-5 animate-spin" aria-label="Loading" />
-          </div>
+          <SkeletonGroup className="flex flex-col gap-4 p-4">
+            <Skeleton className="h-24 rounded-xl" />
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="h-10 rounded-lg" />
+          </SkeletonGroup>
         ) : isError || !data ? (
           <div className="px-4 py-10 text-center text-base text-gray-11">
             {getApiErrorMessage(error, "Could not load your affiliate panel.")}
@@ -272,7 +279,7 @@ function DashboardSection({ data }: { data: AffiliateOverview }) {
           value={formatCents(data.paidOutCents, data.currency)}
         />
         <StatTile
-          label="Referalls"
+          label="Referrals"
           value={`${data.referralCount} ${data.referralCount === 1 ? "User" : "Users"}`}
         />
       </div>

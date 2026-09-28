@@ -25,6 +25,7 @@ import {
   type KolState,
   type WalletRef,
 } from "@/lib/walletReader/types";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /**
  * Rascunho do modal: tudo que o botão "Salvar alterações" manda de uma vez.
@@ -262,8 +263,16 @@ export function KolProfileModal(props: KolProfileModalProps) {
 
   if (!state) {
     return (
-      <Modal open onClose={props.onClose} title="Loading…">
-        <div className="h-64 animate-pulse bg-gray-2" aria-hidden />
+      <Modal open onClose={props.onClose} title="KOL">
+        <SkeletonGroup className="flex flex-col items-center gap-4 px-4 py-6">
+          <Skeleton className="size-24 rounded-full" />
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-3.5 w-24" />
+          <Skeleton className="h-0.5 w-full rounded-none" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          ))}
+        </SkeletonGroup>
       </Modal>
     );
   }
@@ -645,7 +654,7 @@ function KolProfileForm({
           onChange={(e) => set("notes", e.target.value)}
           maxLength={NOTES_MAX}
           rows={5}
-          placeholder="Ex: Costuma comprar cedo em runner de baixo mcap…"
+          placeholder="e.g. Usually buys early on low-mcap runners…"
           aria-label="KOL notes"
           className="w-full resize-y rounded-lg border border-gray-6 bg-gray-2 px-3 py-4 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
         />
@@ -655,7 +664,7 @@ function KolProfileForm({
             draft.notes.length > NOTES_MAX ? "text-vermelho-11" : "text-gray-11",
           )}
         >
-          {draft.notes.length}/{NOTES_MAX} caracteres
+          {draft.notes.length}/{NOTES_MAX} characters
         </p>
       </section>
 

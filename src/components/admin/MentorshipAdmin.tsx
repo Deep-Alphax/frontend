@@ -25,6 +25,7 @@ import {
 } from "@/lib/api/mentorship";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /** Acentos oferecidos no formulário — espelha o enum do backend. */
 const ACCENTS: { value: MentorshipAccent; label: string }[] = [
@@ -253,10 +254,11 @@ export function MentorshipAdmin() {
           </div>
 
           {isLoading ? (
-            <div
-              className="h-40 animate-pulse rounded-lg bg-gray-2"
-              aria-hidden
-            />
+            <SkeletonGroup className="flex flex-col gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 rounded-lg bg-gray-2" />
+              ))}
+            </SkeletonGroup>
           ) : null}
 
           <ul className="flex flex-col gap-2">

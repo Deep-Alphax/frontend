@@ -105,7 +105,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
         `One of the top 3 trades: ${name}, exit at ${t.exitMultiple.toLocaleString(
           "en-US",
           { maximumFractionDigits: 1 },
-        )}x e ${formatSignedUsd(t.tradingPnlUsd)}.`,
+        )}x and ${formatSignedUsd(t.tradingPnlUsd)}.`,
       );
     }
     return { solByDate, dailyByDate, noteByDate };
@@ -170,7 +170,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
     ];
     if (benchmark.available) {
       datasets.push({
-        label: "Medido em SOL",
+        label: "Measured in SOL",
         data: sol,
         borderColor: RED,
         backgroundColor: "rgba(229, 72, 77, 0.10)",
@@ -221,7 +221,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
       title="PNL Total"
       description="Realized (closed) + unrealized (held)"
       rows={[
-        { label: "Realizado", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
+        { label: "Realized", value: formatSignedUsd(realizedPnlUsd), tone: toneOf(realizedPnlUsd) },
         {
           label: "Unrealized",
           value: unrealized.available ? formatSignedUsd(unrealizedUsd) : "—",
@@ -241,18 +241,18 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
   const dw = deriveDrawdownWindow(capital.points);
   const drawdownTooltip = (
     <RichInfoHint
-      title="Maior Drawdown"
+      title="Max Drawdown"
       description="Measures how far capital fell from its high before climbing again"
       rows={[
         { label: "Peak on", value: dw ? formatShortDate(dw.peakDate) : "—" },
-        { label: "Fundo em", value: dw ? formatShortDate(dw.troughDate) : "—" },
+        { label: "Bottom on", value: dw ? formatShortDate(dw.troughDate) : "—" },
         { label: "Duration", value: dw ? `${dw.durationDays} days` : "—" },
         {
-          label: "Queda",
+          label: "Drop",
           value: bankroll.maxDrawdownPct != null ? formatPct(-bankroll.maxDrawdownPct, 1) : "—",
           tone: "negative",
         },
-        { label: "Em dinheiro", value: `−${formatUsd(capital.maxDrawdownUsd)}`, tone: "negative" },
+        { label: "In USD", value: `−${formatUsd(capital.maxDrawdownUsd)}`, tone: "negative" },
       ]}
     />
   );
@@ -365,7 +365,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
         </MiniKpi>
 
         <MiniKpi
-          label="Maior drawdown"
+          label="Max drawdown"
           hint={drawdownTooltip}
           footer={`−${formatUsd(capital.maxDrawdownUsd)} in the period`}
         >
@@ -388,7 +388,7 @@ export function CapitalEvolutionCard({ data }: { data: PortfolioAnalytics }) {
           </span>
           {benchmark.available ? (
             <span className="flex items-center gap-2">
-              <span className="size-3 rounded-sm bg-danger-10" /> Medido em SOL
+              <span className="size-3 rounded-sm bg-danger-10" /> Measured in SOL
             </span>
           ) : null}
         </div>
@@ -461,7 +461,7 @@ function ChartTooltip({
   });
 
   const rows: { label: string; value: string; tone: string }[] = [
-    { label: "Capital acumulado", value: formatSignedUsd(cumUsd), tone: toneClass(cumUsd) },
+    { label: "Cumulative capital", value: formatSignedUsd(cumUsd), tone: toneClass(cumUsd) },
   ];
   if (bankrollPct != null) {
     rows.push({
@@ -472,7 +472,7 @@ function ChartTooltip({
   }
   if (solCum != null) {
     rows.push({
-      label: "Medida em SOL",
+      label: "Measured in SOL",
       value: `${solCum >= 0 ? "+" : "−"}${Math.abs(solCum).toLocaleString("en-US", {
         maximumFractionDigits: 2,
       })} SOL`,

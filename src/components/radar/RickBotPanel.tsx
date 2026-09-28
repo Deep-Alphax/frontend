@@ -3,12 +3,18 @@
 import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { getFeedMessages, type CapturedMessage } from "@/lib/api/feed";
+import {
+  getFeedMessages,
+  nextFeedPage,
+  type CapturedMessage,
+  type FeedPageParam,
+} from "@/lib/api/feed";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
 import { fmtCount } from "@/components/radar/groupAvatar";
 import { RICK_BOT_TAG } from "@/components/radar/rickBot";
 import { ProLock } from "@/components/plans/ProLock";
 import { usePlan } from "@/lib/billing/usePlan";
+import { MessageSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /**
  * A chave de query espelha a do perfil (`["feed-author", tag]`), então o realtime
@@ -54,9 +60,15 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
   const query = useInfiniteQuery({
     queryKey: RICK_QUERY_KEY,
     queryFn: ({ pageParam }) =>
-      getFeedMessages({ authorTag: RICK_BOT_TAG, page: pageParam, limit: 20 }),
-    initialPageParam: 1,
-    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+      // O cabeçalho mostra o total: COUNT só na 1ª página, não a cada rolagem.
+      getFeedMessages({
+        authorTag: RICK_BOT_TAG,
+        before: pageParam ?? undefined,
+        limit: 20,
+        withTotal: pageParam === null,
+      }),
+    initialPageParam: null as FeedPageParam,
+    getNextPageParam: nextFeedPage,
   });
 
   const items = useMemo(() => flattenUnique(query.data?.pages), [query.data]);
@@ -77,11 +89,11 @@ export function RickBotPanel({ onSelectAuthor, dragHandle }: RickBotPanelProps) 
       </div>
 
       {query.isLoading ? (
-        <div className="flex flex-1 flex-col gap-3 p-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-40 animate-pulse rounded-lg border border-gray-6 bg-gray-2" />
+        <SkeletonGroup className="flex flex-col flex-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <MessageSkeleton key={i} />
           ))}
-        </div>
+        </SkeletonGroup>
       ) : items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-3 py-16 text-center">
           <div className="flex flex-col items-center gap-2 px-3">

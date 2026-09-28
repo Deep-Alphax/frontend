@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { KolsAdmin } from "@/components/admin/KolsAdmin";
 
 export const metadata: Metadata = {
-  title: "Admin · Preset de KOLs",
+  title: "Admin · KOL preset",
   robots: { index: false, follow: false },
 };
 

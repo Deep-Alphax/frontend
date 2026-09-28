@@ -122,7 +122,7 @@ export function PeakVsExitCard({ peaks }: PeakVsExitCardProps) {
         </div>
         {peaks.available ? (
           <span className="shrink-0 whitespace-nowrap text-base text-gray-11">
-            {withData.length} trades mais recentes
+            {withData.length} most recent trades
           </span>
         ) : (
           <NoDataBadge />
@@ -141,7 +141,7 @@ export function PeakVsExitCard({ peaks }: PeakVsExitCardProps) {
                 className="absolute right-0 -translate-y-1/2 whitespace-nowrap"
                 style={{ bottom: `${axisPos(m) * 100}%` }}
               >
-                {m === 0.5 ? "0,5x" : `${m}x`}
+                {m === 0.5 ? "0.5x" : `${m}x`}
               </span>
             ))}
           </div>

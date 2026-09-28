@@ -63,8 +63,25 @@ export interface FeedPage {
   items: CapturedMessage[];
   page: number;
   limit: number;
-  total: number;
-  totalPages: number;
+  /** Há página seguinte. */
+  hasMore: boolean;
+  /**
+   * Cursor da página seguinte (`before` do próximo pedido); ausente na última.
+   * Paginação por cursor custa o mesmo em qualquer profundidade do scroll, e
+   * uma captura nova no topo não desloca as páginas seguintes.
+   */
+  nextCursor?: string;
+  /** Só quando pedido (`withTotal`, padrão do servidor) — custa um COUNT. */
+  total?: number;
+  totalPages?: number;
+}
+
+/** Parâmetro de página das listas infinitas: `null` = primeira página. */
+export type FeedPageParam = string | null;
+
+/** `getNextPageParam` das listas infinitas de capturas (cursor). */
+export function nextFeedPage(last: FeedPage): FeedPageParam | undefined {
+  return last.hasMore && last.nextCursor ? last.nextCursor : undefined;
 }
 
 /** Usuário em blacklist (mensagens dele não vão ao Telegram). */
@@ -160,7 +177,10 @@ export async function deleteBlacklist(id: string): Promise<{ id: string }> {
 
 /** GET /api/v1/feed/messages — capturas paginadas (filtros opcionais). */
 export async function getFeedMessages(params: {
+  /** Paginação numerada (admin). A rolagem infinita usa `before`. */
   page?: number;
+  /** Cursor (`nextCursor` da página anterior). */
+  before?: string;
   limit?: number;
   channelId?: string;
   monitorId?: string;
@@ -169,6 +189,13 @@ export async function getFeedMessages(params: {
   /** Tag do autor (identidade presente em 100% das capturas) — feed do perfil. */
   authorTag?: string;
   search?: string;
+  /** Servidor (guildName) — recorte feito no banco, não no pool do cliente. */
+  guildName?: string;
+  /**
+   * `false` dispensa o COUNT (a rolagem infinita só precisa de `hasMore`).
+   * Exige o backend com o parâmetro — senão o `forbidNonWhitelisted` dá 400.
+   */
+  withTotal?: boolean;
 }): Promise<FeedPage> {
   const { data } = await api.get<FeedPage>("/api/v1/feed/messages", { params });
   return data;
@@ -316,6 +343,8 @@ export async function uploadFavoritePhoto(
 /** GET /api/v1/feed/favorites/messages — feed paginado dos autores seguidos. */
 export async function getFavoriteMessages(params: {
   page?: number;
+  /** Cursor (`nextCursor` da página anterior). */
+  before?: string;
   limit?: number;
 }): Promise<FeedPage> {
   const { data } = await api.get<FeedPage>("/api/v1/feed/favorites/messages", {

@@ -3,15 +3,15 @@
 import type { WeekdayBlockCell } from "@/lib/api/analytics";
 import { formatUsd, formatSignedUsd } from "@/lib/format";
 
-const DAY_SHORT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
+const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_FULL = [
-  "Segunda-feira",
+  "Monday",
   "Tuesday",
-  "Quarta-feira",
-  "Quinta-feira",
-  "Sexta-feira",
+  "Wednesday",
+  "Thursday",
+  "Friday",
   "Saturday",
-  "Domingo",
+  "Sunday",
 ];
 const BLOCK_LABELS = ["00–04h", "04–08h", "08–12h", "12–16h", "16–20h", "20–24h"];
 
@@ -28,11 +28,11 @@ const SCALE: { max: number; bg: string }[] = [
 
 const LEGEND: { bg: string; label: string }[] = [
   { bg: "#5b1a20", label: "−150" },
-  { bg: "#7d2530", label: "−150 a −50" },
-  { bg: "#3a1f26", label: "−50 a −10" },
-  { bg: "#23252f", label: "−10 a +10" },
-  { bg: "#1c3a2a", label: "+10 a +50" },
-  { bg: "#235e3b", label: "+50 a +150" },
+  { bg: "#7d2530", label: "−150 to −50" },
+  { bg: "#3a1f26", label: "−50 to −10" },
+  { bg: "#23252f", label: "−10 to +10" },
+  { bg: "#1c3a2a", label: "+10 to +50" },
+  { bg: "#235e3b", label: "+50 to +150" },
   { bg: "#2c7a4a", label: "+150" },
 ];
 

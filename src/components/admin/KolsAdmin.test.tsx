@@ -249,10 +249,10 @@ describe("KolsAdmin — remover e restaurar", () => {
     await user.click(
       await screen.findByRole("button", { name: "Remove Ansem from preset" }),
     );
-    expect(await screen.findByText("removido")).toBeInTheDocument();
+    expect(await screen.findByText("removed")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Restore Ansem" }));
-    await waitFor(() => expect(screen.queryByText("removido")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("removed")).toBeNull());
   });
 
   it("não remove quando a confirmação é cancelada", async () => {
@@ -304,7 +304,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
 
     // Carteiras: remove a que existia e adiciona outra.
     await user.click(screen.getByRole("button", { name: "Remove So1ana111" }));
-    await user.type(screen.getByPlaceholderText("apelido"), "cold");
+    await user.type(screen.getByPlaceholderText("nickname"), "cold");
     await user.type(
       screen.getByPlaceholderText("on-chain address"),
       "So1ana222",
@@ -422,7 +422,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     await openEditor(user, "Ansem");
 
     // Sem endereço: nada é adicionado.
-    await user.type(screen.getByPlaceholderText("apelido"), "vazia");
+    await user.type(screen.getByPlaceholderText("nickname"), "vazia");
     await user.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByText("Wallets (1)")).toBeInTheDocument();
 

@@ -209,7 +209,7 @@ function CustomizeForm({
             className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-6 bg-gray-3 px-8 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
           >
             <Pencil className="size-4" strokeWidth={2} />
-            Mudar foto
+            Change photo
           </button>
           <input
             ref={fileRef}
@@ -225,7 +225,7 @@ function CustomizeForm({
         {/* Apelido */}
         <div className="flex flex-col gap-2">
           <label htmlFor="fav-nickname" className="text-base text-gray-12">
-            Apelido
+            Nickname
           </label>
           <input
             id="fav-nickname"
@@ -244,7 +244,7 @@ function CustomizeForm({
 
         {/* Cores */}
         <div className="flex flex-col gap-3">
-          <p className="text-base text-gray-12">Cores</p>
+          <p className="text-base text-gray-12">Colors</p>
           <div className="flex flex-wrap gap-2">
             {FAVORITE_COLOR_KEYS.map((key) => {
               const active = color === key;
@@ -253,7 +253,7 @@ function CustomizeForm({
                   key={key}
                   type="button"
                   onClick={() => setColor(active ? null : key)}
-                  aria-label={`Cor ${key}`}
+                  aria-label={`Color ${key}`}
                   aria-pressed={active}
                   className={cn(
                     "relative flex size-7 items-center justify-center rounded-full border transition-transform hover:scale-110",

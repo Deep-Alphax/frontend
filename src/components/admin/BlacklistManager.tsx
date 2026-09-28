@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 const EMPTY = { discordUserId: "", username: "", reason: "" };
 
@@ -107,7 +108,9 @@ export function BlacklistManager() {
       </div>
 
       {listQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Loading…</p>
+        <SkeletonGroup className="py-2">
+          <TableSkeleton rows={4} cols={4} />
+        </SkeletonGroup>
       ) : items.length === 0 ? (
         <p className="text-sm text-gray-11">Nobody on the blacklist.</p>
       ) : (

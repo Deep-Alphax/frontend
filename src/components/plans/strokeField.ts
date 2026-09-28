@@ -125,7 +125,7 @@ function compile(
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const kind = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
     console.error(
-      `[strokeField] ${kind}: ${gl.getShaderInfoLog(shader) ?? "(sem log)"}`,
+      `[strokeField] ${kind}: ${gl.getShaderInfoLog(shader) ?? "(no log)"}`,
     );
     gl.deleteShader(shader);
     return null;
@@ -162,7 +162,7 @@ export function createStrokeLight(
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
     console.error(
-      `[strokeField] link: ${gl.getProgramInfoLog(prog) ?? "(sem log)"}`,
+      `[strokeField] link: ${gl.getProgramInfoLog(prog) ?? "(no log)"}`,
     );
     return null;
   }

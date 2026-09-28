@@ -100,7 +100,7 @@ export function Footer() {
                 href="#"
                 className="relative flex h-9 items-center justify-center rounded-lg bg-principal-9 px-3 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
               >
-                Quero participar
+                Join now
               </a>
             </div>
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
@@ -24,6 +25,7 @@ import {
   type KolOverridePatch,
 } from "@/lib/api/walletReader";
 import type { WalletRef } from "@/lib/walletReader/types";
+import { chunkOverrides, type KolImportPayload } from "@/lib/walletReader/backup";
 
 /** Raiz da chave — invalidar por ela alcança TODA combinação de filtro. */
 export const KOL_INDEX_KEY = ["kol-index"] as const;
@@ -44,21 +46,6 @@ export const kolDetailKey = (kolId: string) => [...KOL_DETAIL_KEY, kolId] as con
 
 /** Itens por página. O servidor devolve no máximo 200. */
 const PAGE = 60;
-
-/**
- * Backup da conta.
- *
- * `groups` só aparece em arquivos ANTERIORES à unificação squad/grupo — o
- * backend ainda os lê para traduzir os ids de `fnfGroups` em nomes de squad, e
- * é por isso que o campo continua viajando no import.
- */
-export interface KolBackup {
-  version: 1;
-  exportedAt: string;
-  overrides: Record<string, KolOverridePatch>;
-  customIds: string[];
-  groups?: { id: string; name: string }[];
-}
 
 /**
  * Índice de KOLs, paginado NO SERVIDOR.
@@ -83,6 +70,11 @@ export function useKolIndex(params: KolIndexParams) {
       const loaded = all.reduce((n, p) => n + p.items.length, 0);
       return loaded < last.total ? loaded : undefined;
     },
+    // Cada combinação de filtro é uma chave nova: sem isto, marcar um filtro
+    // deixava a query sem dados até a resposta chegar — a grade virava
+    // esqueleto e TODAS as contagens da rail caíam para 0. Com o dado anterior
+    // mantido, a tela só troca quando o novo chega (`refreshing` no meio).
+    placeholderData: keepPreviousData,
   });
 
   const pages = useMemo(() => query.data?.pages ?? [], [query.data]);
@@ -191,24 +183,43 @@ export function useKolIndex(params: KolIndexParams) {
 
   // ── Backup da conta ────────────────────────────────────────────────────────
 
-  const importMut = useMutation({
-    mutationFn: importKolBackup,
-    onSuccess: invalidate,
-    onError: (e) => onError(e, "Could not import the backup."),
-  });
-
+  /**
+   * Restaura um backup JÁ normalizado (`parseKolBackup`), em lotes que caibam
+   * no corpo do servidor. Os lotes vão em sequência — em paralelo, um backup
+   * grande viraria uma rajada contra o rate limit. O import é upsert por
+   * (conta, kolId), então um lote que falhou pode ser reenviado sem duplicar.
+   *
+   * `groups` (backup antigo) viaja em TODO lote: é a tabela que traduz os
+   * `fnfGroups` daquele lote, e o servidor não guarda estado entre chamadas.
+   */
+  const [importing, setImporting] = useState(false);
   const importBackup = useCallback(
-    async (parsed: Partial<KolBackup>): Promise<number> => {
-      const list = Object.entries(parsed.overrides ?? {}).map(([kolId, patch]) => ({
-        ...patch,
-        kolId,
-      }));
-      const res = await importMut
-        .mutateAsync({ overrides: list, groups: parsed.groups })
-        .catch(() => null);
-      return res?.imported ?? 0;
+    async (payload: KolImportPayload): Promise<{ imported: number; failed: boolean }> => {
+      let imported = 0;
+      setImporting(true);
+      try {
+        for (const overrides of chunkOverrides(payload.overrides)) {
+          const res = await importKolBackup({ overrides, groups: payload.groups });
+          imported += res.imported;
+        }
+        return { imported, failed: false };
+      } catch (e) {
+        toast.error(
+          getApiErrorMessage(
+            e,
+            imported
+              ? `Import stopped after ${imported} KOLs. Try the same file again.`
+              : "Could not import the backup.",
+          ),
+        );
+        return { imported, failed: true };
+      } finally {
+        setImporting(false);
+        // Mesmo com falha no meio: os lotes anteriores JÁ foram gravados.
+        if (imported > 0) await invalidate();
+      }
     },
-    [importMut],
+    [invalidate],
   );
 
   const resetMut = useMutation({
@@ -219,6 +230,8 @@ export function useKolIndex(params: KolIndexParams) {
 
   return {
     loaded: !query.isPending,
+    /** Mostrando o resultado do filtro ANTERIOR enquanto o novo carrega. */
+    refreshing: query.isPlaceholderData,
     items,
     total: head?.total ?? 0,
     counts: head?.counts ?? { byTier: {}, byType: {}, bySquad: {} },
@@ -234,6 +247,7 @@ export function useKolIndex(params: KolIndexParams) {
     deleteSquad: (name: string) => deleteSquadMut.mutate(name),
     exportBackup: exportKolBackup,
     importBackup,
+    importing,
     reset: () => resetMut.mutate(),
   };
 }

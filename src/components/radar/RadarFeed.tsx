@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { ChatMessageList } from "@/components/radar/ChatMessageList";
 import { ProLock } from "@/components/plans/ProLock";
 import { usePlan } from "@/lib/billing/usePlan";
+import { MessageSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 interface RadarFeedProps {
   messages: CapturedMessage[];
@@ -57,7 +58,7 @@ function FeedSearch({
         <button
           type="button"
           onClick={() => onChange("")}
-          aria-label="Limpar busca"
+          aria-label="Clear search"
           className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
         >
           <X className="size-4" strokeWidth={2} />
@@ -96,7 +97,7 @@ export function RadarFeed({
       <div className="flex h-[46px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 bg-gray-2 px-4">
         <div className="flex shrink-0 items-center gap-1">
           {dragHandle}
-          <h2 className="text-base font-semibold text-gray-12">Feed principal</h2>
+          <h2 className="text-base font-semibold text-gray-12">Main feed</h2>
         </div>
         {/* min-w-0: o feed pode ir p/ um slot lateral estreito — a busca encolhe. */}
         <div className="w-full min-w-0 max-w-[320px]">
@@ -105,11 +106,11 @@ export function RadarFeed({
       </div>
 
       {isLoading ? (
-        <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-xl border border-gray-6 bg-gray-2" />
+        <SkeletonGroup className="flex flex-col flex-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <MessageSkeleton key={i} />
           ))}
-        </div>
+        </SkeletonGroup>
       ) : messages.length === 0 && freeEmpty ? (
         // FREE sem capturas: quase sempre é o recorte do plano (só os grupos
         // marcados como Free), não um feed quebrado — e a tela tem que dizer isso.

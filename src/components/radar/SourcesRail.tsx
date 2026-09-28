@@ -39,6 +39,12 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
   const [flyout, setFlyout] = useState<Flyout | null>(null);
   const flyoutRef = useRef<HTMLDivElement | null>(null);
 
+  // Ícone do Discord que falhou (servidor trocou a imagem → o hash antigo dá
+  // 404) cai na inicial colorida, em vez de ficar uma imagem quebrada.
+  const [brokenIcons, setBrokenIcons] = useState<ReadonlySet<string>>(() => new Set());
+  const markBroken = (url: string) =>
+    setBrokenIcons((prev) => (prev.has(url) ? prev : new Set(prev).add(url)));
+
   // Fecha o flyout ao clicar fora / Esc.
   useEffect(() => {
     if (!flyout) return;
@@ -116,7 +122,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
               )}
             >
               {(guildActive || hasActiveChannel) && <ActiveBar />}
-              {g.iconUrl ? (
+              {g.iconUrl && !brokenIcons.has(g.iconUrl) ? (
                 <span
                   className={cn(
                     "size-9 shrink-0 overflow-hidden rounded-xl transition-opacity",
@@ -124,7 +130,14 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={g.iconUrl} alt="" width={36} height={36} className="size-full object-cover" />
+                  <img
+                    src={g.iconUrl}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-full object-cover"
+                    onError={() => markBroken(g.iconUrl!)}
+                  />
                 </span>
               ) : (
                 <span

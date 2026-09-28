@@ -25,13 +25,13 @@ export function ProfitConcentrationCard({
   const legend = [
     {
       dot: "bg-green-10",
-      title: "Melhores 3 tokens",
-      sub: `${top3.count} de ${closedTrades} tokens`,
+      title: "Top 3 tokens",
+      sub: `${top3.count} of ${closedTrades} tokens`,
       usd: top3.pnlUsd,
     },
     {
       dot: "bg-blue-10",
-      title: "Tokens 4 a 10",
+      title: "Tokens 4 to 10",
       sub: `${next7.count} ${next7.count === 1 ? "token" : "tokens"}`,
       usd: next7.pnlUsd,
     },
@@ -47,7 +47,7 @@ export function ProfitConcentrationCard({
     <section className="flex flex-col overflow-hidden rounded-lg border border-gray-6 bg-gray-2">
       <div className="flex items-center justify-between border-b border-gray-6 p-4">
         <h3 className="text-lg font-semibold text-gray-12">Profit concentration</h3>
-        <span className="text-base text-gray-11">100% do lucro bruto</span>
+        <span className="text-base text-gray-11">100% of gross profit</span>
       </div>
 
       {/* Barra segmentada (min-width garante o % legível em fatias pequenas). */}

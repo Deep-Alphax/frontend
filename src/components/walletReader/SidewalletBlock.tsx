@@ -92,7 +92,7 @@ export function SidewalletBlock({
           {pending
             ? scan?.status === "queued"
               ? "Queued…"
-              : "Escaneando…"
+              : "Scanning…"
             : scan
               ? "Run a new scan"
               : "Run scan"}
@@ -148,12 +148,12 @@ export function SidewalletBlock({
                     </span>
                     {f.role === "sidewallet" && (
                       <span className="rounded-full border border-gray-6 px-2 py-0.5 text-xs text-gray-11">
-                        {f.confidence === "high" ? "Link direto" : "Repeated pattern"}
+                        {f.confidence === "high" ? "Direct link" : "Repeated pattern"}
                       </span>
                     )}
                     {f.recognizedElsewhere && (
                       <span className="rounded-full border border-principal-8 bg-principal-3 px-2 py-0.5 text-xs text-principal-11">
-                        ⚠ trader conhecido{f.recognizedAs ? `: ${f.recognizedAs}` : ""}
+                        ⚠ known trader{f.recognizedAs ? `: ${f.recognizedAs}` : ""}
                       </span>
                     )}
                     <span className="text-sm text-gray-12">

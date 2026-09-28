@@ -97,7 +97,7 @@ export function ProfileDashboard({
             icon={PieChart}
             label="Profit concentration"
             info="Share of profit coming from your top 3 trades."
-            hint="Consistente abaixo de 40%"
+            hint="Consistent below 40%"
             value={formatPct(data.profitConcentration.top3.pct)}
           />
         </div>
@@ -105,7 +105,7 @@ export function ProfileDashboard({
           <KpiItem
             layout="inline"
             icon={Target}
-            label="Taxa de acerto"
+            label="Win rate"
             info="Winning trades over all closed positions."
             hint="Between 25% and 40% is normal"
             value={formatPct(data.winRate.winRatePct, 1)}

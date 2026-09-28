@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown } from "lucide-react";
 
 import type { CapturedMessage } from "@/lib/api/feed";
@@ -21,6 +22,19 @@ function dayLabel(iso: string): string {
   if (diffDays === 1) return "Yesterday";
   return d.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit" });
 }
+
+/**
+ * Altura estimada de um card antes de medir. Só afeta a primeira pintura de um
+ * item que ainda não apareceu: depois de medido, a altura real fica em cache
+ * pelo id da mensagem (sobrevive a prepend de páginas antigas).
+ */
+const ESTIMATE_PX = 160;
+const ESTIMATE_COMPACT_PX = 120;
+/**
+ * Cards renderizados além da área visível, para cada lado. Folga para rolagem
+ * rápida sem "flash" de área vazia, sem voltar a montar a lista inteira.
+ */
+const OVERSCAN = 8;
 
 function DayDivider({ label }: { label: string }) {
   return (
@@ -76,6 +90,7 @@ export function ChatMessageList({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   // Ordem cronológica (antigo→novo) só p/ exibição.
   const chrono = useMemo(() => [...messages].slice().reverse(), [messages]);
@@ -89,6 +104,43 @@ export function ChatMessageList({
       }),
     [chrono, showDayDividers],
   );
+
+  /*
+   * Virtualização: só os cards perto da área visível existem no DOM. Antes, cada
+   * página carregada somava ~20 cards montados (com embeds, imagens e animação)
+   * e uma sessão longa de rolagem chegava a centenas — o custo de layout e de
+   * memória crescia sem teto.
+   *
+   * A ancoragem estilo chat continua no `useChatScroll`, sem mudança: ele
+   * trabalha com `scrollHeight`, e o contêiner abaixo tem a altura TOTAL da
+   * lista (`getTotalSize`), então "carregou antigas no topo" e "chegou nova no
+   * fim" continuam aparecendo para ele como variação de altura. Quando um card
+   * acima da área visível é medido com altura diferente da estimada, o próprio
+   * virtualizer corrige a rolagem (não há "pulo").
+   *
+   * Trade-off: um card que sai da área visível desmonta — estado local dele
+   * (popover aberto, mídia expandida) não sobrevive a rolar para longe e voltar.
+   */
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useLayoutEffect(() => {
+    // Distância do topo do conteúdo rolável até a lista (o cabeçalho de
+    // "carregando antigas" tem altura FIXA, então isso não varia).
+    setScrollMargin(listRef.current?.offsetTop ?? 0);
+  }, []);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => (compact ? ESTIMATE_COMPACT_PX : ESTIMATE_PX),
+    // Chave = id da mensagem: a altura medida acompanha o card quando páginas
+    // antigas entram no topo e deslocam todos os índices.
+    getItemKey: (i) => rows[i].m.id,
+    overscan: OVERSCAN,
+    scrollMargin,
+    // Antes da 1ª medição (e no jsdom, que não mede nada) renderiza como se
+    // houvesse uma coluna de altura típica, em vez de nenhuma linha.
+    initialRect: { width: 0, height: 800 },
+  });
 
   // `unread` = novas que chegaram no fim enquanto o usuário lia mais acima.
   const { atBottom, unread, scrollToBottom } = useChatScroll(scrollRef, contentRef, {
@@ -124,35 +176,57 @@ export function ChatMessageList({
       >
         {/* Wrapper observado pelo ResizeObserver (mede o crescimento do conteúdo). */}
         <div ref={contentRef}>
-          {/* Topo: sentinela + estado de "carregando antigas" */}
+          {/* Topo: sentinela + estado de "carregando antigas". Altura FIXA:
+              a lista virtual mede a distância até aqui uma vez só
+              (`scrollMargin`), e um cabeçalho que cresce e some a cada página
+              deslocaria todas as posições calculadas. */}
           <div ref={topSentinelRef} />
-          {isLoadingOlder && (
-            <div className="flex items-center justify-center gap-2 py-3 text-sm text-gray-11">
-              <span>Loading more</span>
-              <span className="flex gap-1">
-                <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-gray-6" />
+          <div className="flex h-11 items-center justify-center text-sm text-gray-11">
+            {isLoadingOlder ? (
+              <span className="flex items-center gap-2">
+                <span>Loading more</span>
+                <span className="flex gap-1">
+                  <span className="size-1.5 animate-bounce rounded-full bg-principal-9 [animation-delay:-0.2s]" />
+                  <span className="size-1.5 animate-bounce rounded-full bg-gray-6 [animation-delay:-0.1s]" />
+                  <span className="size-1.5 animate-bounce rounded-full bg-gray-6" />
+                </span>
               </span>
-            </div>
-          )}
-          {!hasOlder && chrono.length > 0 && (
-            <p className="py-3 text-center text-xs text-gray-11">Start of history.</p>
-          )}
+            ) : !hasOlder && chrono.length > 0 ? (
+              <p className="text-xs">Start of history.</p>
+            ) : null}
+          </div>
 
-          {rows.map(({ m, label, showDivider }) => (
-            <Fragment key={m.id}>
-              {showDivider && <DayDivider label={label} />}
-              <RadarMessageCard
-                m={m}
-                surface={surface}
-                compact={compact}
-                nameAccent={nameAccent}
-                isNew={newIds?.has(m.id)}
-                onSelectAuthor={onSelectAuthor}
-              />
-            </Fragment>
-          ))}
+          <div
+            ref={listRef}
+            className="relative w-full"
+            style={{ height: virtualizer.getTotalSize() }}
+          >
+            {virtualizer.getVirtualItems().map((v) => {
+              const { m, label, showDivider } = rows[v.index];
+              return (
+                <div
+                  key={v.key}
+                  data-index={v.index}
+                  ref={virtualizer.measureElement}
+                  className={cn(
+                    "absolute left-0 top-0 w-full",
+                    v.index === rows.length - 1 && "[&>article]:border-b-0",
+                  )}
+                  style={{ transform: `translateY(${v.start - scrollMargin}px)` }}
+                >
+                  {showDivider && <DayDivider label={label} />}
+                  <RadarMessageCard
+                    m={m}
+                    surface={surface}
+                    compact={compact}
+                    nameAccent={nameAccent}
+                    isNew={newIds?.has(m.id)}
+                    onSelectAuthor={onSelectAuthor}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </ScrollArea>
 

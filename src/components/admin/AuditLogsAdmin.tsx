@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 import {
   AUDIT_ACTIONS,
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { TextField } from "@/components/ui/TextField";
+import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 /*
  * Log de auditoria: tudo que usuários (inclusive admins) e o sistema fazem —
@@ -204,9 +205,9 @@ export function AuditLogsAdmin() {
           `isLoading` (pendente E buscando) dá false. A tela caía no "No events"
           mesmo com a API respondendo 403. */}
       {logs.isPending ? (
-        <div className="flex h-40 items-center justify-center text-gray-11">
-          <Loader2 className="size-5 animate-spin" aria-label="Loading" />
-        </div>
+        <SkeletonGroup className="py-2">
+          <TableSkeleton rows={8} cols={5} />
+        </SkeletonGroup>
       ) : logs.isError ? (
         <p role="alert" className="rounded-xl border border-danger-11/40 bg-gray-2 px-4 py-6 text-center text-sm text-danger-11">
           {getApiErrorMessage(logs.error, "Could not load the audit log.")}

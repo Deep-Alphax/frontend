@@ -5,8 +5,8 @@ import { cn } from "@/lib/cn";
 const OUTCOME_META: Record<OutcomeKey, { label: string; bar: string }> = {
   rugpull: { label: "Rugpull", bar: "bg-danger-10" },
   stop_loss: { label: "Stop loss", bar: "bg-mint-10" },
-  x1_2: { label: "1x a 2x", bar: "bg-purple-10" },
-  x2_5: { label: "2x a 5x", bar: "bg-blue-10" },
+  x1_2: { label: "1x to 2x", bar: "bg-purple-10" },
+  x2_5: { label: "2x to 5x", bar: "bg-blue-10" },
   x5_plus: { label: "Above 5x", bar: "bg-green-10" },
 };
 

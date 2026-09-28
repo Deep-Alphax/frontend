@@ -19,7 +19,7 @@ function fitScene(app: Application) {
   const objects = app.getAllObjects();
   // Log de diagnóstico: nomes dos objetos (ajuda a mirar só o grupo-raiz se necessário).
   console.log(
-    "[spline] objetos:",
+    "[spline] objects:",
     objects.map((o) => o.name),
   );
   for (const o of objects) {

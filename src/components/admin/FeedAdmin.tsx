@@ -36,20 +36,20 @@ function StatusBar() {
     <div className="flex flex-wrap items-center gap-2">
       <Pill
         ok={!!s?.connected}
-        on={`Self-bot: ${s?.userTag ?? "conectado"}`}
+        on={`Self-bot: ${s?.userTag ?? "connected"}`}
         off="Self-bot: offline"
       />
       <Pill ok={!!s?.telegramEnabled} on="Telegram: on" off="Telegram: off" />
       {s && (
         <span className="rounded-full bg-gray-3 px-3 py-1 text-xs text-gray-11">
-          {s.activeMonitors} regras · {s.watchedChannels} canais ·{" "}
-          {s.watchedGuilds} servidores
+          {s.activeMonitors} rules · {s.watchedChannels} channels ·{" "}
+          {s.watchedGuilds} servers
         </span>
       )}
       {s && !s.enabled && (
         <span className="text-xs text-danger-11">
-          DISCORD_USER_TOKEN ausente — self-bot desligado (defina no .env e
-          reinicie).
+          DISCORD_USER_TOKEN missing — self-bot disabled (set it in .env and
+          restart).
         </span>
       )}
     </div>

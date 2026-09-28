@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+
 
 import {
   AFFILIATE_ADMIN_KEY,
@@ -19,6 +19,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { Skeleton, SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 /**
  * Configuração do programa de afiliados.
@@ -70,9 +71,14 @@ function SettingsCard() {
 
   if (isLoading || !data) {
     return (
-      <div className="flex h-32 items-center justify-center text-gray-11">
-        <Loader2 className="size-5 animate-spin" aria-label="Loading" />
-      </div>
+      <SkeletonGroup className="flex flex-col gap-4 py-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+        <TableSkeleton rows={4} cols={4} />
+      </SkeletonGroup>
     );
   }
 
@@ -175,9 +181,14 @@ function AffiliatesTable() {
 
   if (isLoading) {
     return (
-      <div className="flex h-32 items-center justify-center text-gray-11">
-        <Loader2 className="size-5 animate-spin" aria-label="Loading" />
-      </div>
+      <SkeletonGroup className="flex flex-col gap-4 py-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+        <TableSkeleton rows={4} cols={4} />
+      </SkeletonGroup>
     );
   }
   if (isError || !data) {

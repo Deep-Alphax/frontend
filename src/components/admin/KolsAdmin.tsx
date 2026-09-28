@@ -35,6 +35,7 @@ import { KolCard } from "@/components/walletReader/KolCard";
 import { Modal } from "@/components/walletReader/Modal";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
+import { KolCardSkeleton, Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /** Chave da query do preset visto pelo admin (inclui os removidos). */
 export const KOL_PRESET_ADMIN_KEY = ["kol-preset-admin"] as const;
@@ -193,7 +194,7 @@ function KolEditor({
             </Field>
             <div className="flex items-center gap-3 text-xs">
               <label className="cursor-pointer text-secundaria-11 underline underline-offset-2">
-                trocar foto
+                change photo
                 <input
                   type="file"
                   accept="image/*"
@@ -323,7 +324,7 @@ function KolEditor({
                 className={cn(inputCls, "h-9 w-32 shrink-0")}
                 value={wName}
                 onChange={(e) => setWName(e.target.value)}
-                placeholder="apelido"
+                placeholder="nickname"
               />
               <input
                 className={cn(inputCls, "h-9 min-w-0 flex-1 font-mono text-xs")}
@@ -489,7 +490,7 @@ export function KolsAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-gray-12">Preset de KOLs</h1>
+        <h1 className="text-2xl font-semibold text-gray-12">KOL preset</h1>
         <p className="text-sm text-gray-11">
           This is the list <b className="text-gray-12">every</b> user sees. Each
           user can edit a KOL on their own account — that edit beats the preset
@@ -521,19 +522,16 @@ export function KolsAdmin() {
       </div>
 
       <p className="text-xs text-gray-11 tabular-nums">
-        {total.toLocaleString("en-US")} KOLs no preset
-        {filtered.length < total && ` · ${filtered.length} carregados`}
+        {total.toLocaleString("en-US")} KOLs in preset
+        {filtered.length < total && ` · ${filtered.length} loaded`}
       </p>
 
       {isPending ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+        <SkeletonGroup className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[295px] animate-pulse rounded-lg border border-gray-6 bg-gray-2"
-            />
+            <KolCardSkeleton key={i} />
           ))}
-        </div>
+        </SkeletonGroup>
       ) : (
         <>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
@@ -559,7 +557,7 @@ export function KolsAdmin() {
                       </span>
                       {removed && (
                         <span className="text-xs font-medium text-vermelho-11">
-                          removido
+                          removed
                         </span>
                       )}
                       <div className="flex-1" />
@@ -598,10 +596,16 @@ export function KolsAdmin() {
 
           {/* Gatilho da próxima página do preset (mesmo padrão do /wallet-reader). */}
           {hasNextPage && (
-            <div ref={sentinel} className="flex justify-center py-2">
-              <span className="text-xs text-gray-11">
-                {isFetchingNextPage ? "Loading more…" : " "}
-              </span>
+            <div ref={sentinel} className="flex justify-center pt-4">
+              {isFetchingNextPage ? (
+                <SkeletonGroup className="grid w-full grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <KolCardSkeleton key={i} />
+                  ))}
+                </SkeletonGroup>
+              ) : (
+                <span className="h-px" />
+              )}
             </div>
           )}
         </>
@@ -662,8 +666,19 @@ function KolEditorLoader({
 
   if (!data) {
     return (
-      <Modal open onClose={onClose} title="Loading…" className="max-w-2xl">
-        <div className="h-64 animate-pulse bg-gray-2" aria-hidden />
+      <Modal open onClose={onClose} title="KOL" className="max-w-2xl">
+        <SkeletonGroup className="flex flex-col gap-4 p-5">
+          <div className="flex items-center gap-4">
+            <Skeleton className="size-16 rounded-full" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-3.5 w-24" />
+            </div>
+          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          ))}
+        </SkeletonGroup>
       </Modal>
     );
   }

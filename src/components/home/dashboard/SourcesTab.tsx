@@ -30,7 +30,7 @@ function SourceRow({ source }: { source: TradeSource }) {
       </td>
       <td className="px-4 py-4 text-gray-12">
         {source.capture
-          ? `${source.capture.pct}% ${source.capture.onTarget ? "alvo" : "K/o"}`
+          ? `${source.capture.pct}% ${source.capture.onTarget ? "on target" : "off target"}`
           : "—"}
       </td>
       <td className={cn("px-4 py-4 font-medium", tone)}>{formatSignedUsd(source.pnlUsd)}</td>
@@ -153,7 +153,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
             onClick={clear}
             className="px-2 py-1.5 text-sm text-gray-11 transition-colors hover:text-gray-12"
           >
-            Limpar filtro
+            Clear filter
           </button>
         </div>
       </div>
@@ -187,7 +187,7 @@ export function SourcesTab({ sources = [] }: { sources?: TradeSource[] }) {
 
       <div className="flex items-center justify-between gap-4 border-t border-gray-6 p-6 text-sm text-gray-11">
         <span>
-          {filtered.length} {filtered.length === 1 ? "trade" : "trades"} sendo mostrado
+          {filtered.length} {filtered.length === 1 ? "trade" : "trades"} shown
         </span>
         {totalPages > 1 ? (
           <Pagination page={current} total={totalPages} onPage={setPage} />

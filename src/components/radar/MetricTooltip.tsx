@@ -161,7 +161,7 @@ function NetBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
       />
       <Sparkline points={points} />
       <Row
-        label="Bruto realizado"
+        label="Gross realized"
         value={formatSignedUsd(data.tradingPnlUsd)}
         tone={signOf(data.tradingPnlUsd) < 0 ? "red" : "green"}
       />
@@ -182,7 +182,7 @@ function WinBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
   const decided = winners + losers;
   const winW = decided > 0 ? (winners / decided) * 100 : 0;
   return (
-    <Shell title="Taxa de acerto" onClose={onClose}>
+    <Shell title="Win rate" onClose={onClose}>
       <ValueRow
         value={formatPct(winRatePct, 1)}
         valueTone="green"
@@ -199,12 +199,12 @@ function WinBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
       <div className="flex gap-4 px-3 pb-3 pt-2 text-sm">
         <span className="flex items-center gap-1.5">
           <Dot className="bg-green-9" />
-          <span className="text-gray-11">Ganhos</span>
+          <span className="text-gray-11">Gains</span>
           <span className="font-semibold text-gray-12">{winners.toLocaleString("en-US")}</span>
         </span>
         <span className="flex items-center gap-1.5">
           <Dot className="bg-vermelho-10" />
-          <span className="text-gray-11">Perdas</span>
+          <span className="text-gray-11">Losses</span>
           <span className="font-semibold text-gray-12">{losers.toLocaleString("en-US")}</span>
         </span>
       </div>
@@ -242,7 +242,7 @@ function TopBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
       : "—";
   return (
     <Shell title="Peak capture" onClose={onClose}>
-      <ValueRow value={value} sub="Bom acima de 50%" />
+      <ValueRow value={value} sub="Good above 50%" />
       {/* Histograma de captura */}
       <div className="flex items-start gap-2 px-3 py-4">
         {CAPTURE_BUCKETS.map((b, i) => (
@@ -309,16 +309,16 @@ function DrawdownBody({ data, onClose }: { data: PortfolioAnalytics; onClose: ()
   const points = data.capital.points.map((p) => Number(p.cumulativePnlUsd));
   const pct = data.bankroll.maxDrawdownPct;
   return (
-    <Shell title="Maior drawdown" onClose={onClose}>
+    <Shell title="Max drawdown" onClose={onClose}>
       <ValueRow
         value={pct != null ? formatSignedPct(-Math.abs(pct)) : "—"}
         sub={dd?.recoveryDays != null ? `${dd.recoveryDays} days to recover` : "Did not recover"}
       />
       <Sparkline points={points} color="red" />
-      <Row label="Pico" value={dd ? formatShortDate(dd.peakDate) : "—"} />
-      <Row label="Fundo" value={dd ? formatShortDate(dd.troughDate) : "—"} />
+      <Row label="Peak" value={dd ? formatShortDate(dd.peakDate) : "—"} />
+      <Row label="Bottom" value={dd ? formatShortDate(dd.troughDate) : "—"} />
       <Row
-        label="Recuperou em"
+        label="Recovered in"
         value={dd?.recoveryDays != null ? `${dd.recoveryDays} days` : "—"}
       />
     </Shell>
@@ -360,7 +360,7 @@ function VolBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
   const sellUsd = Math.max(0, vol - buyUsd);
   const ticket = data.totalTrades > 0 ? vol / data.totalTrades : 0;
   return (
-    <Shell title="Volume operado" onClose={onClose}>
+    <Shell title="Traded volume" onClose={onClose}>
       <ValueRow
         value={formatCompactUsd(data.volumeUsd)}
         sub={`${data.totalTrades.toLocaleString("en-US")} trades`}
@@ -381,8 +381,8 @@ function VolBody({ data, onClose }: { data: PortfolioAnalytics; onClose: () => v
           ))}
         </div>
       )}
-      <OrdersRow label="Compras" usd={buyUsd} orders={data.buys} />
-      <OrdersRow label="Vendas" usd={sellUsd} orders={data.sells} />
+      <OrdersRow label="Buys" usd={buyUsd} orders={data.buys} />
+      <OrdersRow label="Sells" usd={sellUsd} orders={data.sells} />
       <Row label="Average ticket" value={formatUsd(ticket)} />
     </Shell>
   );

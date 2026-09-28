@@ -14,6 +14,7 @@ import {
 import { getSocket } from "@/lib/realtime/socket";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /** Formata ISO → local curto. */
 function fmt(iso: string): string {
@@ -103,7 +104,7 @@ export function FeedList() {
         return {
           ...prev,
           items: [msg, ...prev.items].slice(0, prev.limit),
-          total: prev.total + 1,
+          total: (prev.total ?? 0) + 1,
         };
       });
     };
@@ -123,10 +124,10 @@ export function FeedList() {
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-12">
-          Feed de capturas
+          Captures feed
         </h2>
         {data && (
-          <span className="text-sm text-gray-11">{data.total} no total</span>
+          <span className="text-sm text-gray-11">{data.total ?? 0} total</span>
         )}
       </div>
 
@@ -137,7 +138,7 @@ export function FeedList() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applySearch()}
-            placeholder="ticker, contrato, palavra…"
+            placeholder="ticker, contract, word…"
           />
         </div>
         <Button className="w-auto" onClick={applySearch}>
@@ -146,7 +147,11 @@ export function FeedList() {
       </div>
 
       {feedQuery.isLoading ? (
-        <p className="text-sm text-gray-11">Loading…</p>
+        <SkeletonGroup className="flex flex-col gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </SkeletonGroup>
       ) : items.length === 0 ? (
         <p className="text-sm text-gray-11">No captures yet.</p>
       ) : (
@@ -157,7 +162,7 @@ export function FeedList() {
         </div>
       )}
 
-      {data && data.totalPages > 1 && (
+      {data && (data.totalPages ?? 1) > 1 && (
         <div className="flex items-center justify-center gap-4 text-sm text-gray-11">
           <Button
             variant="secondary"
@@ -165,15 +170,15 @@ export function FeedList() {
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Anterior
+            Previous
           </Button>
           <span>
-            {data.page} / {data.totalPages}
+            {data.page} / {data.totalPages ?? 1}
           </span>
           <Button
             variant="secondary"
             className="w-auto"
-            disabled={page >= data.totalPages}
+            disabled={page >= (data.totalPages ?? 1)}
             onClick={() => setPage((p) => p + 1)}
           >
             Next

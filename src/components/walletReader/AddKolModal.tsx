@@ -48,7 +48,7 @@ export function AddKolModal({
               const n = name.trim();
               if (!n) return;
               const addr = wAddr.trim();
-              onCreate(n, addr ? { name: wName.trim() || "Principal", address: addr } : undefined);
+              onCreate(n, addr ? { name: wName.trim() || "Main", address: addr } : undefined);
               reset();
             }}
             className="h-9 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
@@ -65,7 +65,7 @@ export function AddKolModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
-            placeholder="ex: Cupsey"
+            placeholder="e.g. Cupsey"
             className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
           />
         </label>
@@ -78,7 +78,7 @@ export function AddKolModal({
               <input
                 value={wName}
                 onChange={(e) => setWName(e.target.value)}
-                placeholder="Principal"
+                placeholder="Main"
                 className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
               />
             </label>

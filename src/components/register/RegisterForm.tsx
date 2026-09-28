@@ -144,7 +144,7 @@ export function RegisterForm() {
           disabled={isSubmitting || awaitingTurnstile}
           className="w-auto"
         >
-          {isSubmitting ? "Creating account..." : "Continuar"}
+          {isSubmitting ? "Creating account..." : "Continue"}
         </Button>
       </div>
     </form>

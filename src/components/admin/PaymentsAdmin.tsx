@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 
 import {
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { TextField } from "@/components/ui/TextField";
+import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 /*
  * Todos os pagamentos da plataforma — cartão (Stripe) e USDC (on-chain) — numa
@@ -253,9 +254,9 @@ export function PaymentsAdmin() {
           pausa a nova tentativa, e `isLoading` (pendente E buscando) dá false —
           a tela cairia no "vazio" com a API respondendo erro. */}
       {payments.isPending ? (
-        <div className="flex h-40 items-center justify-center text-gray-11">
-          <Loader2 className="size-5 animate-spin" aria-label="Loading" />
-        </div>
+        <SkeletonGroup className="py-2">
+          <TableSkeleton rows={8} cols={5} />
+        </SkeletonGroup>
       ) : payments.isError ? (
         <p
           role="alert"

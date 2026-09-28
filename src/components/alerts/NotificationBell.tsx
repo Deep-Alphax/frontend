@@ -11,7 +11,7 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
-import { Bell, Loader2, Settings } from "lucide-react";
+import { Bell, Settings } from "lucide-react";
 
 import {
   getNotifications,
@@ -27,6 +27,7 @@ import { timeAgo } from "@/lib/api/affiliates";
 import { useAccountEvents } from "@/lib/alerts/useAccountEvents";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/cn";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 /**
  * Sininho do header: badge de não lidas + painel com as notificações.
@@ -152,9 +153,17 @@ export function NotificationBell() {
           {/* Popover é `max-h`: o viewport encolhe como item flex, não `h-full`. */}
           <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
             {list.isLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="size-5 animate-spin text-gray-11" />
-              </div>
+              <SkeletonGroup className="flex flex-col">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex gap-3 border-b border-gray-6 px-4 py-3">
+                    <Skeleton className="size-8 shrink-0 rounded-full" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Skeleton className="h-3.5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </SkeletonGroup>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
                 <p className="text-sm font-medium text-gray-12">No notifications yet</p>

@@ -23,6 +23,7 @@ import {
 import { formatClock, parseClock } from "@/lib/mentorship/format";
 import { cn } from "@/lib/cn";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
 const inputCls =
   "h-10 w-full rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60";
@@ -173,7 +174,11 @@ export function MentorshipLessonsPanel({ moduleId }: { moduleId: string }) {
       </div>
 
       {isLoading ? (
-        <div className="h-40 animate-pulse rounded-lg bg-gray-3" aria-hidden />
+        <SkeletonGroup className="flex flex-col gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 rounded-lg" />
+          ))}
+        </SkeletonGroup>
       ) : null}
 
       <ScrollArea viewportClassName="max-h-[420px]">
