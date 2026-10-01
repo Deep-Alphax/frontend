@@ -354,13 +354,19 @@ export function WalletReaderScreen() {
       return;
     }
     if (payload.overrides.length === 0) {
-      toast.error("This backup has no KOL edits to import.");
+      toast.error("This file has no KOLs to import.");
       return;
     }
-    const { imported, failed } = await importBackup(payload);
+    const { imported, skipped, failed } = await importBackup(payload);
     if (failed) return; // o hook já avisou o motivo
-    const skipped = payload.skipped ? ` (${payload.skipped} invalid entries skipped)` : "";
-    toast.success(`Imported ${imported} KOLs${skipped}.`);
+    const invalid = payload.skipped ? ` ${payload.skipped} invalid entries skipped.` : "";
+    if (imported === 0) {
+      // Reimportar o próprio export: todos os KOLs já estão no índice.
+      toast.success(`All ${skipped} KOLs in this file are already in your index — nothing to change.${invalid}`);
+      return;
+    }
+    const already = skipped ? ` ${skipped} already in your index.` : "";
+    toast.success(`Imported ${imported} KOL${imported !== 1 ? "s" : ""}.${already}${invalid}`);
   };
 
   return (

@@ -194,15 +194,19 @@ export function useKolIndex(params: KolIndexParams) {
    */
   const [importing, setImporting] = useState(false);
   const importBackup = useCallback(
-    async (payload: KolImportPayload): Promise<{ imported: number; failed: boolean }> => {
+    async (
+      payload: KolImportPayload,
+    ): Promise<{ imported: number; skipped: number; failed: boolean }> => {
       let imported = 0;
+      let skipped = 0;
       setImporting(true);
       try {
         for (const overrides of chunkOverrides(payload.overrides)) {
           const res = await importKolBackup({ overrides, groups: payload.groups });
           imported += res.imported;
+          skipped += res.skipped ?? 0;
         }
-        return { imported, failed: false };
+        return { imported, skipped, failed: false };
       } catch (e) {
         toast.error(
           getApiErrorMessage(
@@ -212,7 +216,7 @@ export function useKolIndex(params: KolIndexParams) {
               : "Could not import the backup.",
           ),
         );
-        return { imported, failed: true };
+        return { imported, skipped, failed: true };
       } finally {
         setImporting(false);
         // Mesmo com falha no meio: os lotes anteriores JÁ foram gravados.

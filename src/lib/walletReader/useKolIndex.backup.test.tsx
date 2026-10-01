@@ -57,7 +57,7 @@ describe("useKolIndex — importBackup", () => {
     expect(calls.flatMap(([b]) => b.overrides.map((o) => o.kolId))).toEqual(
       withAvatars(12).map((o) => o.kolId),
     );
-    expect(res).toEqual({ imported: 12, failed: false });
+    expect(res).toEqual({ imported: 12, skipped: 0, failed: false });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: KOL_INDEX_KEY });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: KOL_DETAIL_KEY });
   });
@@ -83,7 +83,7 @@ describe("useKolIndex — importBackup", () => {
       res = await result.current.importBackup({ overrides: withAvatars(12) });
     });
 
-    expect(res).toEqual({ imported: 6, failed: true });
+    expect(res).toEqual({ imported: 6, skipped: 0, failed: true });
     expect(toast.error).toHaveBeenCalledTimes(1);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: KOL_INDEX_KEY });
   });
@@ -96,7 +96,7 @@ describe("useKolIndex — importBackup", () => {
     await act(async () => {
       res = await result.current.importBackup({ overrides: [{ kolId: "k1", name: "A" }] });
     });
-    expect(res).toEqual({ imported: 0, failed: true });
+    expect(res).toEqual({ imported: 0, skipped: 0, failed: true });
     expect(toast.error).toHaveBeenCalledTimes(1);
     expect(invalidate).not.toHaveBeenCalled();
   });

@@ -241,8 +241,8 @@ export async function resetKolAccount(): Promise<void> {
  */
 export async function importKolBackup(
   input: KolImportPayload,
-): Promise<{ imported: number }> {
-  const { data } = await api.post<{ imported: number }>(
+): Promise<{ imported: number; skipped?: number }> {
+  const { data } = await api.post<{ imported: number; skipped?: number }>(
     "/api/v1/wallet-reader/kols/import",
     input,
   );

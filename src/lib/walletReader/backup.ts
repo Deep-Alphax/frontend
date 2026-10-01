@@ -30,6 +30,12 @@ export interface KolImportOverride {
   walletsRemoved?: string[] | null;
   dismissedSidewallets?: string[] | null;
   deleted?: boolean;
+  /**
+   * Veio da lista `kols` do export (o KOL inteiro, não uma edição): o servidor
+   * só cria se ele ainda não existir na conta — reimportar o próprio export
+   * não vira edição.
+   */
+  ifMissing?: boolean;
 }
 
 export interface KolImportPayload {
@@ -142,7 +148,9 @@ function groups(v: unknown): { id: string; name: string }[] | undefined {
 /**
  * Texto do arquivo → pedido de import. Aceita o formato do export
  * (`overrides` como objeto `{ [kolId]: override }`) e também uma lista
- * (`overrides: [{ kolId, ... }]`).
+ * (`overrides: [{ kolId, ... }]`). A lista `kols` (export filtrado) vira
+ * "cria se faltar" para cada KOL sem edição no arquivo — é o que leva um
+ * recorte de KOLs para outra conta.
  *
  * @throws KolBackupError quando o arquivo não é um backup de KOLs.
  */
@@ -153,7 +161,7 @@ export function parseKolBackup(text: string): KolImportPayload & { skipped: numb
   } catch {
     throw new KolBackupError("This file is not valid JSON.");
   }
-  if (!isObj(parsed) || !("overrides" in parsed)) {
+  if (!isObj(parsed) || !("overrides" in parsed || "kols" in parsed)) {
     throw new KolBackupError("This file is not a KOL backup (no \"overrides\" found).");
   }
 
@@ -169,6 +177,26 @@ export function parseKolBackup(text: string): KolImportPayload & { skipped: numb
     const o = normalizeOverride(kolId, raw);
     if (o) overrides.push(o);
     else skipped++;
+  }
+
+  // `kols`: o estado inteiro de cada KOL exportado. Quem já tem edição no
+  // arquivo vai pelo override acima; os demais entram como "cria se faltar".
+  const edited = new Set(overrides.map((o) => o.kolId));
+  for (const k of Array.isArray(parsed.kols) ? parsed.kols : []) {
+    if (!isObj(k) || typeof k.id !== "string" || edited.has(k.id)) continue;
+    const o = normalizeOverride(k.id, {
+      name: k.name,
+      relevance: k.relevance,
+      types: k.types,
+      squads: k.squads,
+      twitter: k.twitter,
+      notes: k.notes,
+      walletsAdded: k.wallets,
+    });
+    if (o) {
+      overrides.push({ ...o, ifMissing: true });
+      edited.add(k.id);
+    } else skipped++;
   }
 
   return { overrides, groups: groups(parsed.groups), skipped };

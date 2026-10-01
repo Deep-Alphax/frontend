@@ -68,6 +68,40 @@ describe("parseKolBackup", () => {
   });
 });
 
+describe("parseKolBackup — export filtrado (lista kols)", () => {
+  it("KOL sem edição vira 'cria se faltar'; o que tem edição vai só pelo override", () => {
+    const file = JSON.stringify({
+      version: 1,
+      kols: [
+        { id: "a", name: "A", relevance: 90, types: [], squads: ["Lair"], twitter: "a", notes: "", wallets: [{ name: "main", address: "So1" }] },
+        { id: "b", name: "B", relevance: 20, types: [], squads: [], twitter: "", notes: "", wallets: [] },
+      ],
+      overrides: { b: { notes: "minha nota" } },
+    });
+    const { overrides } = parseKolBackup(file);
+    expect(overrides).toEqual([
+      { kolId: "b", notes: "minha nota" },
+      {
+        kolId: "a",
+        name: "A",
+        relevance: 90,
+        types: [],
+        squads: ["Lair"],
+        twitter: "a",
+        notes: "",
+        walletsAdded: [{ name: "main", address: "So1" }],
+        ifMissing: true,
+      },
+    ]);
+  });
+
+  it("arquivo só com kols (sem edições) não é mais recusado", () => {
+    const { overrides } = parseKolBackup(JSON.stringify({ kols: [{ id: "x", name: "X" }], overrides: {} }));
+    expect(overrides).toHaveLength(1);
+    expect(overrides[0]).toMatchObject({ kolId: "x", ifMissing: true });
+  });
+});
+
 describe("normalizeOverride", () => {
   it("mantém null (volta a herdar do preset) e omite o que falta", () => {
     expect(normalizeOverride("k1", { name: null, twitter: null })).toEqual({
