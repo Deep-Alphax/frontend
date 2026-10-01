@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="badge - rede">
+<rect x="0.75" y="0.75" width="13.5" height="13.5" rx="6.75" fill="#111217"/>
+<rect x="0.75" y="0.75" width="13.5" height="13.5" rx="6.75" stroke="#111217" stroke-width="1.5"/>
+<path id="Vector" d="M5.28 4.5H11L9.72 5.82H4L5.28 4.5ZM4 6.84H9.72L11 8.16H5.28L4 6.84ZM5.28 9.18H11L9.72 10.5H4L5.28 9.18Z" fill="url(#paint0_linear_0_22)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_22" x1="3.6" y1="10.7" x2="10.8" y2="4.3" gradientUnits="userSpaceOnUse">
+<stop stop-color="#9945FF"/>
+<stop offset="0.55" stop-color="#43B4CA"/>
+<stop offset="1" stop-color="#14F195"/>
+</linearGradient>
+</defs>
+</svg>

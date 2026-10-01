@@ -7,11 +7,14 @@ import {
   createMonitor,
   deleteMonitor,
   getMonitors,
+  getTelegramChats,
   updateMonitor,
   type CreateMonitorInput,
   type FeedMonitor,
+  type MonitorPlatform,
 } from "@/lib/api/feed";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ScrollArea } from "@/components/ui/ScrollArea";
@@ -19,8 +22,11 @@ import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 interface FormState {
   id: string | null; // null = criando; setado = editando
+  platform: MonitorPlatform;
   name: string;
+  /** Discord: canal. Telegram: tópico do fórum (opcional). */
   channelId: string;
+  /** Discord: servidor. Telegram: id do grupo (-100…). */
   guildId: string;
   pattern: string;
   telegramChatId: string;
@@ -31,6 +37,7 @@ interface FormState {
 
 const EMPTY_FORM: FormState = {
   id: null,
+  platform: "DISCORD",
   name: "",
   channelId: "",
   guildId: "",
@@ -42,7 +49,29 @@ const EMPTY_FORM: FormState = {
   freeTier: false,
 };
 
-/** Gestão (CRUD) das regras de monitoramento do Discord. */
+const PLATFORMS: Array<{ value: MonitorPlatform; label: string }> = [
+  { value: "DISCORD", label: "Discord" },
+  { value: "TELEGRAM", label: "Telegram" },
+];
+
+function PlatformBadge({ platform }: { platform: MonitorPlatform }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-xs font-medium",
+        platform === "TELEGRAM" ? "bg-azul-9/15 text-azul-11" : "bg-violeta-9/15 text-violeta-11",
+      )}
+    >
+      {platform === "TELEGRAM" ? "Telegram" : "Discord"}
+    </span>
+  );
+}
+
+/**
+ * Gestão (CRUD) das regras de monitoramento — grupos do Discord E do
+ * Telegram no mesmo lugar. As duas plataformas caem no mesmo feed (Radar),
+ * no mesmo recorte FREE/PRO e alimentam o Tracker do mesmo jeito.
+ */
 export function MonitorsManager() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState | null>(null);
@@ -52,24 +81,40 @@ export function MonitorsManager() {
     queryFn: getMonitors,
   });
 
+  // Grupos em que a conta do leitor está — só busca com o form do Telegram aberto.
+  const chatsQuery = useQuery({
+    queryKey: ["telegram-chats"],
+    queryFn: getTelegramChats,
+    enabled: form?.platform === "TELEGRAM",
+    staleTime: 60_000,
+  });
+  const chats = chatsQuery.data ?? [];
+  const chatTitle = (id: string | null) =>
+    id ? chats.find((c) => c.id === id)?.title : undefined;
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["feed-monitors"] });
     queryClient.invalidateQueries({ queryKey: ["feed-status"] });
+    queryClient.invalidateQueries({ queryKey: ["telegram-status"] });
+    queryClient.invalidateQueries({ queryKey: ["telegram-chats"] });
   };
 
   const saveMutation = useMutation({
     mutationFn: (f: FormState) => {
+      const tg = f.platform === "TELEGRAM";
       const payload: CreateMonitorInput = {
         name: f.name.trim() || undefined,
         channelId: f.channelId.trim() || undefined,
         guildId: f.guildId.trim() || undefined,
         pattern: f.pattern.trim() || undefined, // vazio = espelha tudo
-        telegramChatId: f.telegramChatId.trim(),
+        // Telegram: "" limpa o repasse; Discord: obrigatório.
+        telegramChatId: tg ? f.telegramChatId.trim() : f.telegramChatId.trim() || undefined,
         waitForBotReply: f.waitForBotReply,
         isActive: f.isActive,
         freeTier: f.freeTier,
       };
-      return f.id ? updateMonitor(f.id, payload) : createMonitor(payload);
+      // A plataforma só vai na criação (o backend não deixa trocar depois).
+      return f.id ? updateMonitor(f.id, payload) : createMonitor({ ...payload, platform: f.platform });
     },
     onSuccess: (_, f) => {
       toast.success(f.id ? "Rule updated" : "Rule created");
@@ -110,26 +155,30 @@ export function MonitorsManager() {
   });
 
   const monitors = monitorsQuery.data ?? [];
+  const isTg = form?.platform === "TELEGRAM";
   const canSave =
     !!form &&
-    (form.channelId.trim() || form.guildId.trim()) &&
-    form.telegramChatId.trim();
+    (isTg
+      ? /^-?\d{5,20}$/.test(form.guildId.trim()) &&
+        (!form.channelId.trim() || /^\d{1,12}$/.test(form.channelId.trim()))
+      : (form.channelId.trim() || form.guildId.trim()) && form.telegramChatId.trim());
+  const selectedChat = isTg ? chats.find((c) => c.id === form?.guildId.trim()) : undefined;
 
   return (
     <section className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-2 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-12">
             Monitoring rules
           </h2>
           <p className="text-sm text-gray-11">
-            Discord channel → Telegram. No pattern = <b>mirrors everything</b>;
-            with a pattern (regex <code>/body/flags</code> or plain text) =
-            filters.
+            Discord or Telegram group → feed (Radar + Tracker). No pattern ={" "}
+            <b>mirrors everything</b>; with a pattern (regex <code>/body/flags</code> or plain
+            text) = filters.
           </p>
         </div>
         {!form && (
-          <Button className="w-auto" onClick={() => setForm({ ...EMPTY_FORM })}>
+          <Button className="w-auto shrink-0" onClick={() => setForm({ ...EMPTY_FORM })}>
             New rule
           </Button>
         )}
@@ -138,53 +187,147 @@ export function MonitorsManager() {
       {/* Formulário (criar/editar) */}
       {form && (
         <div className="flex flex-col gap-4 rounded-lg border border-gray-6 bg-gray-1 p-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <TextField
-              label="Name (optional)"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Alpha calls #1"
-            />
-            <TextField
-              label="Channel ID (or use the server →)"
-              value={form.channelId}
-              onChange={(e) => setForm({ ...form, channelId: e.target.value })}
-              placeholder="1013855610871226480"
-            />
-            <TextField
-              label="Server ID (empty channel = whole server)"
-              value={form.guildId}
-              onChange={(e) => setForm({ ...form, guildId: e.target.value })}
-              placeholder="guild id (optional)"
-            />
-            <TextField
-              label="Pattern — empty = mirrors EVERYTHING"
-              value={form.pattern}
-              onChange={(e) => setForm({ ...form, pattern: e.target.value })}
-              placeholder="leave empty to mirror everything (or /0x…/i)"
-            />
-            <TextField
-              label="Telegram chat/channel ID"
-              value={form.telegramChatId}
-              onChange={(e) =>
-                setForm({ ...form, telegramChatId: e.target.value })
-              }
-              placeholder="-1004299449661"
-            />
+          {/* Plataforma: escolhida na criação, fixa na edição. */}
+          <div role="radiogroup" aria-label="Platform" className="flex w-fit rounded-lg border border-gray-6 bg-gray-2 p-1">
+            {PLATFORMS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                role="radio"
+                aria-checked={form.platform === p.value}
+                disabled={!!form.id && form.platform !== p.value}
+                onClick={() => {
+                  if (form.platform === p.value) return;
+                  setForm({ ...EMPTY_FORM, id: form.id, name: form.name, platform: p.value });
+                }}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+                  form.platform === p.value ? "bg-gray-4 text-gray-12" : "text-gray-11 hover:text-gray-12",
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
 
-          <div className="flex flex-wrap gap-6">
-            <label className="flex items-center gap-2 text-sm text-gray-12">
-              <input
-                type="checkbox"
-                checked={form.waitForBotReply}
-                onChange={(e) =>
-                  setForm({ ...form, waitForBotReply: e.target.checked })
-                }
-                className="size-4 accent-principal-9"
+          {isTg ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <TextField
+                label="Name (optional)"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Alpha Calls BR"
               />
-              Wait for the bot reply (rich data)
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm text-gray-12">
+                <span>Telegram group</span>
+                {chats.length > 0 ? (
+                  <select
+                    value={chats.some((c) => c.id === form.guildId) ? form.guildId : ""}
+                    onChange={(e) => {
+                      const chat = chats.find((c) => c.id === e.target.value);
+                      setForm({
+                        ...form,
+                        guildId: e.target.value,
+                        name: form.name || chat?.title || "",
+                        channelId: chat?.forum ? form.channelId : "",
+                      });
+                    }}
+                    className="h-10 rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 outline-none focus-visible:border-secundaria-11/60"
+                  >
+                    <option value="">Choose a group the account is in…</option>
+                    {chats.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
+                        {c.username ? ` (@${c.username})` : ""}
+                        {c.kind === "channel" ? " · channel" : ""}
+                        {c.watched ? " · already monitored" : ""}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-gray-11">
+                    {chatsQuery.isLoading
+                      ? "Loading the account's groups…"
+                      : "Reader offline or in no group — type the group id below."}
+                  </span>
+                )}
+              </label>
+              <TextField
+                label="Group id"
+                value={form.guildId}
+                onChange={(e) => setForm({ ...form, guildId: e.target.value })}
+                placeholder="-1001234567890"
+              />
+              <TextField
+                label={selectedChat?.forum ? "Topic id (optional — empty = whole group)" : "Topic id (forums only, optional)"}
+                value={form.channelId}
+                onChange={(e) => setForm({ ...form, channelId: e.target.value })}
+                placeholder="e.g. 7"
+              />
+              <TextField
+                label="Pattern — empty = captures EVERYTHING"
+                value={form.pattern}
+                onChange={(e) => setForm({ ...form, pattern: e.target.value })}
+                placeholder="leave empty to capture everything (or /0x…/i)"
+              />
+              <TextField
+                label="Forward to Telegram chat (optional)"
+                value={form.telegramChatId}
+                onChange={(e) => setForm({ ...form, telegramChatId: e.target.value })}
+                placeholder="-1004299449661 (empty = no forward)"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <TextField
+                label="Name (optional)"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Alpha calls #1"
+              />
+              <TextField
+                label="Channel ID (or use the server →)"
+                value={form.channelId}
+                onChange={(e) => setForm({ ...form, channelId: e.target.value })}
+                placeholder="1013855610871226480"
+              />
+              <TextField
+                label="Server ID (empty channel = whole server)"
+                value={form.guildId}
+                onChange={(e) => setForm({ ...form, guildId: e.target.value })}
+                placeholder="guild id (optional)"
+              />
+              <TextField
+                label="Pattern — empty = mirrors EVERYTHING"
+                value={form.pattern}
+                onChange={(e) => setForm({ ...form, pattern: e.target.value })}
+                placeholder="leave empty to mirror everything (or /0x…/i)"
+              />
+              <TextField
+                label="Telegram chat/channel ID"
+                value={form.telegramChatId}
+                onChange={(e) =>
+                  setForm({ ...form, telegramChatId: e.target.value })
+                }
+                placeholder="-1004299449661"
+              />
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-6">
+            {!isTg && (
+              <label className="flex items-center gap-2 text-sm text-gray-12">
+                <input
+                  type="checkbox"
+                  checked={form.waitForBotReply}
+                  onChange={(e) =>
+                    setForm({ ...form, waitForBotReply: e.target.checked })
+                  }
+                  className="size-4 accent-principal-9"
+                />
+                Wait for the bot reply (rich data)
+              </label>
+            )}
             <label className="flex items-center gap-2 text-sm text-gray-12">
               <input
                 type="checkbox"
@@ -235,7 +378,7 @@ export function MonitorsManager() {
       {/* Tabela de regras */}
       {monitorsQuery.isLoading ? (
         <SkeletonGroup className="py-2">
-          <TableSkeleton rows={5} cols={6} />
+          <TableSkeleton rows={5} cols={7} />
         </SkeletonGroup>
       ) : monitors.length === 0 ? (
         <p className="text-sm text-gray-11">
@@ -243,12 +386,13 @@ export function MonitorsManager() {
         </p>
       ) : (
         <ScrollArea orientation="horizontal">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="text-gray-11">
                 <tr className="border-b border-gray-6">
                   <th className="py-2 pr-4 font-medium">Rule</th>
-                  <th className="py-2 pr-4 font-medium">Channel</th>
-                  <th className="py-2 pr-4 font-medium">Telegram</th>
+                  <th className="py-2 pr-4 font-medium">Platform</th>
+                  <th className="py-2 pr-4 font-medium">Source</th>
+                  <th className="py-2 pr-4 font-medium">Forward</th>
                   <th className="py-2 pr-4 font-medium">Active</th>
                   <th className="py-2 pr-4 font-medium">Plan</th>
                   <th className="py-2 font-medium">Actions</th>
@@ -266,12 +410,23 @@ export function MonitorsManager() {
                         <code className="text-xs text-gray-11">{m.pattern}</code>
                       ) : (
                         <span className="text-xs text-green-11">
-                          mirrors everything
+                          {m.platform === "TELEGRAM" ? "captures everything" : "mirrors everything"}
                         </span>
                       )}
                     </td>
+                    <td className="py-3 pr-4">
+                      <PlatformBadge platform={m.platform ?? "DISCORD"} />
+                    </td>
                     <td className="py-3 pr-4 font-mono text-xs text-gray-11">
-                      {m.channelId ? (
+                      {m.platform === "TELEGRAM" ? (
+                        <>
+                          {chatTitle(m.guildId) ? (
+                            <span className="font-sans text-gray-12">{chatTitle(m.guildId)} </span>
+                          ) : null}
+                          {m.guildId}
+                          {m.channelId && <span className="text-secundaria-11"> · topic {m.channelId}</span>}
+                        </>
+                      ) : m.channelId ? (
                         m.channelId
                       ) : (
                         <span className="text-secundaria-11">
@@ -280,7 +435,7 @@ export function MonitorsManager() {
                       )}
                     </td>
                     <td className="py-3 pr-4 font-mono text-xs text-gray-11">
-                      {m.telegramChatId}
+                      {m.telegramChatId || "—"}
                     </td>
                     <td className="py-3 pr-4">
                       <button
@@ -322,11 +477,12 @@ export function MonitorsManager() {
                           onClick={() =>
                             setForm({
                               id: m.id,
+                              platform: m.platform ?? "DISCORD",
                               name: m.name ?? "",
                               channelId: m.channelId ?? "",
                               guildId: m.guildId ?? "",
                               pattern: m.pattern ?? "",
-                              telegramChatId: m.telegramChatId,
+                              telegramChatId: m.telegramChatId ?? "",
                               waitForBotReply: m.waitForBotReply,
                               isActive: m.isActive,
                               freeTier: m.freeTier,
@@ -339,7 +495,7 @@ export function MonitorsManager() {
                         <button
                           onClick={() => {
                             if (
-                              confirm(`Remove the rule "${m.name || m.pattern}"?`)
+                              confirm(`Remove the rule "${m.name || m.pattern || m.guildId}"?`)
                             ) {
                               deleteMutation.mutate(m.id);
                             }

@@ -327,9 +327,16 @@ export function WalletReaderScreen() {
   const onExport = async () => {
     setExporting(true);
     try {
-      const backup = await exportBackup();
+      // Exporta o que está FILTRADO na tela (antes ignorava os filtros e só
+      // trazia KOLs editados — filtrar e exportar dava arquivo vazio).
+      const backup = await exportBackup(params);
+      const n = backup.kols?.length ?? 0;
+      if (n === 0) {
+        toast.error("No KOL matches the current filters.");
+        return;
+      }
       downloadFile(backupFilename(), JSON.stringify(backup, null, 2), "application/json");
-      toast.success(`Backup exported (${Object.keys(backup.overrides ?? {}).length} KOLs).`);
+      toast.success(`Exported ${n} KOL${n !== 1 ? "s" : ""}.`);
     } catch (e) {
       toast.error(getApiErrorMessage(e, "Could not export the backup."));
     } finally {

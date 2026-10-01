@@ -16,7 +16,7 @@ describe("AdminNav", () => {
   it("dá acesso às telas de admin e ao caminho de volta", () => {
     render(<AdminNav />);
 
-    for (const label of ["Mentorship", "KOLs", "Discord feed", "Affiliates", "Payments", "Logs"]) {
+    for (const label of ["Mentorship", "KOLs", "Feed (Discord + Telegram)", "Affiliates", "Payments", "Logs"]) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: /Back to app/ })).toHaveAttribute(

@@ -93,7 +93,7 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
               <DropdownMenu.Item asChild className={itemClass}>
                 <Link href="/admin/feed">
                   <Shield className="size-5 shrink-0 text-gray-11" />
-                  <span>Admin · Discord feed</span>
+                  <span>Admin · Feed</span>
                 </Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild className={itemClass}>

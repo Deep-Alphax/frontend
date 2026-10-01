@@ -1,15 +1,23 @@
 import { api } from "@/lib/api/client";
 
-/** Regra de monitoramento de canal do Discord (espelha o `DiscordMonitor` do backend). */
+export type MonitorPlatform = "DISCORD" | "TELEGRAM";
+
+/**
+ * Regra de monitoramento (espelha o `DiscordMonitor` do backend) — de um
+ * grupo do Discord OU do Telegram. No Telegram, `guildId` = id do grupo
+ * (-100…) e `channelId` = tópico do fórum (opcional).
+ */
 export interface FeedMonitor {
   id: string;
+  platform: MonitorPlatform;
   name: string | null;
   /** Alvo: canal específico OU (se null) o servidor inteiro via guildId. */
   channelId: string | null;
   guildId: string | null;
   /** null/vazio = espelha TODAS as mensagens. */
   pattern: string | null;
-  telegramChatId: string;
+  /** Destino do repasse (obrigatório no Discord; opcional no Telegram). */
+  telegramChatId: string | null;
   waitForBotReply: boolean;
   isActive: boolean;
   /** Grupo liberado para o plano FREE. `false` = só Pro (default). */
@@ -19,13 +27,15 @@ export interface FeedMonitor {
 }
 
 export interface CreateMonitorInput {
+  /** Só na criação (default DISCORD). */
+  platform?: MonitorPlatform;
   name?: string;
   /** channelId (canal) OU guildId (servidor inteiro) — ao menos um. */
   channelId?: string;
   guildId?: string;
   /** Vazio/ausente = espelha tudo. */
   pattern?: string;
-  telegramChatId: string;
+  telegramChatId?: string;
   waitForBotReply?: boolean;
   isActive?: boolean;
   freeTier?: boolean;
@@ -116,6 +126,38 @@ export interface FeedStatus {
 }
 
 // ─────────────────────────── Status ───────────────────────────
+
+/** Estado do leitor MTProto do Telegram (admin). */
+export interface TelegramReaderStatus {
+  enabled: boolean;
+  connected: boolean;
+  halted: boolean;
+  me: string | null;
+  chatsWatched: number;
+  captured: number;
+  dropped: number;
+  lastError: string | null;
+}
+
+/** Grupo/canal em que a conta do leitor está (seletor do admin). */
+export interface TelegramChatOption {
+  id: string;
+  title: string;
+  username: string | null;
+  kind: "group" | "channel";
+  forum: boolean;
+  watched: boolean;
+}
+
+export async function getTelegramStatus(): Promise<TelegramReaderStatus> {
+  const { data } = await api.get<TelegramReaderStatus>("/api/v1/tracker/admin/telegram/status");
+  return data;
+}
+
+export async function getTelegramChats(): Promise<TelegramChatOption[]> {
+  const { data } = await api.get<TelegramChatOption[]>("/api/v1/tracker/admin/telegram/chats");
+  return data;
+}
 
 /** GET /api/v1/feed/status — estado do self-bot (admin). */
 export async function getFeedStatus(): Promise<FeedStatus> {

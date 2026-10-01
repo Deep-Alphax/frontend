@@ -52,6 +52,8 @@ interface Draft {
   relevance: number;
   types: string[];
   twitter: string;
+  telegramHandle: string;
+  discordHandle: string;
   notes: string;
   squads: string;
   avatar: string | null;
@@ -64,6 +66,8 @@ function draftFrom(k: KolPresetAdminEntry | null): Draft {
     relevance: k?.relevance ?? 20,
     types: k?.types ?? [],
     twitter: k?.twitter ?? "",
+    telegramHandle: k?.telegramHandle ?? "",
+    discordHandle: k?.discordHandle ?? "",
     notes: k?.notes ?? "",
     squads: (k?.squads ?? []).join(", "),
     avatar: k?.avatar ?? null,
@@ -77,6 +81,8 @@ function draftToPatch(d: Draft): KolPresetPatch & { name: string } {
     relevance: d.relevance,
     types: d.types,
     twitter: d.twitter.trim().replace(/^@/, ""),
+    telegramHandle: d.telegramHandle.trim().replace(/^@/, ""),
+    discordHandle: d.discordHandle.trim().replace(/^@/, ""),
     notes: d.notes,
     squads: d.squads
       .split(",")
@@ -278,6 +284,26 @@ function KolEditor({
               value={d.squads}
               onChange={(e) => set("squads", e.target.value)}
               placeholder="Lair, Pastel Alpha"
+            />
+          </Field>
+        </div>
+
+        {/* Tracker: liga a MENSAGEM do autor no grupo à CARTEIRA dele. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Telegram handle (call groups)">
+            <input
+              className={inputCls}
+              value={d.telegramHandle}
+              onChange={(e) => set("telegramHandle", e.target.value)}
+              placeholder="handle without @"
+            />
+          </Field>
+          <Field label="Discord handle (call groups)">
+            <input
+              className={inputCls}
+              value={d.discordHandle}
+              onChange={(e) => set("discordHandle", e.target.value)}
+              placeholder="handle without @"
             />
           </Field>
         </div>

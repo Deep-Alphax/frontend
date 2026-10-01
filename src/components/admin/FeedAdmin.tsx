@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFeedStatus } from "@/lib/api/feed";
+import { getFeedStatus, getTelegramStatus } from "@/lib/api/feed";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
 import { MonitorsManager } from "@/components/admin/MonitorsManager";
@@ -31,6 +31,12 @@ function StatusBar() {
     refetchInterval: 15_000,
   });
   const s = statusQuery.data;
+  const tgQuery = useQuery({
+    queryKey: ["telegram-status"],
+    queryFn: getTelegramStatus,
+    refetchInterval: 15_000,
+  });
+  const tg = tgQuery.data;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -39,7 +45,12 @@ function StatusBar() {
         on={`Self-bot: ${s?.userTag ?? "connected"}`}
         off="Self-bot: offline"
       />
-      <Pill ok={!!s?.telegramEnabled} on="Telegram: on" off="Telegram: off" />
+      <Pill ok={!!s?.telegramEnabled} on="Telegram forward: on" off="Telegram forward: off" />
+      <Pill
+        ok={!!tg?.connected}
+        on={`Telegram reader: @${tg?.me ?? "connected"} · ${tg?.chatsWatched ?? 0} groups`}
+        off={tg?.halted ? "Telegram reader: session invalid" : "Telegram reader: offline"}
+      />
       {s && (
         <span className="rounded-full bg-gray-3 px-3 py-1 text-xs text-gray-11">
           {s.activeMonitors} rules · {s.watchedChannels} channels ·{" "}
@@ -50,6 +61,11 @@ function StatusBar() {
         <span className="text-xs text-danger-11">
           DISCORD_USER_TOKEN missing — self-bot disabled (set it in .env and
           restart).
+        </span>
+      )}
+      {tg && !tg.enabled && (
+        <span className="text-xs text-gray-11">
+          TELEGRAM_API_ID / TELEGRAM_API_HASH / TELEGRAM_SESSION missing — Telegram reader disabled.
         </span>
       )}
     </div>
@@ -66,7 +82,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 /**
- * Tela de admin do Discord feed, organizada em ABAS de configuração. Gated por
+ * Tela de admin do feed (Discord + Telegram), organizada em ABAS de configuração. Gated por
  * sessão + role ADMIN (o backend também exige admin — esta checagem é só de UI).
  */
 export function FeedAdmin() {
@@ -95,7 +111,7 @@ export function FeedAdmin() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold text-gray-12">Discord feed</h1>
+        <h1 className="text-2xl font-semibold text-gray-12">Feed (Discord + Telegram)</h1>
         <StatusBar />
       </header>
 

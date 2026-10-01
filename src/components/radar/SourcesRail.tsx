@@ -122,6 +122,7 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
               )}
             >
               {(guildActive || hasActiveChannel) && <ActiveBar />}
+              <span className="relative">
               {g.iconUrl && !brokenIcons.has(g.iconUrl) ? (
                 <span
                   className={cn(
@@ -150,6 +151,14 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
                   {groupInitial(g.name)}
                 </span>
               )}
+              {/* Grupo do Telegram (canais "tg:…"): selo da plataforma no canto. */}
+              {g.subgroups.some((sg) => sg.channelId.startsWith("tg:")) && (
+                <span className="absolute -bottom-1 -right-1 size-4" aria-label="Telegram">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- selo SVG do Figma */}
+                  <img src="/tracker/platform-telegram-card.svg" alt="" className="absolute -inset-[13.33%] block size-[126.66%] max-w-none" />
+                </span>
+              )}
+              </span>
             </button>
           );
         })}

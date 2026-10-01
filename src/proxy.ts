@@ -96,6 +96,10 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const splineConnect = "https://*.spline.design https://unpkg.com";
   const splineImg = "https://*.spline.design";
 
+  // Ícones de token do Tracker (CDN do DexScreener). O front só monta <img>
+  // com URL desses dois hosts (`TokenIcon`), então a liberação é estreita.
+  const tokenImg = "https://dd.dexscreener.com https://cdn.dexscreener.com";
+
   // Mídia dos embeds do Discord (GIF/imagem/vídeo). Usamos SEMPRE a `proxyURL`
   // do Discord — ele reencaminha QUALQUER provedor (klipy/tenor/giphy/…) por
   // estes hosts, então liberamos só o proxy dele (não cada provedor externo).
@@ -118,7 +122,7 @@ function buildContentSecurityPolicy(isDev: boolean): string {
     // Fontes são self-hosted pelo `next/font` — nada de fonts.gstatic.com.
     `font-src 'self' data:`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + texturas do Spline.
-    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${splineImg}`,
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${splineImg} ${tokenImg}`,
     // Vídeo/GIF (gifv) dos embeds do Discord — sem media-src cairia no default-src.
     `media-src 'self' data: blob: ${discordMedia}`,
     `connect-src 'self' ${api} ${apiWs} ${turnstile} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,

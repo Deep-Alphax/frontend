@@ -20,6 +20,9 @@ export interface KolPresetEntry {
   relevance: number;
   types: string[];
   twitter: string;
+  /** Handles nos grupos de call (Tracker): sem "@", minúsculos. */
+  telegramHandle: string;
+  discordHandle: string;
   notes: string;
   avatar: string | null;
 }
@@ -113,7 +116,16 @@ export type KolOverridePatch = Partial<
 export type KolPresetPatch = Partial<
   Pick<
     KolPresetEntry,
-    "name" | "wallets" | "squads" | "relevance" | "types" | "twitter" | "notes" | "avatar"
+    | "name"
+    | "wallets"
+    | "squads"
+    | "relevance"
+    | "types"
+    | "twitter"
+    | "telegramHandle"
+    | "discordHandle"
+    | "notes"
+    | "avatar"
   >
 >;
 
@@ -175,14 +187,43 @@ export async function createCustomKol(input: {
   return data;
 }
 
-/** GET /api/v1/wallet-reader/kols/backup — backup das edições da conta. */
-export async function exportKolBackup(): Promise<{
+/** KOL como sai no export (estado efetivo, sem avatar). */
+export interface KolExportEntry {
+  id: string;
+  name: string;
+  relevance: number;
+  tier: string;
+  types: string[];
+  squads: string[];
+  twitter: string;
+  notes: string;
+  wallets: WalletRef[];
+  walletCount: number;
+  isCustom: boolean;
+}
+
+/**
+ * GET /api/v1/wallet-reader/kols/backup — export do RECORTE da tela (mesmos
+ * filtros da listagem): `kols` = estado dos KOLs filtrados; `overrides` =
+ * as edições da conta desses KOLs (é o que o "Import backup" restaura).
+ */
+export async function exportKolBackup(params: KolIndexParams = {}): Promise<{
   version: 1;
   exportedAt: string;
+  kols: KolExportEntry[];
   overrides: Record<string, KolOverridePatch>;
   customIds: string[];
 }> {
-  const { data } = await api.get("/api/v1/wallet-reader/kols/backup");
+  const { data } = await api.get("/api/v1/wallet-reader/kols/backup", {
+    params: {
+      search: params.search || undefined,
+      view: params.view && params.view !== "all" ? params.view : undefined,
+      tiers: listParam(params.tiers),
+      types: listParam(params.types),
+      squads: listParam(params.squads),
+      sort: params.sort,
+    },
+  });
   return data;
 }
 
