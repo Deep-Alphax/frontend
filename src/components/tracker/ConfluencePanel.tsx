@@ -1,8 +1,10 @@
 "use client";
 
+import { memo } from "react";
+
 import type { ConfluenceItem } from "@/lib/api/tracker";
 import { cn } from "@/lib/cn";
-import { age, compactUsd, signedPct } from "@/lib/tracker/format";
+import { age, compactUsd, signedPct, tokenLabel } from "@/lib/tracker/format";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import {
@@ -60,7 +62,7 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function ConfluenceCard({ item }: { item: ConfluenceItem }) {
+const ConfluenceCard = memo(function ConfluenceCard({ item }: { item: ConfluenceItem }) {
   const { token } = item;
   const hot = item.score >= 7;
   const change = item.changeSinceFirst;
@@ -79,7 +81,7 @@ function ConfluenceCard({ item }: { item: ConfluenceItem }) {
           <div className="flex min-w-0 items-center gap-2">
             <TokenIcon chain={token.chain} mint={token.mint} symbol={token.symbol} imageUrl={token.imageUrl} badge={false} />
             <span className="truncate text-sm font-semibold leading-[1.1] text-gray-12">
-              ${token.symbol ?? "???"}
+              {tokenLabel(token)}
             </span>
             <CopyButton value={token.mint} boxed={false} size={20} />
           </div>
@@ -112,7 +114,7 @@ function ConfluenceCard({ item }: { item: ConfluenceItem }) {
       </div>
     </article>
   );
-}
+});
 
 export function ConfluencePanel({
   items,

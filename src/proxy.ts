@@ -96,9 +96,10 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   const splineConnect = "https://*.spline.design https://unpkg.com";
   const splineImg = "https://*.spline.design";
 
-  // Ícones de token do Tracker (CDN do DexScreener). O front só monta <img>
-  // com URL desses dois hosts (`TokenIcon`), então a liberação é estreita.
-  const tokenImg = "https://dd.dexscreener.com https://cdn.dexscreener.com";
+  // Ícones de token do Tracker (CDNs do DexScreener, Helius e Moralis). O front
+  // só monta <img> com URL desses hosts (`TokenIcon`), então a liberação é estreita.
+  const tokenImg =
+    "https://dd.dexscreener.com https://cdn.dexscreener.com https://cdn.helius-rpc.com https://logo.moralis.io";
 
   // Mídia dos embeds do Discord (GIF/imagem/vídeo). Usamos SEMPRE a `proxyURL`
   // do Discord — ele reencaminha QUALQUER provedor (klipy/tenor/giphy/…) por

@@ -57,6 +57,16 @@ export function shortAddress(addr: string): string {
   return addr.length > 10 ? `${addr.slice(0, 4)}…${addr.slice(-3)}` : addr;
 }
 
+/**
+ * Rótulo do token: "$SIMBOLO"; sem símbolo (token recém-lançado que nenhuma
+ * fonte nomeou ainda), o contrato abreviado — nunca "$???".
+ */
+export function tokenLabel(t: { symbol: string | null; mint: string }): string {
+  const s = t.symbol?.trim();
+  if (s) return `$${s.replace(/^\$/, "")}`;
+  return t.mint.length > 10 ? `${t.mint.slice(0, 4)}…${t.mint.slice(-4)}` : t.mint;
+}
+
 /** Iniciais de um nome/handle (avatar de letras). */
 export function initials(s: string): string {
   const clean = s.replace(/^@/, "").replace(/[^A-Za-z0-9 ]/g, " ").trim();

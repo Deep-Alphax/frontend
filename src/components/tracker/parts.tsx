@@ -130,8 +130,9 @@ const TOKEN_SKINS = [
   "bg-vermelho-11 text-gray-1",
 ];
 
-/** Só exibimos imagem de token do CDN do DexScreener (liberado na CSP). */
-const IMAGE_HOSTS = /^https:\/\/(dd|cdn)\.dexscreener\.com\//;
+/** Só exibimos imagem de token destes CDNs (os mesmos liberados na CSP). */
+const IMAGE_HOSTS =
+  /^https:\/\/((dd|cdn)\.dexscreener\.com|cdn\.helius-rpc\.com|logo\.moralis\.io)\//;
 
 /**
  * Ícone do token: imagem do DexScreener ou letra colorida, com o selo da rede

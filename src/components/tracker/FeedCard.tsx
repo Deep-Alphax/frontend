@@ -1,8 +1,10 @@
 "use client";
 
+import { memo } from "react";
+
 import type { TrackerFeedItem, TrackerTrade } from "@/lib/api/tracker";
 import { cn } from "@/lib/cn";
-import { ago, compactUsd, initials, quoteAmount, signedUsd } from "@/lib/tracker/format";
+import { ago, compactUsd, initials, quoteAmount, signedUsd, tokenLabel } from "@/lib/tracker/format";
 import { hashStr } from "@/lib/walletReader/types";
 import {
   BuyButton,
@@ -99,7 +101,7 @@ function TradeRow({
             compact ? "text-[13.5px] font-bold leading-normal" : "text-sm font-semibold leading-[1.1]",
           )}
         >
-          ${token.symbol ?? "???"}
+          {tokenLabel(token)}
         </span>
       </span>
       <CopyButton value={token.mint} size={compact ? 22 : 24} />
@@ -141,7 +143,12 @@ function StatChip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function FeedCard({ item }: { item: TrackerFeedItem }) {
+/**
+ * `memo`: o react-query preserva a referência do item que não mudou
+ * (structural sharing), então ao chegar trade novo só o card afetado
+ * re-renderiza — não a lista inteira.
+ */
+export const FeedCard = memo(function FeedCard({ item }: { item: TrackerFeedItem }) {
   const strike = item.status === "strike" && item.strike;
   const handle = item.kol.handle ? `@${item.kol.handle}` : item.kol.name;
   const ring = AVATAR_RINGS[hashStr(item.kol.id) % AVATAR_RINGS.length];
@@ -239,4 +246,4 @@ export function FeedCard({ item }: { item: TrackerFeedItem }) {
       </div>
     </article>
   );
-}
+});

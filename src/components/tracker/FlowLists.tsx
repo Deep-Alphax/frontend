@@ -2,7 +2,7 @@
 
 import type { MultiBuyItem, NetFlowItem, TrackerToken } from "@/lib/api/tracker";
 import { cn } from "@/lib/cn";
-import { ago, compactUsd, signedUsd } from "@/lib/tracker/format";
+import { ago, compactUsd, signedUsd, tokenLabel } from "@/lib/tracker/format";
 import { BuyButton, ChainChip, CopyButton, DataChip, EmptyState, TokenIcon } from "@/components/tracker/parts";
 
 /*
@@ -15,7 +15,7 @@ function TokenCell({ token }: { token: TrackerToken }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <TokenIcon chain={token.chain} mint={token.mint} symbol={token.symbol} imageUrl={token.imageUrl} />
-      <span className="truncate text-sm font-semibold leading-[1.1] text-gray-12">${token.symbol ?? "???"}</span>
+      <span className="truncate text-sm font-semibold leading-[1.1] text-gray-12">{tokenLabel(token)}</span>
       <CopyButton value={token.mint} />
       <ChainChip chain={token.chain} />
     </div>

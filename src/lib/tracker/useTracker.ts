@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
+  type InfiniteData,
+  type QueryClient,
 } from "@tanstack/react-query";
 
 import {
@@ -22,6 +24,7 @@ import {
   type DiscoveryItem,
   type SourcePeriod,
   type TrackerFeedFilters,
+  type TrackerFeedPage,
 } from "@/lib/api/tracker";
 import { getSocket } from "@/lib/realtime/socket";
 
@@ -34,17 +37,81 @@ import { getSocket } from "@/lib/realtime/socket";
 
 const FALLBACK_POLL_MS = 30_000;
 
+const feedKey = (filters: TrackerFeedFilters) => [...TRACKER_KEY, "feed", filters] as const;
+
 export function useTrackerFeed(filters: TrackerFeedFilters, enabled: boolean) {
   return useInfiniteQuery({
-    queryKey: [...TRACKER_KEY, "feed", filters],
+    queryKey: feedKey(filters),
     queryFn: ({ pageParam }) => getTrackerFeed(filters, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
     // Trocar filtro não "some" com a lista (lição de 28/09).
     placeholderData: keepPreviousData,
-    refetchInterval: FALLBACK_POLL_MS,
+    // SEM refetchInterval: numa query infinita ele rebusca TODAS as páginas
+    // carregadas — com o usuário 10 páginas abaixo, eram 10 requisições e a
+    // lista inteira re-renderizando a cada ciclo. Atualização é pelo socket,
+    // só da 1ª página (`refreshFeedTop`).
+    staleTime: 15_000,
     enabled,
   });
+}
+
+/**
+ * Recarrega só o TOPO do feed: corta o cache para a 1ª página antes de
+ * invalidar, então o react-query faz 1 requisição (não uma por página
+ * carregada). As páginas de baixo voltam pela rolagem, se o usuário descer.
+ */
+export function refreshFeedTop(qc: QueryClient, filters: TrackerFeedFilters): void {
+  const key = feedKey(filters);
+  qc.setQueryData<InfiniteData<TrackerFeedPage, string | null>>(key, (d) =>
+    d && d.pages.length > 1 ? { pages: d.pages.slice(0, 1), pageParams: d.pageParams.slice(0, 1) } : d,
+  );
+  void qc.invalidateQueries({ queryKey: key, exact: true });
+}
+
+/** Throttle simples (borda inicial + final): no máx. 1 chamada a cada `ms`. */
+function useThrottled(fn: () => void, ms: number): () => void {
+  const last = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fnRef = useRef(fn);
+  useEffect(() => {
+    fnRef.current = fn;
+  });
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+  return useCallback(() => {
+    const wait = last.current + ms - Date.now();
+    if (wait <= 0) {
+      last.current = Date.now();
+      fnRef.current();
+      return;
+    }
+    if (timer.current) return;
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      last.current = Date.now();
+      fnRef.current();
+    }, wait);
+  }, [ms]);
+}
+
+/** Assina o aviso `tracker:update` do socket. */
+function useTrackerSocket(enabled: boolean, onUpdate: () => void): void {
+  useEffect(() => {
+    if (!enabled) return;
+    const socket = getSocket();
+    socket.on("tracker:update", onUpdate);
+    socket.connect();
+    return () => {
+      socket.off("tracker:update", onUpdate);
+    };
+  }, [enabled, onUpdate]);
+}
+
+/** Feed: avisa a tela (no máx. a cada 3s) — ela decide se recarrega o topo. */
+export function useFeedRealtime(enabled: boolean, onUpdate: () => void): void {
+  useTrackerSocket(enabled, useThrottled(onUpdate, 3_000));
 }
 
 export function useConfluence(enabled: boolean) {
@@ -115,22 +182,17 @@ export function useFollowWallet() {
   });
 }
 
-/** Aviso do socket → rebusca o feed e os painéis de tempo real ativos. */
+/**
+ * Painéis (Confluence, Multi Buys, Net Flows): no máx. a cada 10s — o
+ * servidor já os cacheia por 15s, rebuscar mais rápido só gastaria rede.
+ * O feed NÃO entra aqui (`useFeedRealtime`).
+ */
 export function useTrackerRealtime(enabled: boolean): void {
   const qc = useQueryClient();
-  useEffect(() => {
-    if (!enabled) return;
-    const socket = getSocket();
-    const onUpdate = () => {
-      qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "feed"] });
-      qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "confluence"] });
-      qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "multi-buys"] });
-      qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "net-flows"] });
-    };
-    socket.on("tracker:update", onUpdate);
-    socket.connect();
-    return () => {
-      socket.off("tracker:update", onUpdate);
-    };
-  }, [enabled, qc]);
+  const refresh = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "confluence"] });
+    void qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "multi-buys"] });
+    void qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "net-flows"] });
+  }, [qc]);
+  useTrackerSocket(enabled, useThrottled(refresh, 10_000));
 }

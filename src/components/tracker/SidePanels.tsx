@@ -1,8 +1,10 @@
 "use client";
 
+import { memo } from "react";
+
 import type { DiscoveryItem, SourcePeriod, TopSourceItem } from "@/lib/api/tracker";
 import { cn } from "@/lib/cn";
-import { compactUsd, initials, shortAddress } from "@/lib/tracker/format";
+import { compactUsd, initials, shortAddress, tokenLabel } from "@/lib/tracker/format";
 import { useFollowWallet } from "@/lib/tracker/useTracker";
 import { hashStr } from "@/lib/walletReader/types";
 import { ScrollArea } from "@/components/ui/ScrollArea";
@@ -85,7 +87,7 @@ function SourceRow({
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <p className="truncate text-xs font-semibold leading-[1.3] text-gray-12">{item.group}</p>
         <p className="truncate text-[11px] leading-[1.3] text-gray-11">
-          {item.best ? `best $${item.best.symbol ?? "???"} ${item.best.multiple.toFixed(1)}x` : "no standout call"}
+          {item.best ? `best ${item.best.symbol ? `$${item.best.symbol}` : "call"} ${item.best.multiple.toFixed(1)}x` : "no standout call"}
         </p>
         <div className="flex items-center gap-2">
           <span className="h-[3px] min-w-0 flex-1 overflow-hidden rounded-[3px] bg-gray-6">
@@ -178,7 +180,7 @@ export function TopSourcesPanel({
 
 // ─────────────────────────────── Discovery ───────────────────────────────
 
-function DiscoveryCard({ item }: { item: DiscoveryItem }) {
+const DiscoveryCard = memo(function DiscoveryCard({ item }: { item: DiscoveryItem }) {
   const follow = useFollowWallet();
   const pnl = item.pnl30dUsd;
   return (
@@ -241,14 +243,14 @@ function DiscoveryCard({ item }: { item: DiscoveryItem }) {
           {item.tokens.map((t) => (
             <span key={`${t.chain}:${t.mint}`} className="inline-flex items-center gap-1.5">
               <TokenIcon chain={t.chain} mint={t.mint} symbol={t.symbol} size={20} />
-              <span className="text-xs font-bold leading-[1.3] text-gray-12">${t.symbol ?? "???"}</span>
+              <span className="text-xs font-bold leading-[1.3] text-gray-12">{tokenLabel(t)}</span>
             </span>
           ))}
         </div>
       )}
     </article>
   );
-}
+});
 
 export function DiscoveryPanel({
   items,
