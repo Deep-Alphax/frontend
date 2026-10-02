@@ -54,6 +54,7 @@ interface Draft {
   twitter: string;
   telegramHandle: string;
   discordHandle: string;
+  fomoHandle: string;
   notes: string;
   squads: string;
   avatar: string | null;
@@ -68,6 +69,7 @@ function draftFrom(k: KolPresetAdminEntry | null): Draft {
     twitter: k?.twitter ?? "",
     telegramHandle: k?.telegramHandle ?? "",
     discordHandle: k?.discordHandle ?? "",
+    fomoHandle: k?.fomoHandle ?? "",
     notes: k?.notes ?? "",
     squads: (k?.squads ?? []).join(", "),
     avatar: k?.avatar ?? null,
@@ -83,6 +85,7 @@ function draftToPatch(d: Draft): KolPresetPatch & { name: string } {
     twitter: d.twitter.trim().replace(/^@/, ""),
     telegramHandle: d.telegramHandle.trim().replace(/^@/, ""),
     discordHandle: d.discordHandle.trim().replace(/^@/, ""),
+    fomoHandle: d.fomoHandle.trim().replace(/^@/, ""),
     notes: d.notes,
     squads: d.squads
       .split(",")
@@ -303,6 +306,14 @@ function KolEditor({
               className={inputCls}
               value={d.discordHandle}
               onChange={(e) => set("discordHandle", e.target.value)}
+              placeholder="handle without @"
+            />
+          </Field>
+          <Field label="FOMO handle (fomo.family)">
+            <input
+              className={inputCls}
+              value={d.fomoHandle}
+              onChange={(e) => set("fomoHandle", e.target.value)}
               placeholder="handle without @"
             />
           </Field>

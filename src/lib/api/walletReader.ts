@@ -23,6 +23,7 @@ export interface KolPresetEntry {
   /** Handles nos grupos de call (Tracker): sem "@", minúsculos. */
   telegramHandle: string;
   discordHandle: string;
+  fomoHandle: string;
   notes: string;
   avatar: string | null;
 }
@@ -124,6 +125,7 @@ export type KolPresetPatch = Partial<
     | "twitter"
     | "telegramHandle"
     | "discordHandle"
+    | "fomoHandle"
     | "notes"
     | "avatar"
   >

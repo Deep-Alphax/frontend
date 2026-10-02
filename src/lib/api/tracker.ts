@@ -6,7 +6,7 @@ import { api } from "@/lib/api/client";
  */
 
 export type TrackerChain = "SOLANA" | "ETHEREUM" | "BASE" | "BSC" | "ARBITRUM" | "POLYGON" | "OPTIMISM";
-export type FeedPlatform = "DISCORD" | "TELEGRAM";
+export type FeedPlatform = "DISCORD" | "TELEGRAM" | "PUMPFUN" | "FOMO";
 
 export interface TrackerToken {
   chain: TrackerChain;

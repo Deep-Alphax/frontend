@@ -48,9 +48,15 @@ function SourceRow({
 }) {
   const tone = active ? { bar: "bg-principal-11", text: "text-principal-11" } : rateTone(item.hitRate);
   const skin = GROUP_SKINS[hashStr(item.group) % GROUP_SKINS.length];
-  const badge = item.platform === "TELEGRAM"
-    ? active ? "/tracker/platform-telegram-active.svg" : "/tracker/platform-telegram-card.svg"
-    : "/tracker/platform-discord.svg";
+  // Selos do Figma só existem para Telegram e Discord; pump.fun/FOMO sem selo.
+  const badge =
+    item.platform === "TELEGRAM"
+      ? active
+        ? "/tracker/platform-telegram-active.svg"
+        : "/tracker/platform-telegram-card.svg"
+      : item.platform === "DISCORD"
+        ? "/tracker/platform-discord.svg"
+        : null;
   return (
     <li
       className={cn(
@@ -69,10 +75,12 @@ function SourceRow({
       </span>
       <span className={cn("relative flex size-8 shrink-0 items-center justify-center rounded-[8.533px] text-[13.867px] font-bold", skin)}>
         {item.group.replace(/[^A-Za-z0-9]/g, "").charAt(0).toUpperCase() || "?"}
-        <span className="absolute left-[20.27px] top-[20.27px] size-4">
-          {/* eslint-disable-next-line @next/next/no-img-element -- selo SVG do Figma */}
-          <img src={badge} alt="" className="absolute -inset-[13.33%] block size-[126.66%] max-w-none" />
-        </span>
+        {badge && (
+          <span className="absolute left-[20.27px] top-[20.27px] size-4">
+            {/* eslint-disable-next-line @next/next/no-img-element -- selo SVG do Figma */}
+            <img src={badge} alt="" className="absolute -inset-[13.33%] block size-[126.66%] max-w-none" />
+          </span>
+        )}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <p className="truncate text-xs font-semibold leading-[1.3] text-gray-12">{item.group}</p>

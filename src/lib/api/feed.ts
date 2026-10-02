@@ -149,6 +149,17 @@ export interface TelegramChatOption {
   watched: boolean;
 }
 
+/** Fontes sociais do Tracker (callouts da pump.fun, feed do FOMO). */
+export interface SocialSourcesStatus {
+  pump: { enabled: boolean; leader: boolean; perMinute: number; hotWallets: number; knownWallets: number; polled: number; ingested: number; rateLimited: number };
+  fomo: { enabled: boolean; connected: boolean; events: number; trades: number; theses: number; ignored: number };
+}
+
+export async function getSocialStatus(): Promise<SocialSourcesStatus> {
+  const { data } = await api.get<SocialSourcesStatus>("/api/v1/tracker/admin/social/status");
+  return data;
+}
+
 export async function getTelegramStatus(): Promise<TelegramReaderStatus> {
   const { data } = await api.get<TelegramReaderStatus>("/api/v1/tracker/admin/telegram/status");
   return data;

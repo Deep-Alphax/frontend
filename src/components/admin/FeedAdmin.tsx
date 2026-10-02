@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFeedStatus, getTelegramStatus } from "@/lib/api/feed";
+import { getFeedStatus, getSocialStatus, getTelegramStatus } from "@/lib/api/feed";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
 import { MonitorsManager } from "@/components/admin/MonitorsManager";
@@ -37,6 +37,12 @@ function StatusBar() {
     refetchInterval: 15_000,
   });
   const tg = tgQuery.data;
+  const socialQuery = useQuery({
+    queryKey: ["social-status"],
+    queryFn: getSocialStatus,
+    refetchInterval: 15_000,
+  });
+  const so = socialQuery.data;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -50,6 +56,16 @@ function StatusBar() {
         ok={!!tg?.connected}
         on={`Telegram reader: @${tg?.me ?? "connected"} · ${tg?.chatsWatched ?? 0} groups`}
         off={tg?.halted ? "Telegram reader: session invalid" : "Telegram reader: offline"}
+      />
+      <Pill
+        ok={!!so?.pump.enabled && !!so?.pump.leader}
+        on={`pump.fun callouts: ${so?.pump.hotWallets ?? 0} active KOLs · ${so?.pump.perMinute ?? 0}/min`}
+        off={so?.pump.enabled ? "pump.fun callouts: waiting" : "pump.fun callouts: off"}
+      />
+      <Pill
+        ok={!!so?.fomo.connected}
+        on={`FOMO: connected · ${so?.fomo.theses ?? 0} theses`}
+        off={so?.fomo.enabled ? "FOMO: offline" : "FOMO: off (FOMO_API_KEY missing)"}
       />
       {s && (
         <span className="rounded-full bg-gray-3 px-3 py-1 text-xs text-gray-11">

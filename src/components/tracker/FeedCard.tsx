@@ -80,7 +80,10 @@ function TradeRow({
           compact ? "text-[13.5px] leading-normal" : "text-sm leading-[1.1]",
         )}
       >
-        {quoteAmount(trade.quoteAmount)} {trade.quoteSymbol}
+        {/* Trade do app FOMO vem só em USD (sem tx on-chain). */}
+        {trade.quoteSymbol === "USD"
+          ? compactUsd(trade.quoteAmount)
+          : `${quoteAmount(trade.quoteAmount)} ${trade.quoteSymbol}`}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <TokenIcon
