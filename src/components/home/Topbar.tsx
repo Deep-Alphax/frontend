@@ -59,7 +59,12 @@ export function Topbar() {
 
           <nav className="hidden h-full items-center md:flex">
             {NAV_ITEMS.map((item) => {
-              const isActive = item.href !== "#" && pathname === item.href;
+              // Sub-rota mantém o item pai marcado (/wallet-reader/ranking →
+              // KOLs). A raiz "/" só por igualdade, senão tudo casaria.
+              const isActive =
+                item.href !== "#" &&
+                (pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(`${item.href}/`)));
               return (
                 <Link
                   key={item.label}

@@ -12,6 +12,7 @@ import {
   CopyButton,
   RankTag,
   TokenIcon,
+  TokenTrigger,
 } from "@/components/tracker/parts";
 
 /*
@@ -87,7 +88,7 @@ function TradeRow({
           ? compactUsd(trade.quoteAmount)
           : `${quoteAmount(trade.quoteAmount)} ${trade.quoteSymbol}`}
       </span>
-      <span className="inline-flex items-center gap-1.5">
+      <TokenTrigger token={token}>
         <TokenIcon
           chain={token.chain}
           mint={token.mint}
@@ -103,7 +104,7 @@ function TradeRow({
         >
           {tokenLabel(token)}
         </span>
-      </span>
+      </TokenTrigger>
       <CopyButton value={token.mint} size={compact ? 22 : 24} />
       <ChainChip chain={token.chain} />
       <span className={cn("text-gray-11", compact ? "text-[13px]" : "text-sm leading-[1.3]")}>

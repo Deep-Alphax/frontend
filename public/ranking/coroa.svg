@@ -1,0 +1,18 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Coroa" clip-path="url(#clip0_0_293)">
+<path id="Vector" d="M3.5 8.75L11.375 15.75L21 1.75L30.625 15.75L38.5 8.75L35 26.25H7L3.5 8.75Z" fill="url(#paint0_linear_0_293)"/>
+<path id="Vector_2" d="M3.5 10.5C4.94975 10.5 6.125 9.32475 6.125 7.875C6.125 6.42525 4.94975 5.25 3.5 5.25C2.05025 5.25 0.875 6.42525 0.875 7.875C0.875 9.32475 2.05025 10.5 3.5 10.5Z" fill="#F9D240"/>
+<path id="Vector_3" d="M21 4.8125C22.4497 4.8125 23.625 3.63725 23.625 2.1875C23.625 0.737753 22.4497 -0.4375 21 -0.4375C19.5503 -0.4375 18.375 0.737753 18.375 2.1875C18.375 3.63725 19.5503 4.8125 21 4.8125Z" fill="#F9D240"/>
+<path id="Vector_4" d="M38.5 10.5C39.9497 10.5 41.125 9.32475 41.125 7.875C41.125 6.42525 39.9497 5.25 38.5 5.25C37.0503 5.25 35.875 6.42525 35.875 7.875C35.875 9.32475 37.0503 10.5 38.5 10.5Z" fill="#F9D240"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_293" x1="3.5" y1="1.75" x2="3.5" y2="26.25" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFF3B8"/>
+<stop offset="0.55" stop-color="#F9D240"/>
+<stop offset="1" stop-color="#C79A00"/>
+</linearGradient>
+<clipPath id="clip0_0_293">
+<rect width="42" height="28" fill="white"/>
+</clipPath>
+</defs>
+</svg>

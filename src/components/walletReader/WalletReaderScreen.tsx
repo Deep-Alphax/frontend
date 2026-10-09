@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { KolsTabs } from "@/components/walletReader/KolsTabs";
 import { KolCardSkeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
 import { useKolIndex } from "@/lib/walletReader/useKolIndex";
@@ -532,7 +533,8 @@ export function WalletReaderScreen() {
         </div>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex flex-wrap items-center justify-between gap-y-2.5 border-b border-gray-6 px-6 py-4">
+          {/* Figma 1474:58725: abas à esquerda; contagem, busca e CTA à direita. */}
+          <header className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5 border-b border-gray-6 px-6 py-4">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -542,34 +544,37 @@ export function WalletReaderScreen() {
               >
                 <SlidersHorizontal className="size-4" strokeWidth={1.75} /> Filters
               </button>
+              <KolsTabs />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
               <h1 className="text-base text-gray-11 tabular-nums">
                 {total.toLocaleString("en-US")} KOLs
               </h1>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-11"
-                  strokeWidth={1.75}
-                />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search here..."
-                  aria-label="Search KOL"
-                  className="h-10 w-full max-w-[345px] rounded-lg border border-gray-6 bg-transparent pl-10 pr-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60 sm:w-[345px]"
-                />
+              <div className="flex items-center gap-2.5">
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-11"
+                    strokeWidth={1.75}
+                  />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search here..."
+                    aria-label="Search KOL"
+                    className="h-10 w-full max-w-[345px] rounded-lg border border-gray-6 bg-transparent pl-10 pr-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60 sm:w-[345px]"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddOpen(true)}
+                  className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-principal-9 px-5 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+                >
+                  <Plus className="size-5" strokeWidth={2} />
+                  <span className="max-sm:sr-only">Add KOL</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-principal-9 px-5 text-base font-semibold text-gray-1 transition-colors hover:bg-principal-10"
-              >
-                <Plus className="size-5" strokeWidth={2} />
-                <span className="max-sm:sr-only">Add KOL</span>
-              </button>
             </div>
           </header>
 

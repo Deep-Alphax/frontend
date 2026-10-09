@@ -17,6 +17,7 @@ import {
   getDiscovery,
   getMultiBuys,
   getNetFlows,
+  getTokenDetail,
   getTopSources,
   getTrackerFeed,
   getTrackerFilters,
@@ -25,6 +26,7 @@ import {
   type SourcePeriod,
   type TrackerFeedFilters,
   type TrackerFeedPage,
+  type TokenRef,
 } from "@/lib/api/tracker";
 import { getSocket } from "@/lib/realtime/socket";
 
@@ -195,4 +197,26 @@ export function useTrackerRealtime(enabled: boolean): void {
     void qc.invalidateQueries({ queryKey: [...TRACKER_KEY, "net-flows"] });
   }, [qc]);
   useTrackerSocket(enabled, useThrottled(refresh, 10_000));
+}
+
+/** 4xx não melhora tentando de novo (ex.: 403 do FREE, 400 de mint inválido). */
+const isClientError = (error: unknown): boolean => {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  return typeof status === "number" && status >= 400 && status < 500;
+};
+
+/**
+ * Drawer do token. O servidor monta o detalhe com cache de 10s e a série do
+ * gráfico anda 1 ponto por minuto: 15s de intervalo deixa o drawer "vivo" sem
+ * martelar. `isPending` (não `isLoading`) decide o skeleton — lição de 22/09.
+ */
+export function useTokenDetail(ref: Pick<TokenRef, "chain" | "mint"> | null) {
+  return useQuery({
+    queryKey: [...TRACKER_KEY, "token", ref?.chain, ref?.mint],
+    queryFn: () => getTokenDetail(ref!.chain, ref!.mint),
+    enabled: !!ref,
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    retry: (count, error) => count < 1 && !isClientError(error),
+  });
 }

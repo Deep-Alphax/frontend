@@ -15,6 +15,7 @@ import {
   LiveChip,
   Panel,
   TokenIcon,
+  TokenTrigger,
 } from "@/components/tracker/parts";
 
 /*
@@ -79,10 +80,12 @@ const ConfluenceCard = memo(function ConfluenceCard({ item }: { item: Confluence
         <ScoreRing score={item.score} />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
           <div className="flex min-w-0 items-center gap-2">
-            <TokenIcon chain={token.chain} mint={token.mint} symbol={token.symbol} imageUrl={token.imageUrl} badge={false} />
-            <span className="truncate text-sm font-semibold leading-[1.1] text-gray-12">
-              {tokenLabel(token)}
-            </span>
+            <TokenTrigger token={token} className="gap-2">
+              <TokenIcon chain={token.chain} mint={token.mint} symbol={token.symbol} imageUrl={token.imageUrl} badge={false} />
+              <span className="truncate text-sm font-semibold leading-[1.1] text-gray-12">
+                {tokenLabel(token)}
+              </span>
+            </TokenTrigger>
             <CopyButton value={token.mint} boxed={false} size={20} />
           </div>
           <div className="flex flex-wrap items-center gap-1.5">

@@ -9,7 +9,7 @@ import { useFollowWallet } from "@/lib/tracker/useTracker";
 import { hashStr } from "@/lib/walletReader/types";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
-import { EmptyState, Panel, Segmented, TokenIcon } from "@/components/tracker/parts";
+import { EmptyState, Panel, Segmented, TokenIcon, TokenTrigger } from "@/components/tracker/parts";
 
 // ─────────────────────────────── Top sources ───────────────────────────────
 
@@ -241,10 +241,13 @@ const DiscoveryCard = memo(function DiscoveryCard({ item }: { item: DiscoveryIte
       {item.tokens.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {item.tokens.map((t) => (
-            <span key={`${t.chain}:${t.mint}`} className="inline-flex items-center gap-1.5">
+            <TokenTrigger
+              key={`${t.chain}:${t.mint}`}
+              token={{ ...t, name: null, imageUrl: null, mcUsd: null }}
+            >
               <TokenIcon chain={t.chain} mint={t.mint} symbol={t.symbol} size={20} />
               <span className="text-xs font-bold leading-[1.3] text-gray-12">{tokenLabel(t)}</span>
-            </span>
+            </TokenTrigger>
           ))}
         </div>
       )}

@@ -122,11 +122,14 @@ export function SourcesRail({ groups, selection, onSelect }: SourcesRailProps) {
               )}
             >
               {(guildActive || hasActiveChannel) && <ActiveBar />}
-              <span className="relative">
+              {/* Caixa de 36px: o wrapper (âncora do selo do Telegram) e o
+                  ícone precisam ser BLOCO — span inline ignora `size-9` e a
+                  imagem cai no tamanho natural do arquivo. */}
+              <span className="relative flex size-9 shrink-0">
               {g.iconUrl && !brokenIcons.has(g.iconUrl) ? (
                 <span
                   className={cn(
-                    "size-9 shrink-0 overflow-hidden rounded-xl transition-opacity",
+                    "block size-9 shrink-0 overflow-hidden rounded-xl transition-opacity",
                     highlight ? "opacity-100" : "opacity-90 hover:opacity-100",
                   )}
                 >

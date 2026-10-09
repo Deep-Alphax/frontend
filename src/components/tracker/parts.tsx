@@ -3,9 +3,10 @@
 import { useState, type ReactNode } from "react";
 import toast from "react-hot-toast";
 
-import type { TrackerChain } from "@/lib/api/tracker";
+import type { TokenRef, TrackerChain } from "@/lib/api/tracker";
 import { cn } from "@/lib/cn";
-import { CHAIN_BADGE, CHAIN_LABEL, buyUrl } from "@/lib/tracker/format";
+import { CHAIN_BADGE, CHAIN_LABEL, buyUrl, tokenLabel } from "@/lib/tracker/format";
+import { useOpenToken } from "@/lib/tracker/tokenDrawer";
 import { useBuyTerminal } from "@/lib/tracker/useBuyTerminal";
 import { hashStr, tierFor } from "@/lib/walletReader/types";
 
@@ -101,17 +102,28 @@ const RANK_SKIN: Record<string, string> = {
   "super-alpha": "border-vermelho-9 from-vermelho-7 to-vermelho-3 text-vermelho-12",
 };
 
-export function RankTag({ relevance }: { relevance: number }) {
+const RANK_SIZE = {
+  sm: "h-6 gap-1 border-[0.7px] px-1 text-[9.8px]",
+  md: "h-[30px] gap-2 px-2 text-sm",
+  lg: "h-[34px] gap-1.5 px-3 text-sm",
+} as const;
+
+/**
+ * `sm` = pílula de 24px da lista de carteiras do drawer (emblema 14, texto 9.8);
+ * `lg` = 34px do Deep Ranking (pódio e tabela, Figma 1469:13524).
+ */
+export function RankTag({ relevance, size = "md" }: { relevance: number; size?: keyof typeof RANK_SIZE }) {
   const tier = tierFor(relevance);
   return (
     <span
       className={cn(
-        "inline-flex h-[30px] shrink-0 items-center gap-2 rounded-full border bg-gradient-to-r px-2 text-sm font-medium leading-[1.3]",
+        "inline-flex shrink-0 items-center rounded-full border bg-gradient-to-r font-medium leading-[1.3]",
+        RANK_SIZE[size],
         RANK_SKIN[tier.id] ?? RANK_SKIN.wood,
       )}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- emblema estático pequeno */}
-      <img src={tier.emblem} alt="" className="size-5 object-contain" />
+      <img src={tier.emblem} alt="" className={cn("object-contain", size === "sm" ? "size-3.5" : "size-5")} />
       {tier.label}
     </span>
   );
@@ -136,8 +148,8 @@ const IMAGE_HOSTS =
 
 /**
  * Ícone do token: imagem do DexScreener ou letra colorida, com o selo da rede
- * no canto (badge - rede 1371:32284). Tamanhos do Figma: 24 (card), 20
- * (Discovery), 18 (linha compacta).
+ * no canto (badge - rede 1371:32284). Tamanhos do Figma: 48 (drawer, selo 20),
+ * 24 (card), 20 (Discovery), 18 (linha compacta). `muted` = token rugado (cinza).
  */
 export function TokenIcon({
   chain,
@@ -146,23 +158,41 @@ export function TokenIcon({
   imageUrl,
   size = 24,
   badge = true,
+  muted = false,
 }: {
   chain: TrackerChain;
   mint: string;
   symbol: string | null;
   imageUrl?: string | null;
-  size?: 18 | 20 | 24;
+  size?: 18 | 20 | 24 | 48;
   badge?: boolean;
+  muted?: boolean;
 }) {
   const [broken, setBroken] = useState(false);
   const letter = (symbol ?? "?").replace(/^\$/, "").charAt(0).toUpperCase() || "?";
-  const skin = TOKEN_SKINS[hashStr(mint) % TOKEN_SKINS.length];
+  const skin = muted ? "bg-gray-7 text-gray-1" : TOKEN_SKINS[hashStr(mint) % TOKEN_SKINS.length];
   const img = imageUrl && IMAGE_HOSTS.test(imageUrl) && !broken ? imageUrl : null;
   const badgeSrc = CHAIN_BADGE[chain];
-  const dims = size === 24 ? "size-6" : size === 20 ? "size-5" : "size-[18px]";
-  const text = size === 24 ? "text-[13.333px]" : size === 20 ? "text-[11px]" : "text-[10px]";
-  // Selo de 12px ancorado no canto inferior direito (24 → 16/16; 18 → 10/10).
-  const badgePos = size === 24 ? "left-4 top-4" : size === 20 ? "left-[11px] top-[11px]" : "left-2.5 top-2.5";
+  const dims =
+    size === 48 ? "size-12" : size === 24 ? "size-6" : size === 20 ? "size-5" : "size-[18px]";
+  const text =
+    size === 48
+      ? "font-display text-xl font-semibold tracking-[1px]"
+      : size === 24
+        ? "text-[13.333px]"
+        : size === 20
+          ? "text-[11px]"
+          : "text-[10px]";
+  // Selo ancorado no canto inferior direito: 12px nos ícones de lista
+  // (24 → 16/16; 18 → 10/10) e 20px no cabeçalho do drawer (48 → 32/32).
+  const badgePos =
+    size === 48
+      ? "left-8 top-8 size-5"
+      : size === 24
+        ? "left-4 top-4 size-3"
+        : size === 20
+          ? "left-[11px] top-[11px] size-3"
+          : "left-2.5 top-2.5 size-3";
 
   return (
     <span className={cn("relative inline-flex shrink-0", dims)}>
@@ -173,12 +203,13 @@ export function TokenIcon({
           alt=""
           referrerPolicy="no-referrer"
           onError={() => setBroken(true)}
-          className={cn("rounded-full object-cover", dims)}
+          className={cn("rounded-full object-cover", dims, muted && "grayscale")}
         />
       ) : (
         <span
           className={cn(
-            "flex items-center justify-center rounded-full font-bold leading-none",
+            "flex items-center justify-center rounded-full leading-none",
+            size === 48 ? "" : "font-bold",
             dims,
             text,
             skin,
@@ -188,24 +219,73 @@ export function TokenIcon({
         </span>
       )}
       {badge && badgeSrc && (
-        <span className={cn("absolute size-3", badgePos)}>
+        <span className={cn("absolute", badgePos)}>
           {/* eslint-disable-next-line @next/next/no-img-element -- selo SVG do Figma */}
-          <img src={badgeSrc} alt="" className="absolute -inset-[12.5%] block size-[150%] max-w-none" />
+          <img
+            src={badgeSrc}
+            alt=""
+            className={cn(
+              "absolute block max-w-none",
+              // 20px: o selo inteiro (círculo + marca) ocupa a caixa, como no Figma.
+              size === 48 ? "inset-0 size-full" : "-inset-[12.5%] size-[150%]",
+            )}
+          />
         </span>
       )}
     </span>
   );
 }
 
-/** chip - rede (1371:32311): selo + sigla. */
-export function ChainChip({ chain }: { chain: TrackerChain }) {
+/**
+ * Ícone + nome do token como gatilho do drawer (Figma 1411:34396). Botão de
+ * verdade (teclado/leitor de tela); o visual de dentro não muda.
+ */
+export function TokenTrigger({
+  token,
+  className,
+  children,
+}: {
+  token: TokenRef;
+  className?: string;
+  children: ReactNode;
+}) {
+  const open = useOpenToken();
+  return (
+    <button
+      type="button"
+      onClick={() => open(token)}
+      aria-label={`Open ${tokenLabel(token)} details`}
+      className={cn(
+        "inline-flex min-w-0 items-center gap-1.5 rounded text-left transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-principal-9",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** chip - rede (1371:32311): selo + sigla. `md` = selo de 20px (cabeçalho do drawer). */
+export function ChainChip({ chain, size = "sm" }: { chain: TrackerChain; size?: "sm" | "md" }) {
   const badgeSrc = CHAIN_BADGE[chain];
   return (
-    <span className="inline-flex shrink-0 items-center gap-[5px] rounded-md border border-[#3d3f4a] bg-[#26272f] py-[3px] pl-[5px] pr-[7px]">
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-md border border-[#3d3f4a] bg-[#26272f]",
+        size === "md" ? "gap-1.5 p-1.5" : "gap-[5px] py-[3px] pl-[5px] pr-[7px]",
+      )}
+    >
       {badgeSrc && (
-        <span className="relative size-3">
+        <span className={cn("relative", size === "md" ? "size-5" : "size-3")}>
           {/* eslint-disable-next-line @next/next/no-img-element -- selo SVG do Figma */}
-          <img src={badgeSrc} alt="" className="absolute -inset-[12.5%] block size-[150%] max-w-none" />
+          <img
+            src={badgeSrc}
+            alt=""
+            className={cn(
+              "absolute block max-w-none",
+              size === "md" ? "inset-0 size-full" : "-inset-[12.5%] size-[150%]",
+            )}
+          />
         </span>
       )}
       <span className="text-[11px] font-semibold text-gray-11">{CHAIN_LABEL[chain]}</span>

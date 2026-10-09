@@ -159,3 +159,101 @@ export async function setFollow(chain: TrackerChain, address: string, follow: bo
   if (follow) await api.post("/api/v1/tracker/follows", { chain, address });
   else await api.delete("/api/v1/tracker/follows", { data: { chain, address } });
 }
+
+// ───────────────────────── Drawer do token (Figma 1411:34396) ─────────────────────────
+
+export type TokenDetailStatus = "normal" | "risk" | "rugged";
+export type TokenSignalId =
+  | "kols_bought"
+  | "groups_called"
+  | "rick"
+  | "volume"
+  | "holders"
+  | "liquidity"
+  | "dev"
+  | "bundle";
+/** `off` = medido e não aconteceu; `unknown` = sem fonte de dados (não pontua). */
+export type SignalState = "good" | "bad" | "off" | "unknown";
+export type DeepScoreTier = "strong" | "moderate" | "danger";
+export type HolderRowId = "top10" | "dev" | "snipers" | "insiders" | "bundlers" | "lp" | "fresh";
+
+export interface TokenWalletActivity {
+  kol: TrackerKol;
+  types: string[];
+  callOwner: boolean;
+  action: "BUY" | "SELL";
+  quoteSymbol: string;
+  quoteAmount: number;
+  entryMcUsd: number | null;
+  supplyPct: number | null;
+  lastAt: string;
+  pnlUsd: number | null;
+  multiple: number | null;
+  exited: boolean;
+}
+
+export interface TokenCall {
+  id: string;
+  author: string;
+  platform: FeedPlatform;
+  group: string | null;
+  at: string;
+  text: string;
+  relation: "bought_before" | "sold_after" | "entered_after" | null;
+  mcAtCall: number | null;
+  multiple: number | null;
+}
+
+export interface TokenDetail {
+  token: TrackerToken;
+  status: TokenDetailStatus;
+  live: boolean;
+  launchpad: string | null;
+  launchedAt: string | null;
+  kpis: {
+    mcUsd: number | null;
+    change24h: number | null;
+    liquidityUsd: number | null;
+    volume24hUsd: number | null;
+    holders: number | null;
+  };
+  links: {
+    explorer: string;
+    twitter: string | null;
+    telegram: string | null;
+    website: string | null;
+    dexUrl: string | null;
+    dexPaid: boolean | null;
+  };
+  exit: {
+    liquidityDrop: { pct: number; minutes: number } | null;
+    mcDropFromHigh: number | null;
+    exitedKols: string[];
+    rugAt: string | null;
+    stuckWallets: number;
+  };
+  signals: Array<{ id: TokenSignalId; state: SignalState }>;
+  deepScore: { score: number; tier: DeepScoreTier };
+  chart: {
+    points: Array<{ t: string; mc: number }>;
+    /** "call", "sniper" ou o id do nível do KOL (gold, diamond…). */
+    markers: Array<{ t: string; kind: string }>;
+  };
+  holders: {
+    rows: Array<{ id: HolderRowId; pct: number | null; tone: "good" | "warn" | "bad" | "none" }>;
+    updatedAt: string | null;
+  };
+  wallets: { smartMoneyUsd: number; items: TokenWalletActivity[] };
+  calls: TokenCall[];
+  updatedAt: string;
+}
+
+/** Token aberto no drawer (o que o clique já sabe — o resto vem do servidor). */
+export type TokenRef = Pick<TrackerToken, "chain" | "mint" | "symbol" | "name" | "imageUrl" | "mcUsd">;
+
+export async function getTokenDetail(chain: TrackerChain, mint: string): Promise<TokenDetail> {
+  const { data } = await api.get<TokenDetail>(
+    `/api/v1/tracker/token/${encodeURIComponent(chain)}/${encodeURIComponent(mint)}`,
+  );
+  return data;
+}

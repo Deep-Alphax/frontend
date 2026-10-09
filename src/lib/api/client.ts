@@ -55,6 +55,14 @@ export function isNotFoundError(error: unknown): boolean {
 }
 
 /**
+ * `true` quando o backend recusou a sessão (401). Fora do login, a mensagem
+ * certa é "sessão expirou", não a de credencial errada de `getApiErrorMessage`.
+ */
+export function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof AxiosError && error.response?.status === 401;
+}
+
+/**
  * Extrai uma mensagem amigável (en-US) de um erro do axios, sem vazar detalhes
  * internos. Mapeia os status mais comuns do fluxo de auth para textos claros.
  */
