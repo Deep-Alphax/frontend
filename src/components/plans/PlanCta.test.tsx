@@ -101,20 +101,28 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     vi.clearAllMocks();
   });
 
-  it("FREE com redes ligadas: oferece USDC e o botão abre o modal", async () => {
+  it("o card tem UM botão; ele abre a escolha do meio, e USDC abre o modal de cripto", async () => {
     const user = userEvent.setup();
     setup();
     renderWithQuery(<PlanCta tone="pro" />);
 
-    expect(screen.getByRole("button", { name: "Choose this plan" })).toBeInTheDocument();
-    const cryptoBtn = await screen.findByRole("button", {
-      name: "Pay with USDC",
-    });
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await settled();
+    // No card: só o "Choose this plan" (os meios ficam no modal).
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
 
-    await user.click(cryptoBtn);
+    const chooser = screen.getByRole("dialog", { name: "Choose how to pay" });
+    expect(chooser).toHaveTextContent(/Card.*renews automatically/);
+    await user.click(screen.getByRole("button", { name: /^USDC/ }));
 
-    expect(screen.getByRole("dialog", { name: "Pay with USDC" })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Choose how to pay" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pay with USDC" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Network" }));
     const options = Array.from(
       (await screen.findByRole("listbox")).querySelectorAll('[role="option"]'),
@@ -122,53 +130,70 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     expect(options).toEqual(["USDC on Solana", "USDC on Base"]);
   });
 
-  it("os dois botões ocupam a largura toda do card, um embaixo do outro", async () => {
-    // O container do CTA no PlanCard é `items-start`: sem `w-full` no wrapper
-    // ele encolhe até o conteúdo e os botões ficam pela metade.
+  it("cartão no modal abre o Checkout do Stripe", async () => {
+    const user = userEvent.setup();
     setup();
+    const checkout = vi
+      .mocked(api.createCheckout)
+      .mockReturnValue(new Promise(() => undefined));
     renderWithQuery(<PlanCta tone="pro" />);
-    const cryptoBtn = await screen.findByRole("button", { name: "Pay with USDC" });
-    const cardBtn = screen.getByRole("button", { name: "Choose this plan" });
-    const wrapper = cardBtn.parentElement!;
-    expect(cryptoBtn.parentElement).toBe(wrapper);
-    expect(wrapper.className).toMatch(/\bw-full\b/);
-    expect(wrapper.className).toMatch(/\bflex-col\b/);
-    for (const btn of [cardBtn, cryptoBtn]) {
-      expect(btn.className).toMatch(/\bw-full\b/);
-      expect(btn.className).toMatch(/\bh-11\b/);
-    }
+
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    await user.click(screen.getByRole("button", { name: /^Card/ }));
+
+    expect(checkout).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByRole("button", { name: /^Opening checkout…/ }),
+    ).toBeDisabled();
   });
 
-  it("fechar o modal pelo Close some com ele", async () => {
+  it("o botão ocupa a largura toda do card", async () => {
+    // O container do CTA no PlanCard é `items-start`: sem `w-full` no wrapper
+    // ele encolhe até o conteúdo e o botão fica pela metade.
+    setup();
+    renderWithQuery(<PlanCta tone="pro" />);
+    const cardBtn = screen.getByRole("button", { name: "Choose this plan" });
+    expect(cardBtn.parentElement!.className).toMatch(/\bw-full\b/);
+    expect(cardBtn.className).toMatch(/\bw-full\b/);
+  });
+
+  it("Cancel fecha a escolha", async () => {
     const user = userEvent.setup();
     setup();
     renderWithQuery(<PlanCta tone="pro" />);
 
-    await user.click(await screen.findByRole("button", { name: "Pay with USDC" }));
-    const closes = screen.getAllByRole("button", { name: "Close" });
-    await user.click(closes[closes.length - 1]);
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
   });
 
-  it("sem rede ligada no servidor: nenhuma oferta de cripto", async () => {
+  it("sem rede ligada no servidor: o modal não oferece USDC", async () => {
+    const user = userEvent.setup();
     setup({ options: { ...OPTIONS, chains: [] } });
     renderWithQuery(<PlanCta tone="pro" />);
 
     await settled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    expect(screen.getByRole("button", { name: /^Card/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^USDC/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it("deslogado: não consulta opções nem cobrança e não oferece cripto", async () => {
+  it("deslogado: não consulta opções e o botão leva ao login", async () => {
     setup({ authenticated: false });
     renderWithQuery(<PlanCta tone="pro" />);
 
-    expect(screen.getByRole("button", { name: "Choose this plan" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Choose this plan" }),
+    ).toBeInTheDocument();
     // Dá tempo de qualquer query disparar antes de afirmar que não disparou.
     await new Promise((r) => setTimeout(r, 20));
     expect(getOptions).not.toHaveBeenCalled();
     expect(getBilling).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
   });
 
   it("cartão renovando (PRO via Stripe): sem opção de cripto", async () => {
@@ -184,14 +209,18 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
 
     await settled();
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /USDC/ }),
+    ).not.toBeInTheDocument();
     // Renovando: não há data de fim a anunciar.
     expect(screen.queryByText(/Pro until/)).not.toBeInTheDocument();
   });
 
   it("cartão renovando mas o plano ainda carrega como FREE: sem cripto (servidor recusaria)", async () => {
+    const user = userEvent.setup();
     setup({
       plan: "FREE",
+      pix: PIX_ON,
       billing: {
         provider: "STRIPE",
         currentPeriodEnd: PERIOD_END,
@@ -201,7 +230,13 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     renderWithQuery(<PlanCta tone="pro" />);
 
     await settled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    expect(
+      screen.queryByRole("button", { name: /^USDC/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Pix/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("PRO via CRYPTO: 'Renew with USDC' + data de fim, e o botão abre o modal", async () => {
@@ -216,13 +251,23 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     });
     renderWithQuery(<PlanCta tone="pro" />);
 
-    const renew = await screen.findByRole("button", { name: "Renew with USDC" });
-    expect(screen.getByText(`Pro until ${PERIOD_END_LABEL}`)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Current plan" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Choose this plan" })).not.toBeInTheDocument();
+    const renew = await screen.findByRole("button", {
+      name: "Renew with USDC",
+    });
+    expect(
+      screen.getByText(`Pro until ${PERIOD_END_LABEL}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Current plan" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Choose this plan" }),
+    ).not.toBeInTheDocument();
 
     await user.click(renew);
-    expect(screen.getByRole("dialog", { name: "Pay with USDC" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Pay with USDC" }),
+    ).toBeInTheDocument();
   });
 
   it("PRO via Stripe cancelado: 'Current plan' + 'Extend with USDC' que abre o modal", async () => {
@@ -237,12 +282,18 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     });
     renderWithQuery(<PlanCta tone="pro" />);
 
-    const extend = await screen.findByRole("button", { name: "Extend with USDC" });
+    const extend = await screen.findByRole("button", {
+      name: "Extend with USDC",
+    });
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
-    expect(screen.getByText(/Pro until/)).toHaveTextContent(`Pro until ${PERIOD_END_LABEL}`);
+    expect(screen.getByText(/Pro until/)).toHaveTextContent(
+      `Pro until ${PERIOD_END_LABEL}`,
+    );
 
     await user.click(extend);
-    expect(screen.getByRole("dialog", { name: "Pay with USDC" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Pay with USDC" }),
+    ).toBeInTheDocument();
   });
 
   it("PRO sem detalhe de cobrança (ex.: ADMIN): só 'Current plan'", async () => {
@@ -251,7 +302,9 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
 
     await settled();
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /USDC/ }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Pro until/)).not.toBeInTheDocument();
   });
 });
@@ -261,65 +314,116 @@ describe("PlanCta (card PRO) — oferta de Pix", () => {
     vi.clearAllMocks();
   });
 
-  it("FREE com Pix ligado: oferece Pix e o botão abre o modal com o valor em reais", async () => {
+  it("Pix no modal mostra o valor em reais e abre o modal do Pix", async () => {
     const user = userEvent.setup();
     setup({ pix: PIX_ON });
     renderWithQuery(<PlanCta tone="pro" />);
 
-    const pixBtn = await screen.findByRole("button", { name: "Pay with Pix" });
-    expect(pixBtn.className).toMatch(/\bw-full\b/);
-    await user.click(pixBtn);
+    await settled();
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    const pixRow = screen.getByRole("button", { name: /^Pix/ });
+    expect(pixRow).toHaveTextContent("R$ 253,08 · 30 days · doesn't renew");
+    await user.click(pixRow);
 
     const dialog = screen.getByRole("dialog", { name: "Pay with Pix" });
     expect(dialog).toHaveTextContent("R$ 253,08 · 30 days of Pro");
-    expect(screen.getByRole("button", { name: "Generate Pix · R$ 253,08" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generate Pix · R$ 253,08" }),
+    ).toBeInTheDocument();
   });
 
-  it("Pix desligado no servidor: sem oferta", async () => {
+  it("enquanto as opções carregam, a linha do Pix é skeleton", async () => {
+    const user = userEvent.setup();
+    setup({ pix: PIX_ON });
+    let releasePix!: (v: api.PixOptions) => void;
+    getPix.mockReturnValue(new Promise((r) => (releasePix = r)));
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    // USDC já respondeu; o Pix ainda espera a cotação.
+    expect(
+      await screen.findByRole("button", { name: /^USDC/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading Pix");
+
+    await act(async () => releasePix(PIX_ON));
+    expect(
+      await screen.findByRole("button", { name: /^Pix/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("Pix desligado no servidor: o modal não oferece Pix", async () => {
+    const user = userEvent.setup();
     setup();
     renderWithQuery(<PlanCta tone="pro" />);
     await settled();
-    expect(screen.queryByRole("button", { name: /Pix/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    expect(
+      screen.queryByRole("button", { name: /^Pix/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("cartão renovando: sem Pix (servidor recusaria)", async () => {
     setup({
       plan: "PRO",
       pix: PIX_ON,
-      billing: { provider: "STRIPE", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: false },
+      billing: {
+        provider: "STRIPE",
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: false,
+      },
     });
     renderWithQuery(<PlanCta tone="pro" />);
     await settled();
-    expect(screen.queryByRole("button", { name: /Pix/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Pix/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("PRO via PIX: 'Renew with Pix' em destaque e USDC como alternativa", async () => {
     setup({
       plan: "PRO",
       pix: PIX_ON,
-      billing: { provider: "PIX", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+      billing: {
+        provider: "PIX",
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: true,
+      },
     });
     renderWithQuery(<PlanCta tone="pro" />);
 
     const pix = await screen.findByRole("button", { name: "Renew with Pix" });
     const usdc = screen.getByRole("button", { name: "Renew with USDC" });
     // O meio usado vem primeiro.
-    expect(pix.compareDocumentPosition(usdc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText(`Pro until ${PERIOD_END_LABEL}`)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Current plan" })).not.toBeInTheDocument();
+    expect(
+      pix.compareDocumentPosition(usdc) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.getByText(`Pro until ${PERIOD_END_LABEL}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Current plan" }),
+    ).not.toBeInTheDocument();
   });
 
   it("PRO via CRYPTO com Pix ligado: USDC primeiro, Pix depois", async () => {
     setup({
       plan: "PRO",
       pix: PIX_ON,
-      billing: { provider: "CRYPTO", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+      billing: {
+        provider: "CRYPTO",
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: true,
+      },
     });
     renderWithQuery(<PlanCta tone="pro" />);
 
     const pix = await screen.findByRole("button", { name: "Renew with Pix" });
     const usdc = screen.getByRole("button", { name: "Renew with USDC" });
-    expect(usdc.compareDocumentPosition(pix) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      usdc.compareDocumentPosition(pix) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("PRO via Stripe cancelado: 'Extend with Pix' abre o modal", async () => {
@@ -327,12 +431,20 @@ describe("PlanCta (card PRO) — oferta de Pix", () => {
     setup({
       plan: "PRO",
       pix: PIX_ON,
-      billing: { provider: "STRIPE", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+      billing: {
+        provider: "STRIPE",
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: true,
+      },
     });
     renderWithQuery(<PlanCta tone="pro" />);
 
-    await user.click(await screen.findByRole("button", { name: "Extend with Pix" }));
-    expect(screen.getByRole("dialog", { name: "Pay with Pix" })).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole("button", { name: "Extend with Pix" }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pay with Pix" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -350,7 +462,9 @@ describe("PlanCta (card FREE)", () => {
     expect(getOptions).not.toHaveBeenCalled();
     expect(getPix).not.toHaveBeenCalled();
     expect(getBilling).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /USDC/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("usuário PRO vê 'Free plan' no card FREE", () => {

@@ -6,6 +6,10 @@ import toast from "react-hot-toast";
 
 import { CryptoPayModal } from "@/components/plans/CryptoPayModal";
 import { PixPayModal } from "@/components/plans/PixPayModal";
+import {
+  type MethodState,
+  PaymentMethodModal,
+} from "@/components/plans/PaymentMethodModal";
 import { Button } from "@/components/ui/Button";
 import {
   BILLING_DETAILS_KEY,
@@ -38,6 +42,9 @@ export function PlanCta({ tone }: PlanCtaProps) {
   const closeCrypto = useCallback(() => setCryptoOpen(false), []);
   const [pixOpen, setPixOpen] = useState(false);
   const closePix = useCallback(() => setPixOpen(false), []);
+  // "Choose this plan" abre a escolha do meio: cartão, USDC ou Pix.
+  const [methodOpen, setMethodOpen] = useState(false);
+  const closeMethod = useCallback(() => setMethodOpen(false), []);
 
   // Só o card PRO pergunta — o FREE não oferece nada para comprar.
   const cryptoOptions = useQuery({
@@ -51,7 +58,8 @@ export function PlanCta({ tone }: PlanCtaProps) {
     queryFn: getPixOptions,
     enabled: isAuthenticated && tone === "pro",
     // O valor em reais segue a cotação; a cobrança trava o seu na criação.
-    staleTime: 5 * 60_000,
+    // Sem valor (a cotação demorou no servidor), a próxima visita pede de novo.
+    staleTime: (q) => (q.state.data?.quoteBrlCents == null ? 0 : 5 * 60_000),
   });
   const billing = useQuery({
     queryKey: BILLING_DETAILS_KEY,
@@ -125,12 +133,17 @@ export function PlanCta({ tone }: PlanCtaProps) {
       ? { key: "pix", label: "Renew with Pix", open: () => setPixOpen(true) }
       : null;
     const usdcRenew = canPayCrypto
-      ? { key: "usdc", label: "Renew with USDC", open: () => setCryptoOpen(true) }
+      ? {
+          key: "usdc",
+          label: "Renew with USDC",
+          open: () => setCryptoOpen(true),
+        }
       : null;
     const renew = prepaid
-      ? (provider === "PIX" ? [pixRenew, usdcRenew] : [usdcRenew, pixRenew]).filter(
-          (r) => r !== null,
-        )
+      ? (provider === "PIX"
+          ? [pixRenew, usdcRenew]
+          : [usdcRenew, pixRenew]
+        ).filter((r) => r !== null)
       : [];
 
     return (
@@ -189,6 +202,17 @@ export function PlanCta({ tone }: PlanCtaProps) {
     );
   }
 
+  // Ainda buscando = skeleton na linha do modal; sem oferta = linha some.
+  const methodState = (
+    q: { isPending: boolean; fetchStatus: string },
+    available: boolean,
+  ): MethodState =>
+    available
+      ? "available"
+      : q.isPending && q.fetchStatus !== "idle"
+        ? "loading"
+        : "unavailable";
+
   return (
     <div className="flex w-full flex-col gap-2">
       <Button
@@ -201,25 +225,34 @@ export function PlanCta({ tone }: PlanCtaProps) {
             window.location.href = "/login?next=/plans";
             return;
           }
-          checkout.mutate();
+          setMethodOpen(true);
         }}
       >
-        {checkout.isPending ? "Opening checkout…" : "Choose this plan"}
+        Choose this plan
       </Button>
-      {canPayCrypto && (
-        <Button
-          variant="secondary"
-          className="h-11 p-0"
-          onClick={() => setCryptoOpen(true)}
-        >
-          Pay with USDC
-        </Button>
-      )}
-      {canPayPix && (
-        <Button variant="secondary" className="h-11 p-0" onClick={() => setPixOpen(true)}>
-          Pay with Pix
-        </Button>
-      )}
+      <PaymentMethodModal
+        open={methodOpen}
+        onClose={closeMethod}
+        cardPending={checkout.isPending}
+        onCard={() => checkout.mutate()}
+        usdc={{
+          state: methodState(cryptoOptions, canPayCrypto),
+          periodDays: cryptoOptions.data?.periodDays ?? 30,
+          onChoose: () => {
+            setMethodOpen(false);
+            setCryptoOpen(true);
+          },
+        }}
+        pix={{
+          state: methodState(pixOptions, canPayPix),
+          periodDays: pixOptions.data?.periodDays ?? 30,
+          quoteBrlCents: pixOptions.data?.quoteBrlCents ?? null,
+          onChoose: () => {
+            setMethodOpen(false);
+            setPixOpen(true);
+          },
+        }}
+      />
       {modals}
     </div>
   );
