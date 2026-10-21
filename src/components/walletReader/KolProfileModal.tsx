@@ -26,6 +26,15 @@ import {
   type WalletRef,
 } from "@/lib/walletReader/types";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
+import { NetworkBadge, NetworkFilter, NetworkSelect } from "@/components/walletReader/WalletNetwork";
+import {
+  autoChain,
+  filterWallets,
+  walletChainOf,
+  walletFormError,
+  type WalletChain,
+  type WalletChainFilter,
+} from "@/lib/walletReader/chains";
 
 /**
  * Rascunho do modal: tudo que o botão "Salvar alterações" manda de uma vez.
@@ -77,7 +86,7 @@ function fingerprint(d: Draft): string {
     types: [...d.types].sort(),
     ownSquads: [...d.ownSquads].sort(),
     dismissed: [...d.dismissed].sort(),
-    wallets: d.wallets.map((w) => `${w.name}|${w.address}`).sort(),
+    wallets: d.wallets.map(walletKey).sort(),
   });
 }
 
@@ -88,13 +97,18 @@ function fingerprint(d: Draft): string {
  */
 const NOTES_MAX = 200;
 
+/** Identidade da carteira no rascunho: trocar só a rede também conta como mudança. */
+const walletKey = (w: WalletRef) => `${w.name}|${w.address}|${w.chain ?? ""}`;
+
 const sameList = (a: string[], b: string[]) =>
   a.length === b.length && [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 type Index = ReturnType<typeof useKolIndex>;
 
 /**
- * Linha de carteira (node 901:18404 / 901:20242): apelido + endereço + copiar.
+ * Linha de carteira ("Wallet-row", Figma 1488:47860): selo da rede (24px) +
+ * apelido (128px) + endereço (trunca no fim) + copiar. O saldo do desenho
+ * ainda não tem fonte.
  *
  * Em DETALHES ela também marca/desmarca a carteira na seleção da tela (a barra
  * de ações em massa vive lá fora) — o desenho não tem checkbox, então o estado
@@ -104,15 +118,21 @@ type Index = ReturnType<typeof useKolIndex>;
 function WalletRow({
   name,
   address,
+  chain,
   selected,
   onToggle,
   onRemove,
+  onChainChange,
 }: {
   name: string;
   address: string;
+  /** Rede efetiva (`walletChainOf`); null = EVM antiga sem rede. */
+  chain: WalletChain | null;
   selected?: boolean;
   onToggle?: () => void;
   onRemove?: () => void;
+  /** Só na EDIÇÃO: troca a rede (é como se corrige carteira antiga sem rede). */
+  onChainChange?: (chain: WalletChain) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -143,18 +163,29 @@ function WalletRow({
       className={cn(
         "flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors",
         onToggle && "cursor-pointer",
-        selected ? "border-principal-8 bg-principal-3/40" : "border-gray-6 hover:border-gray-8",
+        selected ? "border-principal-8 bg-principal-3/40" : "border-[#292b35] hover:border-gray-8",
       )}
     >
-      <div className="flex min-w-0 items-center gap-3 text-sm">
-        <span className="w-22 shrink-0 truncate font-semibold leading-[1.1] text-gray-12" title={name}>
+      <div className="flex min-w-0 flex-1 items-center gap-3 text-sm">
+        <NetworkBadge chain={chain} />
+        <span className="w-32 shrink-0 truncate font-semibold leading-[1.3] text-gray-12" title={name}>
           {name}
         </span>
-        <span className="min-w-0 truncate leading-[1.3] text-gray-11" title={address}>
+        <span className="min-w-0 flex-1 truncate leading-[1.3] text-gray-11" title={address}>
           {address}
         </span>
       </div>
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-1">
+        {onChainChange && (
+          <NetworkSelect
+            size="sm"
+            value={chain}
+            address={address}
+            onChange={onChainChange}
+            label={`Network of wallet ${name}`}
+            className={cn("w-[130px]", !chain && "border-principal-8")}
+          />
+        )}
         <button
           type="button"
           onClick={copy}
@@ -300,6 +331,8 @@ function KolProfileForm({
 
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
+  const [wChain, setWChain] = useState<WalletChain | null>(null);
+  const [netFilter, setNetFilter] = useState<WalletChainFilter>("all");
   const [newSquad, setNewSquad] = useState("");
   const [saving, setSaving] = useState(false);
   // O modal abre em DETALHES (node 901:18345); "Edit" leva ao formulário.
@@ -321,6 +354,18 @@ function KolProfileForm({
 
   const tier = tierFor(draft.relevance);
   const twHandle = draft.twitter.trim().replace(/^@/, "");
+
+  // Nova carteira: rede obrigatória e coerente com o formato do endereço.
+  const wAddrError = walletFormError(wAddr, wChain);
+  const duplicateWallet = draft.wallets.some((w) => w.address === wAddr.trim());
+  const canAddWallet = !!wAddr.trim() && !wAddrError && !duplicateWallet;
+
+  // Filtro por rede dos DETALHES. Se a rede filtrada sumir (carteira removida
+  // ou rede trocada na edição), volta para "All" em vez de lista vazia.
+  const viewWallets = useMemo(() => {
+    const list = filterWallets(draft.wallets, netFilter);
+    return list.length || netFilter === "all" ? list : draft.wallets;
+  }, [draft.wallets, netFilter]);
 
   /**
    * Squads do PRESET: o que o servidor mandou como efetivo menos o que é da
@@ -381,8 +426,7 @@ function KolProfileForm({
     // `""` diz ao backend "limpei a foto"; `null` ali significaria herdar o preset.
     if (draft.avatar !== initial.avatar) patch.avatar = draft.avatar ?? "";
 
-    const walletKeys = (ws: WalletRef[]) => ws.map((w) => `${w.name}|${w.address}`);
-    if (!sameList(walletKeys(draft.wallets), walletKeys(initial.wallets))) {
+    if (!sameList(draft.wallets.map(walletKey), initial.wallets.map(walletKey))) {
       // Manda a lista EFETIVA: o servidor deriva added/removed contra o preset,
       // então o cliente não precisa carregar a camada base só para isso.
       patch.wallets = draft.wallets;
@@ -583,7 +627,8 @@ function KolProfileForm({
   const sidewallets = (
     <div className="rounded-xl border border-gray-6 bg-gray-1/60 p-4">
       <SidewalletBlock
-        wallets={draft.wallets}
+        // A varredura lê a Solana (Helius/Birdeye): carteira EVM não entra.
+        wallets={draft.wallets.filter((w) => walletChainOf(w) === "SOLANA")}
         scans={scans}
         dismissed={draft.dismissed}
         onDismiss={(address) => set("dismissed", draft.dismissed.concat([address]))}
@@ -613,21 +658,28 @@ function KolProfileForm({
         walletsLock
       ) : (
         <>
-          <EditSection label="Wallets" count={`${draft.wallets.length} total`}>
+          <EditSection
+            label="Wallets"
+            count={`${viewWallets.length} of ${draft.wallets.length}`}
+          >
             {draft.wallets.length === 0 ? (
               <p className="text-sm text-gray-11">No wallets on file.</p>
             ) : (
-              <div className="flex flex-col gap-2">
-                {draft.wallets.map((w) => (
-                  <WalletRow
-                    key={w.address}
-                    name={w.name}
-                    address={w.address}
-                    selected={isSelected(id, w.address)}
-                    onToggle={() => toggleSelect(id, w, state.squads)}
-                  />
-                ))}
-              </div>
+              <>
+                <NetworkFilter wallets={draft.wallets} value={netFilter} onChange={setNetFilter} />
+                <div className="flex flex-col gap-2">
+                  {viewWallets.map((w) => (
+                    <WalletRow
+                      key={w.address}
+                      name={w.name}
+                      address={w.address}
+                      chain={walletChainOf(w)}
+                      selected={isSelected(id, w.address)}
+                      onToggle={() => toggleSelect(id, w, state.squads)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </EditSection>
 
@@ -769,6 +821,13 @@ function KolProfileForm({
                 key={w.address}
                 name={w.name}
                 address={w.address}
+                chain={walletChainOf(w)}
+                onChainChange={(chain) =>
+                  set(
+                    "wallets",
+                    draft.wallets.map((x) => (x.address === w.address ? { ...x, chain } : x)),
+                  )
+                }
                 onRemove={() =>
                   set("wallets", draft.wallets.filter((x) => x.address !== w.address))
                 }
@@ -776,7 +835,7 @@ function KolProfileForm({
             ))}
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <input
             value={wName}
             onChange={(e) => setWName(e.target.value)}
@@ -786,28 +845,39 @@ function KolProfileForm({
           />
           <input
             value={wAddr}
-            onChange={(e) => setWAddr(e.target.value)}
+            onChange={(e) => {
+              setWAddr(e.target.value);
+              setWChain((c) => autoChain(e.target.value, c));
+            }}
             placeholder="Wallet address"
             aria-label="Wallet address"
-            className="h-10 min-w-0 flex-1 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
+            className="h-10 min-w-[180px] flex-1 rounded-lg border border-gray-6 bg-gray-2 px-3 text-sm leading-[1.3] text-gray-12 outline-none placeholder:text-gray-11 focus:border-secundaria-11/60"
           />
+          <NetworkSelect value={wChain} address={wAddr} onChange={setWChain} />
           <button
             type="button"
+            disabled={!canAddWallet}
             onClick={() => {
               const addr = wAddr.trim();
-              if (!addr || draft.wallets.some((w) => w.address === addr)) return;
+              if (!canAddWallet || !wChain) return;
               set(
                 "wallets",
-                draft.wallets.concat([{ name: wName.trim() || "Wallet", address: addr }]),
+                draft.wallets.concat([{ name: wName.trim() || "Wallet", address: addr, chain: wChain }]),
               );
               setWName("");
               setWAddr("");
+              setWChain(null);
             }}
-            className="flex h-10 shrink-0 items-center justify-center rounded-lg bg-principal-9 px-6 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+            className="flex h-10 shrink-0 items-center justify-center rounded-lg bg-principal-9 px-6 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Add
           </button>
         </div>
+        {wAddrError && (
+          <p role="alert" className="text-xs text-vermelho-11">
+            {wAddrError}
+          </p>
+        )}
       </EditSection>
 
       <EditSection label="Sidewallets / Copytraders">{sidewallets}</EditSection>

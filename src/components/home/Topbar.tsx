@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Radar", href: "/radar" },
   { label: "Tracker", href: "/tracker" },
   { label: "KOLs", href: "/wallet-reader" },
+  { label: "Copy Trade", href: "/copy-trade" },
   { label: "My profile", href: "/" },
 ];
 

@@ -5,6 +5,9 @@ import { useState } from "react";
 import { Modal } from "@/components/walletReader/Modal";
 import { ProLock } from "@/components/plans/ProLock";
 import { usePlan } from "@/lib/billing/usePlan";
+import { NetworkSelect } from "@/components/walletReader/WalletNetwork";
+import { autoChain, walletFormError, type WalletChain } from "@/lib/walletReader/chains";
+import type { WalletRef } from "@/lib/walletReader/types";
 
 /** Modal de criação de um novo KOL manual. */
 export function AddKolModal({
@@ -14,17 +17,23 @@ export function AddKolModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string, wallet?: { name: string; address: string }) => void;
+  onCreate: (name: string, wallet?: WalletRef) => void;
 }) {
   const { isPro } = usePlan();
   const [name, setName] = useState("");
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
+  const [wChain, setWChain] = useState<WalletChain | null>(null);
+
+  // Carteira é opcional; se vier, a rede é obrigatória e coerente com o endereço.
+  const walletError = walletFormError(wAddr, wChain);
+  const canCreate = !!name.trim() && !walletError;
 
   const reset = () => {
     setName("");
     setWName("");
     setWAddr("");
+    setWChain(null);
   };
 
   return (
@@ -44,14 +53,18 @@ export function AddKolModal({
           </button>
           <button
             type="button"
+            disabled={!canCreate}
             onClick={() => {
               const n = name.trim();
-              if (!n) return;
+              if (!canCreate) return;
               const addr = wAddr.trim();
-              onCreate(n, addr ? { name: wName.trim() || "Main", address: addr } : undefined);
+              onCreate(
+                n,
+                addr && wChain ? { name: wName.trim() || "Main", address: addr, chain: wChain } : undefined,
+              );
               reset();
             }}
-            className="h-9 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+            className="h-9 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Create KOL
           </button>
@@ -86,11 +99,25 @@ export function AddKolModal({
               <span className="text-xs font-medium text-gray-11">Wallet address (optional)</span>
               <input
                 value={wAddr}
-                onChange={(e) => setWAddr(e.target.value)}
+                onChange={(e) => {
+                  setWAddr(e.target.value);
+                  setWChain((c) => autoChain(e.target.value, c));
+                }}
                 placeholder="paste the on-chain address"
                 className="h-9 rounded-lg border border-gray-6 bg-gray-1 px-3 font-mono text-xs text-gray-12 placeholder:text-gray-11 outline-none focus:border-secundaria-11/60"
               />
             </label>
+            {wAddr.trim() && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-gray-11">Network</span>
+                <NetworkSelect size="sm" value={wChain} address={wAddr} onChange={setWChain} className="w-full" />
+              </div>
+            )}
+            {walletError && (
+              <p role="alert" className="text-xs text-vermelho-11">
+                {walletError}
+              </p>
+            )}
           </>
         ) : (
           <ProLock

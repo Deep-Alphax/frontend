@@ -1,11 +1,11 @@
 import { api } from "@/lib/api/client";
 
 /** Meio de pagamento — espelha o `BillingProvider` do backend. */
-export type PaymentProvider = "STRIPE" | "CRYPTO";
+export type PaymentProvider = "STRIPE" | "CRYPTO" | "PIX";
 
 export type PaymentStatus = "PAID" | "FAILED" | "REFUNDED" | "PARTIALLY_REFUNDED";
 
-export const PAYMENT_PROVIDERS: PaymentProvider[] = ["STRIPE", "CRYPTO"];
+export const PAYMENT_PROVIDERS: PaymentProvider[] = ["STRIPE", "CRYPTO", "PIX"];
 export const PAYMENT_STATUSES: PaymentStatus[] = [
   "PAID",
   "FAILED",

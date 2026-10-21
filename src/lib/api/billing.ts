@@ -28,8 +28,8 @@ export async function createCheckout(): Promise<string> {
  */
 export const PLAN_KEY = ["billing-plan"] as const;
 
-/** Como o PRO vigente foi pago. `CRYPTO` é pré-pago e não renova sozinho. */
-export type BillingProvider = "STRIPE" | "CRYPTO";
+/** Como o PRO vigente foi pago. `CRYPTO` e `PIX` são pré-pagos e não renovam. */
+export type BillingProvider = "STRIPE" | "CRYPTO" | "PIX";
 
 export interface BillingDetails {
   provider: BillingProvider;
@@ -154,6 +154,56 @@ export async function submitCryptoPayment(
 export async function getCryptoPayment(id: string): Promise<CryptoPayment> {
   const { data } = await api.get<CryptoPayment>(
     `/api/v1/billing/crypto/payments/${encodeURIComponent(id)}`,
+  );
+  return data;
+}
+
+// ─── Pré-pago em Pix (Vai de Cripto) ────────────────────────────────────────
+
+export interface PixOptions {
+  /** Pix ligado no servidor (credenciais da Vai de Cripto configuradas). */
+  enabled: boolean;
+  periodDays: number;
+  amountUsdCents?: number;
+  /** Valor em reais de AGORA (só exibição — a cobrança trava o seu). */
+  quoteBrlCents?: number | null;
+}
+
+export type PixPaymentStatus = "PENDING" | "CONFIRMED" | "EXPIRED" | "FAILED" | "REFUNDED";
+
+export interface PixPayment {
+  id: string;
+  status: PixPaymentStatus;
+  amountBrlCents: number;
+  amountUsdCents: number;
+  /** Reais por USDT da cotação travada na cobrança ("5.913600"). */
+  fxRate: string;
+  periodDays: number;
+  /**
+   * Pix copia e cola — só enquanto dá para pagar. O backend omite `null`;
+   * ausente com status PENDING = o QR ainda está sendo gerado.
+   */
+  qrCopyPaste?: string | null;
+  /** QR em data URL (SVG gerado no servidor). */
+  qrImage?: string | null;
+  expiresAt?: string | null;
+  confirmedAt?: string | null;
+}
+
+export async function getPixOptions(): Promise<PixOptions> {
+  const { data } = await api.get<PixOptions>("/api/v1/billing/pix/options");
+  return data;
+}
+
+/** Abre a cobrança. Nenhum dado do pagador é pedido: qualquer conta pode pagar. */
+export async function createPixPayment(): Promise<PixPayment> {
+  const { data } = await api.post<PixPayment>("/api/v1/billing/pix/payments");
+  return data;
+}
+
+export async function getPixPayment(id: string): Promise<PixPayment> {
+  const { data } = await api.get<PixPayment>(
+    `/api/v1/billing/pix/payments/${encodeURIComponent(id)}`,
   );
   return data;
 }

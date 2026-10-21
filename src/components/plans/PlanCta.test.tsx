@@ -13,6 +13,7 @@ vi.mock("@/lib/api/billing", async (importOriginal) => {
   return {
     ...actual,
     getCryptoOptions: vi.fn(),
+    getPixOptions: vi.fn(),
     getBillingDetails: vi.fn(),
     createCheckout: vi.fn(),
     createCryptoPayment: vi.fn(),
@@ -26,7 +27,16 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 const getOptions = vi.mocked(api.getCryptoOptions);
+const getPix = vi.mocked(api.getPixOptions);
 const getBilling = vi.mocked(api.getBillingDetails);
+
+const PIX_ON: api.PixOptions = {
+  enabled: true,
+  periodDays: 30,
+  amountUsdCents: 5000,
+  quoteBrlCents: 25308,
+};
+const PIX_OFF: api.PixOptions = { enabled: false, periodDays: 30 };
 const mockSession = vi.mocked(useSession);
 const mockPlan = vi.mocked(usePlan);
 
@@ -48,11 +58,13 @@ function setup({
   plan = "FREE",
   authenticated = true,
   options = OPTIONS,
+  pix = PIX_OFF,
   billing = null,
 }: {
   plan?: api.Plan;
   authenticated?: boolean;
   options?: api.CryptoOptions;
+  pix?: api.PixOptions;
   billing?: api.BillingDetails | null;
 } = {}) {
   mockSession.mockReturnValue({
@@ -66,6 +78,7 @@ function setup({
     isLoading: false,
   });
   getOptions.mockResolvedValue(options);
+  getPix.mockResolvedValue(pix);
   getBilling.mockResolvedValue(billing);
 }
 
@@ -76,6 +89,7 @@ function setup({
  */
 async function settled() {
   await waitFor(() => expect(getOptions).toHaveBeenCalled());
+  await waitFor(() => expect(getPix).toHaveBeenCalled());
   await waitFor(() => expect(getBilling).toHaveBeenCalled());
   await act(async () => {
     await new Promise((r) => setTimeout(r, 30));
@@ -242,6 +256,86 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
   });
 });
 
+describe("PlanCta (card PRO) — oferta de Pix", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("FREE com Pix ligado: oferece Pix e o botão abre o modal com o valor em reais", async () => {
+    const user = userEvent.setup();
+    setup({ pix: PIX_ON });
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    const pixBtn = await screen.findByRole("button", { name: "Pay with Pix" });
+    expect(pixBtn.className).toMatch(/\bw-full\b/);
+    await user.click(pixBtn);
+
+    const dialog = screen.getByRole("dialog", { name: "Pay with Pix" });
+    expect(dialog).toHaveTextContent("R$ 253,08 · 30 days of Pro");
+    expect(screen.getByRole("button", { name: "Generate Pix · R$ 253,08" })).toBeInTheDocument();
+  });
+
+  it("Pix desligado no servidor: sem oferta", async () => {
+    setup();
+    renderWithQuery(<PlanCta tone="pro" />);
+    await settled();
+    expect(screen.queryByRole("button", { name: /Pix/ })).not.toBeInTheDocument();
+  });
+
+  it("cartão renovando: sem Pix (servidor recusaria)", async () => {
+    setup({
+      plan: "PRO",
+      pix: PIX_ON,
+      billing: { provider: "STRIPE", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: false },
+    });
+    renderWithQuery(<PlanCta tone="pro" />);
+    await settled();
+    expect(screen.queryByRole("button", { name: /Pix/ })).not.toBeInTheDocument();
+  });
+
+  it("PRO via PIX: 'Renew with Pix' em destaque e USDC como alternativa", async () => {
+    setup({
+      plan: "PRO",
+      pix: PIX_ON,
+      billing: { provider: "PIX", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+    });
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    const pix = await screen.findByRole("button", { name: "Renew with Pix" });
+    const usdc = screen.getByRole("button", { name: "Renew with USDC" });
+    // O meio usado vem primeiro.
+    expect(pix.compareDocumentPosition(usdc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(`Pro until ${PERIOD_END_LABEL}`)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Current plan" })).not.toBeInTheDocument();
+  });
+
+  it("PRO via CRYPTO com Pix ligado: USDC primeiro, Pix depois", async () => {
+    setup({
+      plan: "PRO",
+      pix: PIX_ON,
+      billing: { provider: "CRYPTO", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+    });
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    const pix = await screen.findByRole("button", { name: "Renew with Pix" });
+    const usdc = screen.getByRole("button", { name: "Renew with USDC" });
+    expect(usdc.compareDocumentPosition(pix) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("PRO via Stripe cancelado: 'Extend with Pix' abre o modal", async () => {
+    const user = userEvent.setup();
+    setup({
+      plan: "PRO",
+      pix: PIX_ON,
+      billing: { provider: "STRIPE", currentPeriodEnd: PERIOD_END, cancelAtPeriodEnd: true },
+    });
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    await user.click(await screen.findByRole("button", { name: "Extend with Pix" }));
+    expect(screen.getByRole("dialog", { name: "Pay with Pix" })).toBeInTheDocument();
+  });
+});
+
 describe("PlanCta (card FREE)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -254,6 +348,7 @@ describe("PlanCta (card FREE)", () => {
     expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
     await new Promise((r) => setTimeout(r, 20));
     expect(getOptions).not.toHaveBeenCalled();
+    expect(getPix).not.toHaveBeenCalled();
     expect(getBilling).not.toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: /USDC/ })).not.toBeInTheDocument();
   });

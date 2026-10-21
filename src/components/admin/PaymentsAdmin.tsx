@@ -30,7 +30,7 @@ import { TextField } from "@/components/ui/TextField";
 import { SkeletonGroup, TableSkeleton } from "@/components/ui/Skeleton";
 
 /*
- * Todos os pagamentos da plataforma — cartão (Stripe) e USDC (on-chain) — numa
+ * Todos os pagamentos da plataforma — cartão (Stripe), USDC e Pix — numa
  * lista só, mais recentes primeiro, com os totais dos filtros aplicados.
  *
  * Mesmo desenho da tela de logs: filtros são RASCUNHO até o "Apply", lista
@@ -44,6 +44,7 @@ const ALL = "__all";
 const PROVIDER_LABEL: Record<PaymentProvider, string> = {
   STRIPE: "Card",
   CRYPTO: "USDC",
+  PIX: "Pix",
 };
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
@@ -165,8 +166,8 @@ export function PaymentsAdmin() {
         <div>
           <h1 className="text-xl font-semibold text-gray-12">Payments</h1>
           <p className="mt-1 text-sm text-gray-11">
-            Every payment on the platform — card (Stripe) and USDC (on-chain) —
-            with refunds and failures.
+            Every payment on the platform — card (Stripe), USDC (on-chain) and Pix
+            (paid out in USDT, shown in USD) — with refunds and failures.
           </p>
         </div>
         <button
@@ -358,6 +359,8 @@ function formatWhen(iso: string): string {
 
 function methodLabel(p: PaymentItem): string {
   if (p.provider === "STRIPE") return PROVIDER_LABEL.STRIPE;
+  // Valor no livro-caixa é o equivalente em USD; o real fica na cobrança Pix.
+  if (p.provider === "PIX") return PROVIDER_LABEL.PIX;
   const chain = p.chain ? (CHAIN_LABEL[p.chain] ?? p.chain) : null;
   return chain ? `USDC · ${chain}` : "USDC";
 }

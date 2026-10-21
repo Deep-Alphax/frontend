@@ -33,6 +33,13 @@ import {
 } from "@/lib/walletReader/types";
 import { KolCard } from "@/components/walletReader/KolCard";
 import { Modal } from "@/components/walletReader/Modal";
+import { NetworkSelect } from "@/components/walletReader/WalletNetwork";
+import {
+  autoChain,
+  walletChainOf,
+  walletFormError,
+  type WalletChain,
+} from "@/lib/walletReader/chains";
 import { useSession } from "@/lib/auth/useSession";
 import { cn } from "@/lib/cn";
 import { KolCardSkeleton, Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
@@ -136,9 +143,15 @@ function KolEditor({
   const [d, setD] = useState<Draft>(() => draftFrom(editing));
   const [wName, setWName] = useState("");
   const [wAddr, setWAddr] = useState("");
+  const [wChain, setWChain] = useState<WalletChain | null>(null);
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setD((p) => ({ ...p, [k]: v }));
+
+  // Nova carteira do preset: rede obrigatória e coerente com o endereço.
+  const wAddrError = walletFormError(wAddr, wChain);
+  const canAddWallet =
+    !!wAddr.trim() && !wAddrError && !d.wallets.some((w) => w.address === wAddr.trim());
 
   const onUpload = async (file: File | undefined) => {
     if (!file) return;
@@ -341,6 +354,19 @@ function KolEditor({
                 <span className="min-w-0 flex-1 truncate font-mono text-xs text-gray-11">
                   {w.address}
                 </span>
+                <NetworkSelect
+                  size="sm"
+                  value={walletChainOf(w)}
+                  address={w.address}
+                  label={`Network of ${w.address}`}
+                  className={cn("w-[130px]", !walletChainOf(w) && "border-principal-8")}
+                  onChange={(chain) =>
+                    set(
+                      "wallets",
+                      d.wallets.map((x, j) => (j === i ? { ...x, chain } : x)),
+                    )
+                  }
+                />
                 <button
                   type="button"
                   aria-label={`Remove ${w.address}`}
@@ -356,7 +382,7 @@ function KolEditor({
                 </button>
               </div>
             ))}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 className={cn(inputCls, "h-9 w-32 shrink-0")}
                 value={wName}
@@ -366,29 +392,39 @@ function KolEditor({
               <input
                 className={cn(inputCls, "h-9 min-w-0 flex-1 font-mono text-xs")}
                 value={wAddr}
-                onChange={(e) => setWAddr(e.target.value)}
+                onChange={(e) => {
+                  setWAddr(e.target.value);
+                  setWChain((c) => autoChain(e.target.value, c));
+                }}
                 placeholder="on-chain address"
               />
+              <NetworkSelect size="sm" value={wChain} address={wAddr} onChange={setWChain} />
               <button
                 type="button"
+                disabled={!canAddWallet}
                 onClick={() => {
                   const addr = wAddr.trim();
-                  if (!addr || d.wallets.some((w) => w.address === addr))
-                    return;
+                  if (!canAddWallet || !wChain) return;
                   set(
                     "wallets",
                     d.wallets.concat([
-                      { name: wName.trim() || "Wallet", address: addr },
+                      { name: wName.trim() || "Wallet", address: addr, chain: wChain },
                     ]),
                   );
                   setWName("");
                   setWAddr("");
+                  setWChain(null);
                 }}
-                className="h-9 shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4"
+                className="h-9 shrink-0 rounded-lg border border-gray-6 bg-gray-3 px-3 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-4 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Add
               </button>
             </div>
+            {wAddrError && (
+              <p role="alert" className="text-xs text-vermelho-11">
+                {wAddrError}
+              </p>
+            )}
           </div>
         </Field>
       </div>

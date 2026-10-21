@@ -221,3 +221,31 @@ describe("backupFilename", () => {
     expect(backupFilename(new Date("2026-09-28T15:00:00Z"))).toBe("kol-index-backup-2026-09-28.json");
   });
 });
+
+describe("parseKolBackup — rede das carteiras", () => {
+  it("mantém rede válida e descarta a que não bate com o endereço", () => {
+    const evm = "0x" + "ab".repeat(20);
+    const sol = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
+    const res = parseKolBackup(
+      JSON.stringify({
+        version: 1,
+        overrides: {
+          k1: {
+            walletsAdded: [
+              { name: "a", address: evm, chain: "BASE" },
+              { name: "b", address: sol, chain: "BASE" },
+              { name: "c", address: sol, chain: "MARS" },
+              { name: "d", address: sol },
+            ],
+          },
+        },
+      }),
+    );
+    expect(res.overrides[0].walletsAdded).toEqual([
+      { name: "a", address: evm, chain: "BASE" },
+      { name: "b", address: sol },
+      { name: "c", address: sol },
+      { name: "d", address: sol },
+    ]);
+  });
+});

@@ -1,4 +1,5 @@
 import type { WalletRef } from "@/lib/walletReader/types";
+import { WALLET_CHAINS, addressFamily, chainsForAddress } from "@/lib/walletReader/chains";
 
 /**
  * Leitura do arquivo de backup de KOLs ANTES de mandar ao servidor.
@@ -98,9 +99,16 @@ function wallets(v: unknown): WalletRef[] | null | undefined {
   const out: WalletRef[] = [];
   for (const w of v) {
     if (!isObj(w) || typeof w.address !== "string" || !w.address.trim()) continue;
+    const address = w.address.trim().slice(0, MAX_WALLET_FIELD);
+    // Rede só entra se for conhecida E bater com o endereço — o backend
+    // recusaria o lote inteiro por uma rede inválida.
+    const chain = WALLET_CHAINS.find((c) => c === w.chain);
     out.push({
       name: (typeof w.name === "string" ? w.name : "").slice(0, MAX_WALLET_FIELD),
-      address: w.address.trim().slice(0, MAX_WALLET_FIELD),
+      address,
+      ...(chain && chainsForAddress(address).includes(chain) && addressFamily(address)
+        ? { chain }
+        : {}),
     });
   }
   return out.slice(0, MAX_WALLETS);

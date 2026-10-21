@@ -5,12 +5,14 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { CryptoPayModal } from "@/components/plans/CryptoPayModal";
+import { PixPayModal } from "@/components/plans/PixPayModal";
 import { Button } from "@/components/ui/Button";
 import {
   BILLING_DETAILS_KEY,
   createCheckout,
   getBillingDetails,
   getCryptoOptions,
+  getPixOptions,
 } from "@/lib/api/billing";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/useSession";
@@ -34,12 +36,21 @@ export function PlanCta({ tone }: PlanCtaProps) {
   const { plan: current, isLoading } = usePlan();
   const [cryptoOpen, setCryptoOpen] = useState(false);
   const closeCrypto = useCallback(() => setCryptoOpen(false), []);
+  const [pixOpen, setPixOpen] = useState(false);
+  const closePix = useCallback(() => setPixOpen(false), []);
 
   // Só o card PRO pergunta — o FREE não oferece nada para comprar.
   const cryptoOptions = useQuery({
     queryKey: ["crypto-options"],
     queryFn: getCryptoOptions,
     enabled: isAuthenticated && tone === "pro",
+    staleTime: 5 * 60_000,
+  });
+  const pixOptions = useQuery({
+    queryKey: ["pix-options"],
+    queryFn: getPixOptions,
+    enabled: isAuthenticated && tone === "pro",
+    // O valor em reais segue a cotação; a cobrança trava o seu na criação.
     staleTime: 5 * 60_000,
   });
   const billing = useQuery({
@@ -77,27 +88,64 @@ export function PlanCta({ tone }: PlanCtaProps) {
   const cardRenewing =
     billing.data?.provider === "STRIPE" && !billing.data.cancelAtPeriodEnd;
   const canPayCrypto = cryptoChains.length > 0 && !cardRenewing;
+  // Mesma trava do cripto no servidor (`cryptoBlockReason`).
+  const canPayPix = pixOptions.data?.enabled === true && !cardRenewing;
 
-  const cryptoModal = cryptoOptions.data ? (
-    <CryptoPayModal
-      open={cryptoOpen}
-      chains={cryptoChains}
-      amount={cryptoOptions.data.amount}
-      periodDays={cryptoOptions.data.periodDays}
-      onClose={closeCrypto}
-    />
-  ) : null;
+  const modals = (
+    <>
+      {cryptoOptions.data ? (
+        <CryptoPayModal
+          open={cryptoOpen}
+          chains={cryptoChains}
+          amount={cryptoOptions.data.amount}
+          periodDays={cryptoOptions.data.periodDays}
+          onClose={closeCrypto}
+        />
+      ) : null}
+      {pixOptions.data?.enabled ? (
+        <PixPayModal
+          open={pixOpen}
+          quoteBrlCents={pixOptions.data.quoteBrlCents ?? null}
+          periodDays={pixOptions.data.periodDays}
+          onClose={closePix}
+        />
+      ) : null}
+    </>
+  );
 
   if (current === "PRO") {
+    const provider = billing.data?.provider;
+    const prepaid = provider === "CRYPTO" || provider === "PIX";
     const until = billing.data?.cancelAtPeriodEnd
       ? formatDate(billing.data.currentPeriodEnd)
       : null;
+
+    // Pré-pago: renova pelo meio usado (botão principal) ou pelo outro.
+    const pixRenew = canPayPix
+      ? { key: "pix", label: "Renew with Pix", open: () => setPixOpen(true) }
+      : null;
+    const usdcRenew = canPayCrypto
+      ? { key: "usdc", label: "Renew with USDC", open: () => setCryptoOpen(true) }
+      : null;
+    const renew = prepaid
+      ? (provider === "PIX" ? [pixRenew, usdcRenew] : [usdcRenew, pixRenew]).filter(
+          (r) => r !== null,
+        )
+      : [];
+
     return (
       <div className="flex w-full flex-col gap-2">
-        {billing.data?.provider === "CRYPTO" && canPayCrypto ? (
-          <Button variant="primary" onClick={() => setCryptoOpen(true)}>
-            Renew with USDC
-          </Button>
+        {renew.length > 0 ? (
+          renew.map((r, i) => (
+            <Button
+              key={r.key}
+              variant={i === 0 ? "primary" : "secondary"}
+              className={i === 0 ? undefined : "h-11 p-0"}
+              onClick={r.open}
+            >
+              {r.label}
+            </Button>
+          ))
         ) : (
           <Button
             variant="primary"
@@ -110,7 +158,7 @@ export function PlanCta({ tone }: PlanCtaProps) {
         {until && (
           <p className="text-center text-sm text-gray-11">
             Pro until {until}
-            {billing.data?.provider === "STRIPE" && canPayCrypto && (
+            {provider === "STRIPE" && canPayCrypto && (
               <>
                 {" · "}
                 <button
@@ -122,9 +170,21 @@ export function PlanCta({ tone }: PlanCtaProps) {
                 </button>
               </>
             )}
+            {provider === "STRIPE" && canPayPix && (
+              <>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => setPixOpen(true)}
+                  className="font-semibold text-principal-11 hover:underline"
+                >
+                  Extend with Pix
+                </button>
+              </>
+            )}
           </p>
         )}
-        {cryptoModal}
+        {modals}
       </div>
     );
   }
@@ -155,7 +215,12 @@ export function PlanCta({ tone }: PlanCtaProps) {
           Pay with USDC
         </Button>
       )}
-      {cryptoModal}
+      {canPayPix && (
+        <Button variant="secondary" className="h-11 p-0" onClick={() => setPixOpen(true)}>
+          Pay with Pix
+        </Button>
+      )}
+      {modals}
     </div>
   );
 }

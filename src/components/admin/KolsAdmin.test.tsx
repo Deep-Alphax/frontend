@@ -313,7 +313,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     await user.type(screen.getByPlaceholderText("nickname"), "cold");
     await user.type(
       screen.getByPlaceholderText("on-chain address"),
-      "So1ana222",
+      "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
     );
     await user.click(screen.getByRole("button", { name: "Add" }));
 
@@ -328,7 +328,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
       relevance: 42,
       types: ["whale"],
       avatar: null,
-      wallets: [{ name: "cold", address: "So1ana222" }],
+      wallets: [{ name: "cold", address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", chain: "SOLANA" }],
     };
   }
 
@@ -374,7 +374,7 @@ describe("KolsAdmin — todos os campos do KOL", () => {
     expect(
       screen.getByRole("button", { name: "Alpha Caller" }),
     ).not.toHaveClass("bg-principal-3");
-    expect(screen.getByText("So1ana222")).toBeInTheDocument();
+    expect(screen.getByText("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM")).toBeInTheDocument();
     expect(screen.queryByText("So1ana111")).toBeNull();
   });
 

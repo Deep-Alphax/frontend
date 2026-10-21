@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useState } from "react";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { renderWithQuery } from "@/test/queryWrapper";
@@ -200,7 +200,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
     await user.type(screen.getByRole("textbox", { name: /wallet nickname/i }), "cold");
     await user.type(
       screen.getByRole("textbox", { name: /wallet address/i }),
-      "So1ana222",
+      "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
     );
     await user.click(screen.getByRole("button", { name: "Add" }));
 
@@ -214,7 +214,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
       types: ["whale"],
       // Só os squads DA CONTA sobem: "Lair" é do preset e não é do usuário.
       squads: ["Outro Squad"],
-      wallets: [{ name: "cold", address: "So1ana222" }],
+      wallets: [{ name: "cold", address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", chain: "SOLANA" }],
     });
 
     // Reabre e confere que a UI parte do estado do servidor, não do cache velho.
@@ -225,7 +225,7 @@ describe("KolProfileModal — salvar edições da conta", () => {
     expect(screen.getByText("@handlenovo")).toBeInTheDocument();
     expect(screen.getByText("Wood")).toBeInTheDocument();
     expect(screen.getByText("Whale")).toBeInTheDocument();
-    expect(screen.getByText("So1ana222")).toBeInTheDocument();
+    expect(screen.getByText("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM")).toBeInTheDocument();
     expect(screen.queryByText("So1ana111")).toBeNull();
   });
 
@@ -467,5 +467,89 @@ describe("KolProfileModal — plano FREE (carteiras são do Pro)", () => {
     const patch = vi.mocked(api.patchKolOverride).mock.calls[0][1];
     expect(patch).toMatchObject({ notes: "nota nova" });
     expect(patch).not.toHaveProperty("wallets");
+  });
+});
+
+describe("KolProfileModal — rede das carteiras", () => {
+  const SOL = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
+  const EVM_BASE = "0x" + "ab".repeat(20);
+  const EVM_OLD = "0x" + "cd".repeat(20);
+
+  beforeEach(() => {
+    server.kol.wallets = [
+      { name: "sol", address: SOL },
+      { name: "base", address: EVM_BASE, chain: "BASE" },
+      { name: "antiga", address: EVM_OLD },
+    ];
+    server.kol.walletCount = 3;
+  });
+
+  it("filtra as carteiras por rede nos detalhes", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<Harness />);
+    await user.click(screen.getByRole("button", { name: "open kol" }));
+
+    const filter = await screen.findByRole("group", { name: "Filter wallets by network" });
+    expect(filter).toHaveTextContent("All3");
+    expect(filter).toHaveTextContent("SOL1");
+    expect(filter).toHaveTextContent("Base1");
+    expect(filter).toHaveTextContent("No network1");
+
+    await user.click(within(filter).getByRole("button", { name: /^Base/ }));
+    expect(screen.getByTitle(EVM_BASE)).toBeInTheDocument();
+    expect(screen.queryByTitle(SOL)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(EVM_OLD)).not.toBeInTheDocument();
+
+    await user.click(within(filter).getByRole("button", { name: /^All/ }));
+    expect(screen.getByTitle(SOL)).toBeInTheDocument();
+  });
+
+  it("nova carteira exige a rede; Solana é escolhida sozinha pelo endereço", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<Harness />);
+    await openEditing(user);
+
+    const addr = screen.getByRole("textbox", { name: "Wallet address" });
+    const add = () => screen.getByRole("button", { name: "Add" });
+
+    await user.type(addr, "0x" + "ef".repeat(20));
+    expect(add()).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose the network");
+
+    await user.click(screen.getByRole("combobox", { name: "Wallet network" }));
+    expect(screen.queryByRole("option", { name: "Solana" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("option", { name: "BNB Chain" }));
+    await user.click(add());
+
+    await user.clear(addr);
+    await user.type(addr, "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM");
+    expect(screen.getByRole("combobox", { name: "Wallet network" })).toHaveTextContent("Solana");
+    await user.click(add());
+
+    await save(user);
+    await waitFor(() => expect(api.patchKolOverride).toHaveBeenCalled());
+    const patch = vi.mocked(api.patchKolOverride).mock.calls[0][1];
+    expect(patch.wallets?.slice(3)).toEqual([
+      { name: "Wallet", address: "0x" + "ef".repeat(20), chain: "BSC" },
+      { name: "Wallet", address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", chain: "SOLANA" },
+    ]);
+  });
+
+  it("define a rede de uma carteira antiga sem rede", async () => {
+    const user = userEvent.setup();
+    renderWithQuery(<Harness />);
+    await openEditing(user);
+
+    await user.click(screen.getByRole("combobox", { name: "Network of wallet antiga" }));
+    await user.click(await screen.findByRole("option", { name: "Ethereum" }));
+    await save(user);
+
+    await waitFor(() => expect(api.patchKolOverride).toHaveBeenCalled());
+    const patch = vi.mocked(api.patchKolOverride).mock.calls[0][1];
+    expect(patch.wallets?.find((w) => w.address === EVM_OLD)).toEqual({
+      name: "antiga",
+      address: EVM_OLD,
+      chain: "ETHEREUM",
+    });
   });
 });

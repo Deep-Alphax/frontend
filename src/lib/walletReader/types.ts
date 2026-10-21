@@ -1,3 +1,5 @@
+import type { WalletChain } from "@/lib/walletReader/chains";
+
 /**
  * Wallet Reader (KOL Index) — port do app standalone p/ o Deep Alpha (React + DS).
  * Tipos e constantes de domínio. O índice vem do backend em duas camadas — o
@@ -10,6 +12,8 @@
 export interface WalletRef {
   name: string;
   address: string;
+  /** Rede (`lib/walletReader/chains.ts`); ausente em carteira antiga. */
+  chain?: WalletChain;
 }
 
 /** Perfil-base (estático, gerado do wallets.txt). */
