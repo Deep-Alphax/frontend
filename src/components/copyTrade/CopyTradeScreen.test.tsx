@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { CopyTradeScreen } from "./CopyTradeScreen";
 import * as copyTrade from "@/lib/api/copyTrade";
+import * as devSnipe from "@/lib/api/devSnipe";
 import * as tracker from "@/lib/api/tracker";
 import { renderWithQuery } from "@/test/queryWrapper";
 import { DEFAULT_COPY_CONFIG } from "@/lib/copyTrade/config";
@@ -20,10 +21,17 @@ vi.mock("@/lib/api/copyTrade", async (importOriginal) => {
     getKolCopy: vi.fn(),
     getCopiers: vi.fn(),
     createCopy: vi.fn(),
+    resolveCopyAddress: vi.fn(),
     updateCopy: vi.fn(),
     copyAction: vi.fn(),
   };
 });
+vi.mock("@/lib/api/devSnipe", async (importOriginal) => {
+  const actual = await importOriginal<typeof devSnipe>();
+  return { ...actual, getSnipeOverview: vi.fn() };
+});
+// A aba ativa vem de `?type=` — aqui sempre a URL do jsdom (Wallet Copy).
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(window.location.search) }));
 vi.mock("@/lib/api/tracker", async (importOriginal) => {
   const actual = await importOriginal<typeof tracker>();
   return { ...actual, getTrackerFeed: vi.fn() };
@@ -44,6 +52,8 @@ const getCopyFeed = vi.mocked(copyTrade.getCopyFeed);
 const getKolCopy = vi.mocked(copyTrade.getKolCopy);
 const getCopiers = vi.mocked(copyTrade.getCopiers);
 const createCopy = vi.mocked(copyTrade.createCopy);
+const resolveAddress = vi.mocked(copyTrade.resolveCopyAddress);
+const WALLET = "7xKXq2Nf8wTzR1bV9mYcA3dLpE6sJ4hU9fQ2";
 
 const EMPTY_OVERVIEW: copyTrade.CopyOverview = {
   mode: "shadow",
@@ -106,6 +116,7 @@ const HOME: copyTrade.CopyTradeHome = {
 describe("CopyTradeScreen", () => {
   beforeEach(() => {
     plan.isPro = true;
+    vi.mocked(devSnipe.getSnipeOverview).mockReset().mockResolvedValue({ mode: "shadow", w1: null, waiting: [], fired: [] });
     getOverview.mockReset().mockResolvedValue(EMPTY_OVERVIEW);
     getCopyFeed.mockReset().mockResolvedValue({ items: [], total: 0, page: 1 });
     getKolCopy.mockReset().mockResolvedValue({ mode: "shadow", copy: null, events: [] });
@@ -155,7 +166,8 @@ describe("CopyTradeScreen", () => {
     expect(screen.getByRole("heading", { name: "Create copy" })).toBeInTheDocument();
     // O passo a passo aparece quando o overview confirma que não há copies.
     expect(await screen.findByText("Pick a wallet")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /dev snipe/i })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: /wallet copy/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /dev snipe/i })).toHaveAttribute("aria-selected", "false");
 
     const card = await screen.findByRole("button", { name: "Open @reefcalls" });
     const article = card.closest("article")!;
@@ -279,6 +291,68 @@ describe("CopyTradeScreen", () => {
     expect(within(drawer).getByRole("button", { name: "Start copying" })).toBeDisabled();
 
     await userEvent.click(within(drawer).getByRole("button", { name: "0.5 SOL" }));
+    await userEvent.click(within(drawer).getByRole("button", { name: "Start copying" }));
+    await waitFor(() =>
+      expect(createCopy).toHaveBeenCalledWith({ kolId: "reefcalls", config: expect.objectContaining({ v: 1 }) }),
+    );
+  });
+
+  it("Novo Wallet Copy: vazio trava o formulário; carteira avulsa encontrada libera e cria pelo endereço", async () => {
+    resolveAddress.mockReset().mockResolvedValue({
+      address: WALLET,
+      kol: null,
+      stats: { hitRate: 54, pnlSol: 41, trades: 212, partial: false },
+    });
+    createCopy.mockResolvedValue(
+      copyView({ kol: { id: `wallet:${WALLET}`, label: "7xKX…9fQ2", relevance: 0, avatarUrl: null } }),
+    );
+    renderWithQuery(<CopyTradeScreen />);
+    await userEvent.click(screen.getByRole("button", { name: "Create copy" }));
+
+    const drawer = await screen.findByRole("dialog", { name: "Configure copy" });
+    expect(within(drawer).getByRole("heading", { name: "New Wallet Copy" })).toBeInTheDocument();
+    expect(within(drawer).getByText("Wallet to copy")).toBeInTheDocument();
+    expect(within(drawer).getByText("Amount per buy").closest("[inert]")).not.toBeNull();
+    expect(within(drawer).getByRole("button", { name: "Paste the wallet address" })).toBeDisabled();
+
+    await userEvent.type(within(drawer).getByLabelText("Wallet address"), "not-an-address");
+    expect(within(drawer).getByRole("alert")).toHaveTextContent("This doesn't look like a Solana address.");
+    expect(resolveAddress).not.toHaveBeenCalled();
+
+    await userEvent.click(within(drawer).getByRole("button", { name: "Clear address" }));
+    await userEvent.type(within(drawer).getByLabelText("Wallet address"), WALLET);
+    expect(await within(drawer).findByText("Found")).toBeInTheDocument();
+    expect(resolveAddress).toHaveBeenCalledWith(WALLET);
+    expect(within(drawer).getByText("No KOL profile")).toBeInTheDocument();
+    expect(within(drawer).getByText("7xKX…9fQ2")).toBeInTheDocument();
+    expect(within(drawer).getByText("7X")).toBeInTheDocument();
+    expect(within(drawer).getByText("54%")).toBeInTheDocument();
+    expect(within(drawer).getByText("+41 SOL")).toBeInTheDocument();
+    expect(within(drawer).getByText("212")).toBeInTheDocument();
+    expect(within(drawer).getByText("Amount per buy").closest("[inert]")).toBeNull();
+
+    await userEvent.click(within(drawer).getByRole("button", { name: "Start copying" }));
+    await waitFor(() =>
+      expect(createCopy).toHaveBeenCalledWith({ address: WALLET, config: expect.objectContaining({ v: 1 }) }),
+    );
+  });
+
+  it("Novo Wallet Copy: carteira de KOL segue pelo KOL", async () => {
+    resolveAddress.mockReset().mockResolvedValue({
+      address: WALLET,
+      kol: { id: "reefcalls", label: "@reefcalls", relevance: 95, avatarUrl: null },
+      stats: { hitRate: 58, pnlSol: 312, trades: 1200, partial: true },
+    });
+    createCopy.mockResolvedValue(copyView());
+    renderWithQuery(<CopyTradeScreen />);
+    await userEvent.click(screen.getByRole("button", { name: "Create copy" }));
+
+    const drawer = await screen.findByRole("dialog", { name: "Configure copy" });
+    await userEvent.type(within(drawer).getByLabelText("Wallet address"), WALLET);
+    expect(await within(drawer).findByText("@reefcalls")).toBeInTheDocument();
+    expect(within(drawer).getByText("7xKX…9fQ2")).toBeInTheDocument();
+    expect(within(drawer).getByText("1,200+")).toBeInTheDocument();
+
     await userEvent.click(within(drawer).getByRole("button", { name: "Start copying" }));
     await waitFor(() =>
       expect(createCopy).toHaveBeenCalledWith({ kolId: "reefcalls", config: expect.objectContaining({ v: 1 }) }),

@@ -10,6 +10,7 @@ import {
   CancelIcon,
   ChevronRightIcon,
   CopyIcon,
+  DepositIcon,
   PencilIcon,
   PlusSignIcon,
   WalletIcon,
@@ -17,6 +18,7 @@ import {
 import { deleteWallet, getWallets, type Wallet } from "@/lib/api/wallets";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/useSession";
+import { useDepositModal } from "@/lib/store/depositModal";
 import { useWalletSelection } from "@/lib/store/walletSelection";
 import { cn } from "@/lib/cn";
 
@@ -31,7 +33,7 @@ function shortAddress(address: string): string {
  * nomeia; sem ele o design numera ("2 Carteira"), então a posição na lista
  * vira o nome — por isso o índice entra aqui.
  */
-function walletName(wallet: Wallet, index: number): string {
+export function walletName(wallet: Wallet, index: number): string {
   return wallet.label?.trim() || `Wallet ${index + 1}`;
 }
 
@@ -71,6 +73,7 @@ export function WalletChip() {
   const queryClient = useQueryClient();
   const selectedWalletId = useWalletSelection((s) => s.selectedWalletId);
   const select = useWalletSelection((s) => s.select);
+  const showDeposit = useDepositModal((s) => s.show);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -170,10 +173,12 @@ export function WalletChip() {
         </DropdownMenu.Trigger>
 
         <DropdownMenu.Portal>
+          {/* 289px = 265px do Figma + a ação "Deposit with Pix" (24px) — sem
+              isso o endereço curto da linha ficava cortado de novo. */}
           <DropdownMenu.Content
             align="end"
             sideOffset={8}
-            className="z-50 w-[265px] overflow-hidden rounded-lg border border-gray-6 bg-gray-2"
+            className="z-50 w-[289px] overflow-hidden rounded-lg border border-gray-6 bg-gray-2"
           >
             {wallets.map((wallet, index) => {
               const name = walletName(wallet, index);
@@ -211,6 +216,19 @@ export function WalletChip() {
                   </span>
 
                   <span className="flex shrink-0 items-center gap-1">
+                    {/* Depósito via Pix com ESTA carteira como destino (a rede
+                        dela vem pré-escolhida). Fecha o menu antes de abrir o
+                        modal, pelo mesmo motivo do `openModal`. */}
+                    <RowAction
+                      label={`Deposit with Pix to ${name}`}
+                      title="Deposit with Pix"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        showDeposit({ chain: wallet.chain, address: wallet.address });
+                      }}
+                    >
+                      <DepositIcon className="size-4" />
+                    </RowAction>
                     <RowAction
                       label={`Copy ${name} address`}
                       onClick={() => handleCopy(wallet.address)}
@@ -254,11 +272,14 @@ export function WalletChip() {
 /** Botão de ação da linha — para o clique antes que ele vire "selecionar". */
 function RowAction({
   label,
+  title,
   onClick,
   danger,
   children,
 }: {
   label: string;
+  /** Dica no hover (o `aria-label` já nomeia para leitor de tela). */
+  title?: string;
   onClick: () => void;
   danger?: boolean;
   children: React.ReactNode;
@@ -267,6 +288,7 @@ function RowAction({
     <button
       type="button"
       aria-label={label}
+      title={title}
       // O Radix decide o destino do item já no `pointerdown`; sem parar o evento
       // aqui, a linha some antes de o `click` chegar e o botão nunca dispara.
       onPointerDown={(e) => e.stopPropagation()}

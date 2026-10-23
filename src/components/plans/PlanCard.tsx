@@ -48,7 +48,7 @@ interface PlanCardProps {
   /** Rótulo do plano. No Free ele é um espaçador invisível (opacity-0 no Figma). */
   name: string;
   nameHidden?: boolean;
-  /** Linha de preço — livre porque Free é uma palavra e Pro é "$ 50,00 / Por mês". */
+  /** Linha de preço — livre porque Free é uma palavra e Pro é "$ 100.00 / Per month". */
   price: ReactNode;
   cta: ReactNode;
   features: PlanFeature[];

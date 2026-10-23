@@ -1,16 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import type { CopyKol, KolRef } from "@/lib/api/copyTrade";
 import { usePlan } from "@/lib/billing/usePlan";
 import { cn } from "@/lib/cn";
 import { useCopyOverview } from "@/lib/copyTrade/useCopies";
+import { useSnipeOverview } from "@/lib/devSnipe/useDevSnipe";
 import { Topbar } from "@/components/home/Topbar";
 import { ProLock } from "@/components/plans/ProLock";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { CopyConfigDrawer, type DrawerTarget } from "@/components/copyTrade/CopyConfigDrawer";
-import { CopyTypeBar } from "@/components/copyTrade/CopyTypeBar";
+import { CopyTypeBar, type CopyType } from "@/components/copyTrade/CopyTypeBar";
+import { DevSnipePanel } from "@/components/copyTrade/DevSnipePanel";
 import { KolDetailPanel } from "@/components/copyTrade/KolDetailPanel";
 import { MyCopiesColumn } from "@/components/copyTrade/MyCopiesColumn";
 import { W1Modal } from "@/components/copyTrade/W1Modal";
@@ -41,14 +44,32 @@ function refToKol(r: KolRef): CopyKol {
  * Só PRO (decisão 2026-10-20) — o backend barra (403); o FREE vê o upsell.
  * O modo de execução vem do servidor: em "shadow" tudo é marcado como
  * simulado, em "off" o copy é salvo mas não opera.
+ *
+ * Abas Wallet Copy / Dev Snipe (Figma 1638:34036): a aba fica na URL
+ * (`?type=snipe`) para sobreviver ao reload. A troca usa
+ * `history.replaceState` — integrado ao router do Next, sem navegação nem
+ * entrada nova no histórico. `useSearchParams` pede o `<Suspense>` da página.
  */
 export function CopyTradeScreen() {
   const { isPro, isLoading: planLoading } = usePlan();
   const enabled = isPro;
   const locked = !planLoading && !isPro;
 
+  const params = useSearchParams();
+  const [type, setType] = useState<CopyType>(() => (params?.get("type") === "snipe" ? "snipe" : "wallet"));
+  const switchType = useCallback((t: CopyType) => {
+    setType(t);
+    const qs = new URLSearchParams(window.location.search);
+    if (t === "snipe") qs.set("type", "snipe");
+    else qs.delete("type");
+    const q = qs.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${q ? `?${q}` : ""}`);
+  }, []);
+
   const overview = useCopyOverview(enabled);
   const o = overview.data;
+  // Fora da aba Dev Snipe só a contagem da aba usa o overview — sem polling.
+  const snipes = useSnipeOverview(enabled, type === "snipe");
   const hasCopies = !!o && o.active.length + o.history.length > 0;
 
   const [open, setOpen] = useState<CopyKol | null>(null);
@@ -60,8 +81,16 @@ export function CopyTradeScreen() {
   return (
     <div className="flex min-h-dvh flex-col bg-gray-1 lg:h-dvh lg:overflow-hidden">
       <Topbar />
-      <CopyTypeBar copies={o?.active.length ?? 0} />
+      <CopyTypeBar type={type} onChange={switchType} copies={o?.active.length ?? 0} snipes={snipes.data?.waiting.length ?? 0} />
       <main className="relative flex-1 lg:min-h-0">
+        {type === "snipe" ? (
+          <DevSnipePanel
+            enabled={enabled}
+            locked={locked}
+            overview={snipes.data}
+            loading={planLoading || (enabled && snipes.isPending)}
+          />
+        ) : (
         <div
           aria-hidden={locked || undefined}
           className={cn(
@@ -104,19 +133,24 @@ export function CopyTradeScreen() {
             </div>
           )}
         </div>
+        )}
 
         {locked && (
           <div className="absolute inset-0 z-20 flex items-start justify-center bg-gray-1/70 px-4 pt-24 backdrop-blur-sm">
             <ProLock
               className="w-full max-w-lg bg-gray-2"
-              title="Copy Trade is part of Pro"
-              detail="See every KOL's verified 30-day track record and copy the wallets that hit the most."
+              title={type === "snipe" ? "Dev Snipe is part of Pro" : "Copy Trade is part of Pro"}
+              detail={
+                type === "snipe"
+                  ? "Buy the next token of the devs whose launches migrate the most, in the first block."
+                  : "See every KOL's verified 30-day track record and copy the wallets that hit the most."
+              }
             />
           </div>
         )}
       </main>
 
-      {drawer && enabled && (
+      {drawer && enabled && type === "wallet" && (
         <CopyConfigDrawer
           key={`${drawer.kol?.id ?? "new"}:${drawer.copy?.id ?? ""}`}
           target={drawer}
@@ -124,10 +158,9 @@ export function CopyTradeScreen() {
           balanceSol={o?.w1?.balanceSol ?? null}
           enabled={enabled}
           onClose={() => setDrawer(null)}
-          onSaved={(kolId) => {
-            const ref = drawer.kol;
+          onSaved={(ref) => {
             setDrawer(null);
-            if (ref && open?.id !== kolId) openRef(ref);
+            openRef(ref);
           }}
         />
       )}

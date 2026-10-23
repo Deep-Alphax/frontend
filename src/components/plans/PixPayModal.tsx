@@ -14,6 +14,7 @@ import {
   type PixPayment,
 } from "@/lib/api/billing";
 import { getApiErrorMessage } from "@/lib/api/client";
+import { PRO_PRICE_USD } from "@/lib/billing/price";
 import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
 import { formatBrl, formatFxRate } from "@/lib/pix/format";
@@ -34,12 +35,15 @@ const QR_POLL_MS = 2_000;
 export function PixPayModal({
   open,
   quoteBrlCents,
+  amountUsdCents = null,
   periodDays,
   onClose,
 }: {
   open: boolean;
   /** Valor de agora em reais (só exibição; a cobrança trava o seu). */
   quoteBrlCents: number | null;
+  /** Preço em centavos de US$ vindo do servidor; ausente = preço de vitrine. */
+  amountUsdCents?: number | null;
   periodDays: number;
   onClose: () => void;
 }) {
@@ -138,7 +142,7 @@ export function PixPayModal({
                     ? formatBrl(payment.data.amountBrlCents)
                     : quoteBrlCents
                       ? formatBrl(quoteBrlCents)
-                      : "US$ 50 in BRL"}{" "}
+                      : `US$ ${amountUsdCents ? amountUsdCents / 100 : PRO_PRICE_USD} in BRL`}{" "}
                   · {periodDays} days of Pro · doesn&apos;t renew
                 </p>
               </div>

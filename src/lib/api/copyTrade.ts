@@ -261,8 +261,24 @@ export const getKolCopy = async (kolId: string) =>
   (await api.get<KolCopy>(`${ME}/kols/${encodeURIComponent(kolId)}`)).data;
 export const getCopiers = async (kolId: string, page: number, pageSize = 10) =>
   (await api.get<CopiersBoard>(`${ME}/kols/${encodeURIComponent(kolId)}/copiers`, { params: { page, pageSize } })).data;
+/** Prévia da carteira colada no "Novo Wallet Copy" (Figma 1642:34085). */
+export interface ResolvedWallet {
+  address: string;
+  /** KOL do índice dono da carteira; null = carteira avulsa ("Sem perfil de KOL"). */
+  kol: KolRef | null;
+  /** 30d da carteira; null = nenhum swap em SOL no período (ou histórico indisponível). */
+  stats: {
+    /** Só conta swaps ao vivo (o histórico on-chain não tem o MC da época). */
+    hitRate: number | null;
+    pnlSol: number;
+    trades: number;
+    /** Histórico cortado no teto da busca: `trades` é um piso ("1,000+"). */
+    partial: boolean;
+  } | null;
+}
+
 export const resolveCopyAddress = async (address: string) =>
-  (await api.get<{ kol: KolRef | null }>(`${ME}/resolve`, { params: { address } })).data.kol;
+  (await api.get<ResolvedWallet>(`${ME}/resolve`, { params: { address } })).data;
 
 export const createCopy = async (body: { kolId?: string; address?: string; config: CopyConfig }) =>
   (await api.post<CopyView>(`${ME}/copies`, body)).data;

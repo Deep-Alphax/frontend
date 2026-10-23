@@ -65,6 +65,16 @@ export function kolRole(types: string[]): string | null {
   return id ? (KOL_TYPE_MAP[id]?.label ?? null) : null;
 }
 
+/** Carteira avulsa no Wallet Copy: "7xKX…9fQ2" (4 + 4, como no Figma 1642:34085). */
+export function walletShort(addr: string): string {
+  return addr.length > 10 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr;
+}
+
+/** Iniciais da carteira sem perfil de KOL: os 2 primeiros caracteres ("7X"). */
+export function walletInitials(addr: string): string {
+  return addr.slice(0, 2).toUpperCase();
+}
+
 /** "128 trades" — atividade de 30d no lugar do nº de seguidores (sem fonte). */
 export function tradesLabel(k: Pick<CopyKol, "stats">): string {
   const n = k.stats ? k.stats.buys + k.stats.sells : 0;

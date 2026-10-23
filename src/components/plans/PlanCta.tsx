@@ -114,6 +114,7 @@ export function PlanCta({ tone }: PlanCtaProps) {
         <PixPayModal
           open={pixOpen}
           quoteBrlCents={pixOptions.data.quoteBrlCents ?? null}
+          amountUsdCents={pixOptions.data.amountUsdCents ?? null}
           periodDays={pixOptions.data.periodDays}
           onClose={closePix}
         />

@@ -203,3 +203,16 @@ export function PlusSignIcon({ className }: IconProps) {
     </Icon>
   );
 }
+
+/**
+ * Seta descendo para a bandeja (traço no estilo do conjunto, desenhado aqui —
+ * sem nó no Figma) — botão "Deposit" do header e ação da linha de carteira.
+ */
+export function DepositIcon({ className }: IconProps) {
+  return (
+    <Icon className={className}>
+      <path d="M12 3.5V14.5M12 14.5C11.3 14.5 8.5 11.5 8.5 11.5M12 14.5C12.7 14.5 15.5 11.5 15.5 11.5" />
+      <path d="M3.5 14.5C3.5 17.33 3.5 18.74 4.38 19.62C5.26 20.5 6.67 20.5 9.5 20.5H14.5C17.33 20.5 18.74 20.5 19.62 19.62C20.5 18.74 20.5 17.33 20.5 14.5" />
+    </Icon>
+  );
+}

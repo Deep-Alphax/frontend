@@ -99,7 +99,7 @@ export function CryptoPayModal({
   open: boolean;
   /** Redes ligadas no servidor. */
   chains: CryptoChain[];
-  /** Preço base exibido na escolha de rede ("50"). */
+  /** Preço base exibido na escolha de rede ("100"), vindo do servidor. */
   amount: string;
   periodDays: number;
   onClose: () => void;

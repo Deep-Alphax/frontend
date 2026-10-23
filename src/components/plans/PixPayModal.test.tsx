@@ -21,8 +21,8 @@ const getPix = vi.mocked(api.getPixPayment);
 const PENDING: api.PixPayment = {
   id: "pix_1",
   status: "PENDING",
-  amountBrlCents: 29568,
-  amountUsdCents: 5000,
+  amountBrlCents: 59136,
+  amountUsdCents: 10000,
   fxRate: "5.913600",
   periodDays: 30,
   qrCopyPaste: "00020101021226PIXCODE6304ABCD",
@@ -31,7 +31,7 @@ const PENDING: api.PixPayment = {
 
 function open(onClose = vi.fn()) {
   renderWithQuery(
-    <PixPayModal open quoteBrlCents={29568} periodDays={30} onClose={onClose} />,
+    <PixPayModal open quoteBrlCents={59136} periodDays={30} onClose={onClose} />,
   );
   return onClose;
 }
@@ -51,10 +51,33 @@ describe("PixPayModal", () => {
   it("mostra o valor em reais e não pede dado do pagador", () => {
     open();
     const dialog = screen.getByRole("dialog", { name: "Pay with Pix" });
-    expect(dialog).toHaveTextContent("R$ 295,68 · 30 days of Pro · doesn't renew");
+    expect(dialog).toHaveTextContent("R$ 591,36 · 30 days of Pro · doesn't renew");
     expect(dialog).toHaveTextContent(/any Brazilian bank account/);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Generate Pix · R$ 295,68" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Generate Pix · R$ 591,36" })).toBeInTheDocument();
+  });
+
+  it("sem cotação, mostra o preço em US$ que o servidor mandou (ou o de vitrine)", () => {
+    const { unmount } = renderWithQuery(
+      <PixPayModal
+        open
+        quoteBrlCents={null}
+        amountUsdCents={10000}
+        periodDays={30}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Pay with Pix" })).toHaveTextContent(
+      "US$ 100 in BRL · 30 days of Pro",
+    );
+    unmount();
+
+    renderWithQuery(
+      <PixPayModal open quoteBrlCents={null} periodDays={30} onClose={vi.fn()} />,
+    );
+    expect(screen.getByRole("dialog", { name: "Pay with Pix" })).toHaveTextContent(
+      "US$ 100 in BRL · 30 days of Pro",
+    );
   });
 
   it("exibe QR, copia e cola e a cotação travada", async () => {
@@ -71,7 +94,7 @@ describe("PixPayModal", () => {
       PENDING.qrImage,
     );
     expect(screen.getByLabelText("Pix copy and paste")).toHaveValue(PENDING.qrCopyPaste);
-    expect(screen.getByText(/US\$ 50 at R\$ 5\.9136/)).toBeInTheDocument();
+    expect(screen.getByText(/US\$ 100 at R\$ 5\.9136/)).toBeInTheDocument();
     expect(screen.getByText("Waiting for payment…")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Copy" }));

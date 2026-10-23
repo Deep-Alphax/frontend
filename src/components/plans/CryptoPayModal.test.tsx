@@ -80,7 +80,7 @@ function payment(over: Partial<api.CryptoPayment> = {}): api.CryptoPayment {
     tokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     tokenDecimals: 6,
     chainId: 8453,
-    amount: "50",
+    amount: "100",
     receiver: "0x184f309b7D9f4c2430506831778173ecDAC55B84",
     reference: null,
     periodDays: 30,
@@ -120,7 +120,7 @@ function renderModal(props: Partial<Parameters<typeof CryptoPayModal>[0]> = {}) 
     <CryptoPayModal
       open
       chains={ALL}
-      amount="50"
+      amount="100"
       periodDays={30}
       onClose={onClose}
       {...props}
@@ -149,7 +149,7 @@ beforeEach(() => {
 describe("CryptoPayModal — rede", () => {
   it("cabeçalho enxuto: valor, período e que não renova", () => {
     renderModal();
-    expect(screen.getByText("50 USDC · 30 days of Pro · doesn't renew")).toBeInTheDocument();
+    expect(screen.getByText("100 USDC · 30 days of Pro · doesn't renew")).toBeInTheDocument();
   });
 
   it("lista só as redes recebidas, com a nota curta dentro do item", async () => {
@@ -215,7 +215,7 @@ describe("CryptoPayModal — carteira", () => {
 
     expect(createPay.mock.calls[0][0]).toBe("BASE");
     const wallet = await screen.findByTestId("wallet-evm");
-    expect(wallet).toHaveTextContent("50 USDC on Base");
+    expect(wallet).toHaveTextContent("100 USDC on Base");
     expect(screen.queryByTestId("wallet-solana")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Back" }));
@@ -229,7 +229,7 @@ describe("CryptoPayModal — carteira", () => {
 
     await pickChain(user, /USDC on Solana/);
 
-    expect(await screen.findByTestId("wallet-solana")).toHaveTextContent("50 USDC on Solana");
+    expect(await screen.findByTestId("wallet-solana")).toHaveTextContent("100 USDC on Solana");
   });
 
   it("envio → registra {txHash, payer, signature}; sem Back enquanto registra; depois confirmando", async () => {

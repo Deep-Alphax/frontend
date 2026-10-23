@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
+import { PRO_PRICE_USD } from "@/lib/billing/price";
 import { cn } from "@/lib/cn";
 import { DURATION, EASE } from "@/lib/motion";
 import { formatBrl } from "@/lib/pix/format";
@@ -95,7 +96,9 @@ export function PaymentMethodModal({
                 <h2 className="text-lg font-semibold leading-[1.2] text-gray-12">
                   Choose how to pay
                 </h2>
-                <p className="mt-1 text-sm text-gray-11">Pro plan · US$ 50</p>
+                <p className="mt-1 text-sm text-gray-11">
+                  Pro plan · US$ {PRO_PRICE_USD}
+                </p>
               </div>
 
               <div className="flex flex-col gap-2 p-4">

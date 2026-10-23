@@ -3,6 +3,7 @@ import { PlanCard, type PlanFeature } from "@/components/plans/PlanCard";
 import { PlanCta } from "@/components/plans/PlanCta";
 import { PlansBackground } from "@/components/plans/PlansBackground";
 import { TEXT_TRIM } from "@/components/plans/textTrim";
+import { PRO_PRICE_USD } from "@/lib/billing/price";
 import { cn } from "@/lib/cn";
 
 /*
@@ -83,7 +84,9 @@ export function PlansScreen() {
               price={
                 <>
                   <span className={cn(DISPLAY_28, TEXT_TRIM)}>$</span>
-                  <span className={cn(DISPLAY_28, TEXT_TRIM)}>50.00</span>
+                  <span className={cn(DISPLAY_28, TEXT_TRIM)}>
+                    {PRO_PRICE_USD.toFixed(2)}
+                  </span>
                   <span className={cn("text-base leading-[1.3]", TEXT_TRIM)}>
                     / Per month
                   </span>

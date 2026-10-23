@@ -87,7 +87,10 @@ export interface CryptoPayment {
   tokenDecimals: number;
   /** Chain id EVM; `null` na Solana. */
   chainId: number | null;
-  /** Valor a enviar, em decimal ("50"). A carteira envia exatamente isto. */
+  /**
+   * Valor a enviar, em decimal ("100"). A carteira envia exatamente isto — é o
+   * GRAVADO na cobrança (uma aberta antes de uma troca de preço mantém o dela).
+   */
   amount: string;
   receiver: string;
   /** Solana Pay: chave que vai na transferência (conta só-leitura). */

@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-import { resolveCopyAddress, type CopyConfig, type CopyTarget, type CopyView, type ExecMode, type KolRef } from "@/lib/api/copyTrade";
+import {
+  resolveCopyAddress,
+  type CopyConfig,
+  type CopyTarget,
+  type CopyView,
+  type ExecMode,
+  type KolRef,
+  type ResolvedWallet,
+} from "@/lib/api/copyTrade";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 import {
@@ -17,20 +25,29 @@ import {
   filtersSummary,
   protectionSummary,
 } from "@/lib/copyTrade/config";
-import { hitLabel, pnlTone, signedSol, sol } from "@/lib/copyTrade/format";
+import { hitLabel, pnlTone, signedSol, sol, walletInitials, walletShort } from "@/lib/copyTrade/format";
 import { useCopyMutations } from "@/lib/copyTrade/useCopies";
 import { useCopyKol } from "@/lib/copyTrade/useCopyTrade";
-import { tierFor } from "@/lib/walletReader/types";
+import { tierFor, type TierSpec } from "@/lib/walletReader/types";
 import { ScrollArea } from "@/components/ui/ScrollArea";
+import { BoltIcon, FilterIcon, RemoveIcon, ShieldIcon, TrashIcon } from "@/components/copyTrade/icons";
+import { KpiCell, RadioCard, Segmented } from "@/components/copyTrade/controls";
 import {
-  BoltIcon,
-  ChevronIcon,
-  FilterIcon,
-  RemoveIcon,
-  ShieldIcon,
-  TrashIcon,
-} from "@/components/copyTrade/icons";
-import { KpiCell, RadioCard, Segmented, Switch } from "@/components/copyTrade/controls";
+  Accordion,
+  AddressField,
+  AmountField,
+  BlockTitle,
+  FoundCard,
+  FoundCardSkeleton,
+  InitialsAvatar,
+  NumberField,
+  PendingButton,
+  PrimaryButton,
+  SOLANA_ADDRESS,
+  TargetField,
+  ToggleRow,
+  useEscapeClose,
+} from "@/components/copyTrade/drawerParts";
 import { KolAvatar, RankTag, tierVars } from "@/components/copyTrade/parts";
 
 export interface DrawerTarget {
@@ -47,15 +64,18 @@ interface Props {
   balanceSol: number | null;
   enabled: boolean;
   onClose: () => void;
-  onSaved: (kolId: string) => void;
+  /** Copy salvo — a tela abre a carteira dele na 3ª coluna. */
+  onSaved: (kol: KolRef) => void;
 }
-
-const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 /**
  * Drawer "Configurar copy" (Figma 1618:29802 e variantes Padrão, Minhas
  * metas, Ajustes abertos e Saldo insuficiente). Três seções: quanto por
  * compra, quando vender e proteção/filtros/execução (recolhidos).
+ *
+ * Sem KOL escolhido vira o "Novo Wallet Copy" (1646:34851 vazio, 1646:35765
+ * carteira encontrada): a seção 1 pede o endereço de QUALQUER carteira Solana
+ * e as demais ficam travadas até a prévia chegar.
  *
  * Divergências: sem "≈ US$" sob o valor (o front não tem preço do SOL sem
  * abrir a CSP a outra origem); "dev vendeu" e "bundle" desabilitados — o
@@ -63,59 +83,72 @@ const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
  */
 export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, onSaved }: Props) {
   const editing = target.copy && target.copy.status !== "ENDED" ? target.copy : null;
+  const byAddress = !target.kol;
   const [cfg, setCfg] = useState<CopyConfig>(() => structuredClone(target.copy?.config ?? DEFAULT_COPY_CONFIG));
   const [address, setAddress] = useState("");
   const [open, setOpen] = useState<"protection" | "filters" | "execution" | null>(null);
   const { create, update } = useCopyMutations();
-  // "Novo copy por endereço": de qual KOL do índice é a carteira colada.
   const typed = address.trim();
   const validAddr = SOLANA_ADDRESS.test(typed);
   const resolved = useQuery({
     queryKey: ["copy-trade", "resolve", typed],
     queryFn: () => resolveCopyAddress(typed),
-    enabled: enabled && !target.kol && validAddr,
+    enabled: enabled && byAddress && validAddr,
     staleTime: 60_000,
+    retry: false,
   });
-  const kol: KolRef | null = target.kol ?? resolved.data ?? null;
-  const resolving = resolved.isFetching;
+  // Prévia só vale para o endereço que está no campo agora.
+  const found = byAddress && validAddr && resolved.data?.address === typed ? resolved.data : null;
+  const kol: KolRef | null = target.kol ?? found?.kol ?? null;
+  const resolving = byAddress && validAddr && resolved.isFetching && !found;
   const addrError =
-    target.kol || !typed
+    !byAddress || !typed
       ? null
       : !validAddr
         ? "This doesn't look like a Solana address."
         : resolved.isError
           ? getApiErrorMessage(resolved.error)
-          : resolved.data === null
-            ? "This wallet isn't tracked by Deep Alpha yet."
-            : null;
-  const detail = useCopyKol(kol?.id ?? null, enabled);
+          : null;
+  // Bloqueado até haver carteira: KOL escolhido ou endereço resolvido.
+  const ready = !byAddress || !!found;
+  const detail = useCopyKol(byAddress ? null : (kol?.id ?? null), enabled);
   const stats = detail.data?.kol.stats ?? null;
   const tier = tierFor(kol?.relevance ?? 0);
   const radioName = useId();
+  // No "Novo Wallet Copy" a carteira é a seção 1 e as demais andam uma casa.
+  const n0 = byAddress ? 1 : 0;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
+  useEscapeClose(onClose);
 
   const set = <K extends keyof CopyConfig>(k: K, v: Partial<CopyConfig[K]>) =>
     setCfg((c) => ({ ...c, [k]: { ...(c[k] as object), ...v } }));
   const lowBalance = exceedsBalance(cfg, balanceSol);
   const errors = configErrors(cfg);
   const busy = create.isPending || update.isPending;
-  const canSubmit = !!kol && !errors.length && !lowBalance && !busy;
+  const canSubmit = ready && !errors.length && !lowBalance && !busy;
 
   const submit = async () => {
-    if (!kol) return;
+    if (!ready) return;
     try {
-      if (editing) await update.mutateAsync({ copyId: editing.id, config: cfg });
-      else await create.mutateAsync({ kolId: kol.id, config: cfg });
-      toast.success(editing ? "Copy updated." : `Copying ${kol.label}.`);
-      onSaved(kol.id);
+      let saved: CopyView;
+      if (editing) saved = await update.mutateAsync({ copyId: editing.id, config: cfg });
+      else if (found) {
+        // Carteira de KOL segue pelo KOL; avulsa vai pelo endereço.
+        saved = await create.mutateAsync(found.kol ? { kolId: found.kol.id, config: cfg } : { address: found.address, config: cfg });
+      } else saved = await create.mutateAsync({ kolId: target.kol!.id, config: cfg });
+      toast.success(editing ? "Copy updated." : `Copying ${saved.kol.label}.`);
+      onSaved(saved.kol);
     } catch (e) {
       toast.error(getApiErrorMessage(e));
+    }
+  };
+
+  const paste = async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (text) setAddress(text);
+    } catch {
+      toast.error("Couldn't read the clipboard. Paste the address with Ctrl+V.");
     }
   };
 
@@ -129,43 +162,46 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
         style={tierVars(tier)}
         className="relative flex h-full w-full max-w-[460px] flex-col border-l border-gray-5 bg-gray-2 shadow-[-30px_0_80px_0_rgba(0,0,0,0.55)]"
       >
-        <span aria-hidden className="pointer-events-none absolute top-0 -left-px right-0 z-20 h-0.5 bg-[linear-gradient(90deg,var(--tier-11),transparent)]" />
+        {!byAddress && (
+          <span aria-hidden className="pointer-events-none absolute top-0 -left-px right-0 z-20 h-0.5 bg-[linear-gradient(90deg,var(--tier-11),transparent)]" />
+        )}
         <header className="relative z-20 flex items-center gap-2 border-b border-gray-6 bg-gray-2 px-4 py-2">
           <h2 className="flex-1 text-base leading-[1.1] font-semibold text-gray-12">
-            {editing ? "Adjust copy" : "Configure copy"}
+            {editing ? "Adjust copy" : byAddress ? "New Wallet Copy" : "Configure copy"}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close" autoFocus className="rounded text-gray-12 hover:bg-gray-4">
+          <button type="button" onClick={onClose} aria-label="Close" autoFocus={!byAddress} className="rounded text-gray-12 hover:bg-gray-4">
             <RemoveIcon className="size-6" />
           </button>
         </header>
 
-        {/* Perfil + KPIs (ou o campo do endereço). */}
+        {byAddress ? (
+          /* 1. Carteira para copiar: campo do endereço + prévia ("carteira encontrada"). */
+          <div className="flex flex-col gap-2 border-b border-gray-5 px-4 pt-3 pb-4">
+            <BlockTitle n={1} title="Wallet to copy" />
+            <AddressField
+              value={address}
+              onChange={setAddress}
+              onPaste={paste}
+              state={addrError ? "error" : typed ? "filled" : "empty"}
+            />
+            {resolving ? (
+              <FoundCardSkeleton />
+            ) : found ? (
+              <FoundWallet wallet={found} tier={tier} />
+            ) : (
+              <p role={addrError ? "alert" : undefined} className={cn("text-xs leading-[1.3]", addrError ? "text-vermelho-11" : "text-gray-11")}>
+                {addrError ?? "Paste the address of any Solana wallet. You'll see its track record before turning it on."}
+              </p>
+            )}
+          </div>
+        ) : (
+        /* Perfil + KPIs do KOL escolhido. */
         <div className="relative isolate overflow-hidden border-b border-gray-5 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--tier-9)_55%,transparent)_0%,color-mix(in_srgb,var(--tier-9)_12%,transparent)_55%,transparent_100%)] px-4 pt-3 pb-4">
           {kol && (
             <div aria-hidden className="pointer-events-none absolute -top-10 -right-2.5 -z-10 size-[220px] [mask-image:radial-gradient(closest-side,#000_20%,transparent_100%)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={tier.emblem} alt="" width={220} height={220} className="size-full object-cover opacity-45" />
             </div>
-          )}
-          {!target.kol && (
-            <label className="mb-3 flex flex-col gap-2">
-              <span className="text-xs leading-[1.3] text-gray-11">Wallet address</span>
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Paste a Solana wallet address"
-                spellCheck={false}
-                className={cn(
-                  "w-full rounded-lg border bg-gray-1 px-3 py-2 font-mono text-sm text-gray-12 outline-none placeholder:font-body placeholder:text-gray-9",
-                  addrError ? "border-vermelho-8" : "border-gray-6 focus:border-gray-8",
-                )}
-              />
-              {(addrError || resolving) && (
-                <span className={cn("text-xs", addrError ? "text-vermelho-11" : "text-gray-11")}>
-                  {resolving ? "Looking up the wallet…" : addrError}
-                </span>
-              )}
-            </label>
           )}
           {kol && (
             <div className="flex flex-col gap-3">
@@ -186,9 +222,11 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
             </div>
           )}
         </div>
+        )}
 
         <ScrollArea className="flex min-h-0 flex-1 flex-col" viewportClassName="min-h-0 flex-1">
-          <div className="flex flex-col gap-5 px-4 py-3">
+          {/* Sem carteira ainda, o resto do formulário aparece apagado e fora do foco. */}
+          <div inert={!ready} className={cn("flex flex-col gap-5 px-4 py-3 transition-opacity", !ready && "opacity-40")}>
             {mode !== "live" && (
               <p className="rounded-lg border border-principal-6 bg-principal-3 px-3 py-2 text-xs leading-[1.3] text-principal-11">
                 {mode === "shadow"
@@ -199,7 +237,7 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
 
             {/* 1. Quanto por compra */}
             <section className="flex flex-col gap-2">
-              <BlockTitle n={1} title="Amount per buy" />
+              <BlockTitle n={n0 + 1} title="Amount per buy" />
               <Segmented
                 label="Amount mode"
                 value={cfg.buy.mode}
@@ -210,61 +248,20 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
                   { value: "percent", label: `${cfg.buy.percent}% of his` },
                 ]}
               />
-              <div
-                className={cn(
-                  "flex flex-col gap-3 rounded-lg border bg-gray-1 p-4",
-                  lowBalance ? "border-vermelho-8" : "border-gray-6",
-                )}
-              >
-                <label htmlFor="copy-amount" className="text-xs leading-[1.3] text-gray-11">
-                  {cfg.buy.mode === "fixed" ? "Amount per buy" : "Cap per buy"}
-                </label>
-                <div className="flex items-baseline gap-2">
-                  <input
-                    id="copy-amount"
-                    type="number"
-                    inputMode="decimal"
-                    min={0.01}
-                    step={0.01}
-                    value={cfg.buy.amountSol}
-                    onChange={(e) => set("buy", { amountSol: Number(e.target.value) })}
-                    className={cn(
-                      "w-28 bg-transparent font-display text-2xl leading-[1.1] font-semibold tracking-[1px] outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none",
-                      lowBalance ? "text-vermelho-11" : "text-gray-12",
-                    )}
-                  />
-                  <span className="text-sm leading-[1.3] font-semibold text-gray-11">SOL</span>
-                </div>
-                {lowBalance && (
-                  <p className="text-xs leading-[1.3] text-vermelho-11">
-                    Above your W1 balance ({sol(balanceSol)}). Lower the amount or deposit first.
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-1">
-                  {AMOUNT_PRESETS.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      aria-pressed={cfg.buy.amountSol === v}
-                      onClick={() => set("buy", { amountSol: v })}
-                      className={cn(
-                        "rounded border p-2 text-sm leading-[1.3] transition-colors",
-                        cfg.buy.amountSol === v
-                          ? "border-principal-6 bg-principal-3 text-principal-11"
-                          : "border-gray-6 bg-gray-3 text-gray-11 hover:bg-gray-4",
-                      )}
-                    >
-                      {v.toLocaleString("en-US")} SOL
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <AmountField
+                id="copy-amount"
+                label={cfg.buy.mode === "fixed" ? "Amount per buy" : "Cap per buy"}
+                value={cfg.buy.amountSol}
+                onChange={(v) => set("buy", { amountSol: v })}
+                presets={AMOUNT_PRESETS}
+                error={lowBalance ? `Above your W1 balance (${sol(balanceSol)}). Lower the amount or deposit first.` : null}
+              />
               <p className="text-xs leading-[1.3] text-gray-11">{buyHint(cfg)}</p>
             </section>
 
             {/* 2. Quando vender */}
             <section className="flex flex-col gap-2">
-              <BlockTitle n={2} title="When to sell" />
+              <BlockTitle n={n0 + 2} title="When to sell" />
               <RadioCard
                 name={radioName}
                 checked={cfg.sell.mode === "follow"}
@@ -335,7 +332,7 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
 
             {/* 3. Proteção e filtros */}
             <section className="flex flex-col gap-2">
-              <BlockTitle n={3} title="Protection and filters" hint="optional" />
+              <BlockTitle n={n0 + 3} title="Protection and filters" hint="optional" />
               <Accordion
                 icon={<ShieldIcon className="size-4" />}
                 title="Deep Alpha protection"
@@ -442,159 +439,39 @@ export function CopyConfigDrawer({ target, mode, balanceSol, enabled, onClose, o
         </ScrollArea>
 
         <footer className="border-t border-gray-5 bg-gray-2 px-4 pt-3 pb-4">
-          <button
-            type="button"
-            disabled={!canSubmit}
-            onClick={submit}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-principal-9 px-8 text-base leading-[1.1] font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {busy ? "Saving…" : editing ? "Save changes" : "Start copying"}
-          </button>
+          {ready ? (
+            <PrimaryButton disabled={!canSubmit} onClick={submit}>
+              {busy ? "Saving…" : editing ? "Save changes" : "Start copying"}
+            </PrimaryButton>
+          ) : (
+            <PendingButton>{resolving ? "Looking up the wallet…" : "Paste the wallet address"}</PendingButton>
+          )}
         </footer>
       </section>
     </div>
   );
 }
 
-function BlockTitle({ n, title, hint }: { n: number; title: string; hint?: string }) {
+/** "cartão - carteira encontrada" (Figma 1642:34085): identidade + 3 KPIs de 30d. */
+function FoundWallet({ wallet, tier }: { wallet: ResolvedWallet; tier: TierSpec }) {
+  const s = wallet.stats;
   return (
-    <div className="flex h-6 items-center gap-1.5">
-      <span className="flex size-5 items-center justify-center rounded-full border border-principal-6 bg-principal-3 text-xs leading-[1.3] font-semibold text-principal-11">
-        {n}
-      </span>
-      <h3 className="flex-1 text-sm leading-[1.3] font-medium text-gray-12">{title}</h3>
-      {hint && <span className="text-xs leading-[1.3] text-gray-11">{hint}</span>}
-    </div>
-  );
-}
-
-function Accordion({
-  icon,
-  title,
-  summary,
-  open,
-  onToggle,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  summary: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  const id = useId();
-  return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-5 bg-gray-2">
-      <button type="button" aria-expanded={open} aria-controls={id} onClick={onToggle} className="flex h-14 items-center gap-3 p-3 text-left">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-principal-6 bg-[linear-gradient(180deg,rgba(249,210,64,0.22)_0%,rgba(249,210,64,0)_100%),linear-gradient(var(--color-principal-3),var(--color-principal-3))] text-principal-11">
-          {icon}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-2 leading-[1.3]">
-          <span className="text-sm font-semibold text-gray-12">{title}</span>
-          <span className="truncate text-xs text-gray-11">{summary}</span>
-        </span>
-        <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full border border-gray-6 text-gray-12", open ? "bg-gray-4" : "bg-gray-3")}>
-          <ChevronIcon className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-        </span>
-      </button>
-      {open && (
-        <div id={id} className="flex flex-col gap-3 px-3 pb-3">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  note,
-  checked,
-  onChange,
-  disabled,
-  last,
-  bare,
-}: {
-  label: string;
-  note?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-  last?: boolean;
-  bare?: boolean;
-}) {
-  return (
-    <div className={cn("flex min-h-11 items-center gap-3", bare ? "py-3" : "p-3", !last && !bare && "border-b border-gray-5")}>
-      <div className="flex min-w-0 flex-1 flex-col gap-2 leading-[1.3]">
-        <span className={cn("text-sm", disabled ? "text-gray-10" : "text-gray-12")}>{label}</span>
-        {note && <span className="text-xs text-gray-11">{note}</span>}
-      </div>
-      <Switch checked={checked} onChange={onChange} label={label} disabled={disabled} />
-    </div>
-  );
-}
-
-function NumberField({
-  label,
-  unit,
-  value,
-  onChange,
-  step = 1,
-}: {
-  label: string;
-  unit: string;
-  value: number | null;
-  onChange: (v: number | null) => void;
-  step?: number;
-}) {
-  const id = useId();
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-xs leading-[1.3] whitespace-nowrap text-gray-11">
-        {label}
-      </label>
-      <div className="flex items-center gap-1 rounded-lg border border-gray-6 bg-gray-1 px-3 py-2 focus-within:border-gray-8">
-        <input
-          id={id}
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step={step}
-          value={value ?? ""}
-          placeholder="Off"
-          onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-          className="w-full min-w-0 bg-transparent text-sm font-semibold text-gray-12 outline-none placeholder:font-normal placeholder:text-gray-9 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-        />
-        <span className="shrink-0 text-xs leading-[1.3] whitespace-nowrap text-gray-11">{unit}</span>
-      </div>
-    </div>
-  );
-}
-
-function TargetField({
-  prefix,
-  value,
-  onChange,
-  label,
-}: {
-  prefix: string;
-  value: number;
-  onChange: (v: number) => void;
-  label: string;
-}) {
-  return (
-    <label className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-gray-6 bg-gray-1 px-3 py-2 leading-[1.3] focus-within:border-gray-8">
-      <span className="text-xs text-gray-11">{prefix}</span>
-      <input
-        aria-label={label}
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full min-w-0 bg-transparent text-sm font-semibold text-gray-12 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-      />
-      <span className="text-xs text-gray-11">%</span>
-    </label>
+    <FoundCard
+      avatar={
+        wallet.kol ? (
+          <KolAvatar kol={wallet.kol} tier={tier} ring="border" className="size-9" />
+        ) : (
+          <InitialsAvatar text={walletInitials(wallet.address)} />
+        )
+      }
+      title={wallet.kol?.label ?? walletShort(wallet.address)}
+      subtitle={wallet.kol ? walletShort(wallet.address) : "No KOL profile"}
+      kpis={[
+        { label: "Hit rate 30d", value: hitLabel(s?.hitRate) },
+        { label: "Result 30d", value: s ? signedSol(s.pnlSol) : "—", tone: pnlTone(s?.pnlSol) },
+        { label: "Trades 30d", value: s ? `${s.trades.toLocaleString("en-US")}${s.partial ? "+" : ""}` : "—" },
+      ]}
+    />
   );
 }
 

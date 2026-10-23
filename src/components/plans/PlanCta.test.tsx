@@ -33,8 +33,8 @@ const getBilling = vi.mocked(api.getBillingDetails);
 const PIX_ON: api.PixOptions = {
   enabled: true,
   periodDays: 30,
-  amountUsdCents: 5000,
-  quoteBrlCents: 25308,
+  amountUsdCents: 10000,
+  quoteBrlCents: 50616,
 };
 const PIX_OFF: api.PixOptions = { enabled: false, periodDays: 30 };
 const mockSession = vi.mocked(useSession);
@@ -42,7 +42,7 @@ const mockPlan = vi.mocked(usePlan);
 
 const OPTIONS: api.CryptoOptions = {
   token: "USDC",
-  amount: "50",
+  amount: "100",
   periodDays: 30,
   chains: ["SOLANA", "BASE"],
 };
@@ -321,14 +321,17 @@ describe("PlanCta (card PRO) — oferta de Pix", () => {
 
     await settled();
     await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    expect(
+      screen.getByRole("dialog", { name: "Choose how to pay" }),
+    ).toHaveTextContent("Pro plan · US$ 100");
     const pixRow = screen.getByRole("button", { name: /^Pix/ });
-    expect(pixRow).toHaveTextContent("R$ 253,08 · 30 days · doesn't renew");
+    expect(pixRow).toHaveTextContent("R$ 506,16 · 30 days · doesn't renew");
     await user.click(pixRow);
 
     const dialog = screen.getByRole("dialog", { name: "Pay with Pix" });
-    expect(dialog).toHaveTextContent("R$ 253,08 · 30 days of Pro");
+    expect(dialog).toHaveTextContent("R$ 506,16 · 30 days of Pro");
     expect(
-      screen.getByRole("button", { name: "Generate Pix · R$ 253,08" }),
+      screen.getByRole("button", { name: "Generate Pix · R$ 506,16" }),
     ).toBeInTheDocument();
   });
 

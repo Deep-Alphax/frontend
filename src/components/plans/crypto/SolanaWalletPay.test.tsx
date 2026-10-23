@@ -39,7 +39,7 @@ function payment(): CryptoPayment {
     tokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     tokenDecimals: 6,
     chainId: null,
-    amount: "50",
+    amount: "100",
     receiver: "BLNe5umxS7QGZPxvYAq3Favrs4hdeS47nThytnfFoE4u",
     reference: "Ref1111111111111111111111111111111111111111",
     periodDays: 30,
@@ -121,14 +121,14 @@ describe("SolanaWalletPay", () => {
     const onSent = vi.fn();
     render(<SolanaWalletPay payment={payment()} network="Solana" busy={false} error={null} onSent={onSent} />);
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(transfer.buildUsdcTransfer).toHaveBeenCalledWith({
       payer: publicKey,
       receiver: payment().receiver,
       mint: payment().tokenAddress,
       reference: payment().reference,
-      amount: BigInt(50_000_000),
+      amount: BigInt(100_000_000),
       decimals: 6,
       blockhash: "EETubP5AKHgjPAhzPAFcb8BAY1hMH639CWCFTqi3hq1k",
       lastValidBlockHeight: 99,
@@ -163,7 +163,7 @@ describe("SolanaWalletPay", () => {
     const onSent = vi.fn();
     render(<SolanaWalletPay payment={payment()} network="Solana" busy={false} error={null} onSent={onSent} />);
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(onSent).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("You cancelled the request in your wallet.");

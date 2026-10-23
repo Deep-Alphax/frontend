@@ -48,7 +48,7 @@ function payment(over: Partial<CryptoPayment> = {}): CryptoPayment {
     tokenAddress: USDC_BASE,
     tokenDecimals: 6,
     chainId: 8453,
-    amount: "50",
+    amount: "100",
     receiver: RECEIVER,
     reference: null,
     periodDays: 30,
@@ -114,9 +114,9 @@ describe("EvmWalletPay — pagar", () => {
     actions.sendTransaction.mockImplementation(async () => (order.push("send"), "0xhash"));
     const { onSent } = renderPay();
 
-    expect(screen.getByText("50 USDC")).toBeInTheDocument();
+    expect(screen.getByText("100 USDC")).toBeInTheDocument();
     expect(screen.getByText("on Base")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(order).toEqual(["sign", "send"]);
     expect(actions.switchChain).not.toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe("EvmWalletPay — pagar", () => {
     expect(tx.value).toBeUndefined();
     const decoded = decodeFunctionData({ abi: erc20Abi, data: tx.data });
     expect(decoded.functionName).toBe("transfer");
-    expect(decoded.args).toEqual([RECEIVER, BigInt(50_000_000)]);
+    expect(decoded.args).toEqual([RECEIVER, BigInt(100_000_000)]);
 
     expect(onSent).toHaveBeenCalledWith({ txHash: "0xhash", payer: PAYER, signature: "0xsig" });
   });
@@ -142,12 +142,12 @@ describe("EvmWalletPay — pagar", () => {
     actions.signMessage.mockRejectedValue({ name: "UserRejectedRequestError", code: 4001 });
     const { onSent } = renderPay();
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(actions.sendTransaction).not.toHaveBeenCalled();
     expect(onSent).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("You cancelled the request in your wallet.");
-    expect(screen.getByRole("button", { name: "Pay 50 USDC" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Pay 100 USDC" })).toBeEnabled();
   });
 
   it("envio recusado depois de assinar → sem onSent, erro inline", async () => {
@@ -157,7 +157,7 @@ describe("EvmWalletPay — pagar", () => {
     actions.sendTransaction.mockRejectedValue({ cause: { code: 4001 } });
     const { onSent } = renderPay();
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(onSent).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("You cancelled the request in your wallet.");
@@ -172,7 +172,7 @@ describe("EvmWalletPay — pagar", () => {
     actions.sendTransaction.mockImplementation(async () => (order.push("send"), "0xhash"));
     renderPay();
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(actions.switchChain).toHaveBeenCalledWith(expect.anything(), { chainId: 8453 });
     expect(order).toEqual(["switch", "sign", "send"]);
@@ -192,12 +192,12 @@ describe("EvmWalletPay — pagar", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     const [, tx] = actions.sendTransaction.mock.calls[0];
     expect(decodeFunctionData({ abi: erc20Abi, data: tx.data }).args).toEqual([
       RECEIVER,
-      BigInt("50000000000000000000"),
+      BigInt("100000000000000000000"),
     ]);
   });
 
@@ -206,7 +206,7 @@ describe("EvmWalletPay — pagar", () => {
     connected();
     const { onSent } = renderPay(payment({ ownershipMessage: null }));
 
-    await user.click(screen.getByRole("button", { name: "Pay 50 USDC" }));
+    await user.click(screen.getByRole("button", { name: "Pay 100 USDC" }));
 
     expect(actions.signMessage).not.toHaveBeenCalled();
     expect(actions.sendTransaction).not.toHaveBeenCalled();
