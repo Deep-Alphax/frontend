@@ -28,8 +28,12 @@ export async function createCheckout(): Promise<string> {
  */
 export const PLAN_KEY = ["billing-plan"] as const;
 
-/** Como o PRO vigente foi pago. `CRYPTO` e `PIX` são pré-pagos e não renovam. */
-export type BillingProvider = "STRIPE" | "CRYPTO" | "PIX";
+/**
+ * Como o PRO vigente foi pago. `CRYPTO` e `PIX` são pré-pagos e não renovam.
+ * `COUPON` = PRO grátis de cupom (ver `api/coupons.ts`): sempre vem com
+ * `cancelAtPeriodEnd: true` e, no fim, a conta volta ao FREE sem cobrança.
+ */
+export type BillingProvider = "STRIPE" | "CRYPTO" | "PIX" | "COUPON";
 
 export interface BillingDetails {
   provider: BillingProvider;

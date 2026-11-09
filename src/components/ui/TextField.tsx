@@ -12,6 +12,11 @@ export interface TextFieldProps
   rightSlot?: React.ReactNode;
   /** Mensagem de erro — quando presente, realça a borda e é anunciada por SR. */
   error?: string;
+  /**
+   * Rótulo só para leitor de tela (`sr-only`) — para campos em linha de tabela,
+   * onde o cabeçalho da coluna já diz o que é. O `<label>` continua existindo.
+   */
+  hideLabel?: boolean;
 }
 
 /**
@@ -20,14 +25,20 @@ export interface TextFieldProps
  * `forwardRef` permite o registro direto no React Hook Form.
  */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
-  ({ label, leftIcon, rightSlot, error, id, className, ...props }, ref) => {
+  (
+    { label, leftIcon, rightSlot, error, hideLabel, id, className, ...props },
+    ref,
+  ) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const errorId = `${inputId}-error`;
 
     return (
       <div className="flex w-full flex-col gap-2">
-        <label htmlFor={inputId} className="text-base text-gray-12">
+        <label
+          htmlFor={inputId}
+          className={cn("text-base text-gray-12", hideLabel && "sr-only")}
+        >
           {label}
         </label>
 

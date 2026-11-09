@@ -31,6 +31,7 @@ export function PaymentMethodModal({
   onCard,
   usdc,
   pix,
+  cardNote,
 }: {
   open: boolean;
   onClose: () => void;
@@ -45,6 +46,11 @@ export function PaymentMethodModal({
     quoteBrlCents: number | null;
     onChoose: () => void;
   };
+  /**
+   * Aviso discreto logo abaixo da linha do cartão (ex.: PRO de cupom, que o
+   * cartão substitui na hora). Só informa — não bloqueia nenhum meio.
+   */
+  cardNote?: string;
 }) {
   const reduce = useReducedMotion();
 
@@ -108,6 +114,11 @@ export function PaymentMethodModal({
                   disabled={cardPending}
                   onClick={onCard}
                 />
+                {cardNote ? (
+                  <p className="px-1 text-xs leading-[1.4] text-gray-11">
+                    {cardNote}
+                  </p>
+                ) : null}
                 <PrepaidRow
                   state={usdc.state}
                   title="USDC"

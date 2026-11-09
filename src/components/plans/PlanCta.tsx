@@ -122,7 +122,11 @@ export function PlanCta({ tone }: PlanCtaProps) {
     </>
   );
 
-  if (current === "PRO") {
+  // PRO grátis de cupom: é PRO, mas não foi pago — continua podendo pagar para
+  // seguir no PRO depois. Cai no fluxo de compra, não no de "plano atual".
+  const couponPro = current === "PRO" && billing.data?.provider === "COUPON";
+
+  if (current === "PRO" && !couponPro) {
     const provider = billing.data?.provider;
     const prepaid = provider === "CRYPTO" || provider === "PIX";
     const until = billing.data?.cancelAtPeriodEnd
@@ -214,6 +218,10 @@ export function PlanCta({ tone }: PlanCtaProps) {
         ? "loading"
         : "unavailable";
 
+  const couponUntil = couponPro
+    ? formatDate(billing.data?.currentPeriodEnd ?? null)
+    : null;
+
   return (
     <div className="flex w-full flex-col gap-2">
       <Button
@@ -229,11 +237,21 @@ export function PlanCta({ tone }: PlanCtaProps) {
           setMethodOpen(true);
         }}
       >
-        Choose this plan
+        {couponPro ? "Continue with Pro" : "Choose this plan"}
       </Button>
+      {couponPro && couponUntil && (
+        <p className="text-center text-sm text-gray-11">
+          Free Pro (coupon) until {couponUntil}
+        </p>
+      )}
       <PaymentMethodModal
         open={methodOpen}
         onClose={closeMethod}
+        cardNote={
+          couponPro
+            ? "Subscribing by card starts now and ends your free coupon period. Crypto and Pix add days after it."
+            : undefined
+        }
         cardPending={checkout.isPending}
         onCard={() => checkout.mutate()}
         usdc={{

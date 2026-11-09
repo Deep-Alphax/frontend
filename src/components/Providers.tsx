@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 
 import { PageViewTracker } from "@/components/audit/PageViewTracker";
+import { captureCouponFromUrl } from "@/lib/coupon";
 import { captureReferralFromUrl } from "@/lib/referral";
 
 /**
@@ -32,8 +33,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Captura o `?ref=` do link de afiliado em QUALQUER rota, não só no cadastro:
   // o link circula apontando para a home e para /plans, e quem cai ali e se
   // cadastra depois tem que continuar atribuído.
+  // Mesmo raciocínio para o `?coupon=` do link de PRO grátis — inclusive o que
+  // vem dentro do `?next=` do login, para sobreviver a cadastro e verificação.
   useEffect(() => {
     captureReferralFromUrl(window.location.search);
+    captureCouponFromUrl(window.location.search);
   }, []);
 
   return (

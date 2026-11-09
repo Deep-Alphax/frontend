@@ -296,6 +296,48 @@ describe("PlanCta (card PRO) — oferta de cripto", () => {
     ).toBeInTheDocument();
   });
 
+  it("PRO grátis de cupom: mostra até quando e continua oferecendo pagar (com aviso do cartão)", async () => {
+    const user = userEvent.setup();
+    setup({
+      plan: "PRO",
+      pix: PIX_ON,
+      billing: {
+        provider: "COUPON",
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: true,
+      },
+    });
+    renderWithQuery(<PlanCta tone="pro" />);
+
+    expect(
+      await screen.findByText(`Free Pro (coupon) until ${PERIOD_END_LABEL}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Current plan" }),
+    ).not.toBeInTheDocument();
+    await settled();
+
+    await user.click(screen.getByRole("button", { name: "Continue with Pro" }));
+    const chooser = screen.getByRole("dialog", { name: "Choose how to pay" });
+    // Nenhum meio é bloqueado — o cartão só vem com o aviso de que encerra o cupom.
+    expect(screen.getByRole("button", { name: /^Card/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^USDC/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Pix/ })).toBeInTheDocument();
+    expect(chooser).toHaveTextContent(
+      "Subscribing by card starts now and ends your free coupon period. Crypto and Pix add days after it.",
+    );
+  });
+
+  it("sem cupom, o modal não mostra o aviso do cartão", async () => {
+    const user = userEvent.setup();
+    setup();
+    renderWithQuery(<PlanCta tone="pro" />);
+    await user.click(screen.getByRole("button", { name: "Choose this plan" }));
+    expect(
+      screen.getByRole("dialog", { name: "Choose how to pay" }),
+    ).not.toHaveTextContent(/free coupon period/);
+  });
+
   it("PRO sem detalhe de cobrança (ex.: ADMIN): só 'Current plan'", async () => {
     setup({ plan: "PRO", billing: null });
     renderWithQuery(<PlanCta tone="pro" />);

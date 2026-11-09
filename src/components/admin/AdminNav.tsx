@@ -24,6 +24,7 @@ const ADMIN_ITEMS: { href: string; label: string }[] = [
   { href: "/admin/ranking", label: "Deep Ranking" },
   { href: "/admin/feed", label: "Feed (Discord + Telegram)" },
   { href: "/admin/affiliates", label: "Affiliates" },
+  { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/logs", label: "Logs" },
 ];

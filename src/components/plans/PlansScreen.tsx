@@ -1,4 +1,5 @@
 import { Topbar } from "@/components/home/Topbar";
+import { CouponRedeem } from "@/components/plans/CouponRedeem";
 import { PlanCard, type PlanFeature } from "@/components/plans/PlanCard";
 import { PlanCta } from "@/components/plans/PlanCta";
 import { PlansBackground } from "@/components/plans/PlansBackground";
@@ -92,7 +93,15 @@ export function PlansScreen() {
                   </span>
                 </>
               }
-              cta={<PlanCta tone="pro" />}
+              cta={
+                // O cupom mora no card PRO, logo abaixo da compra: é o PRO que
+                // ele libera. Fica FORA do `PlanCta` para não misturar resgate
+                // com os meios de pagamento.
+                <div className="flex w-full flex-col gap-3">
+                  <PlanCta tone="pro" />
+                  <CouponRedeem />
+                </div>
+              }
               features={PRO_FEATURES}
               footnote="Costs less than one rug fee"
             />
