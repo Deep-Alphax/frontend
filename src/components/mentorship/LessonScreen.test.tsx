@@ -54,9 +54,11 @@ function overview({
   materials = [] as api.MentorshipMaterial[],
 } = {}): MentorshipOverview {
   return {
+    categories: [],
     modules: [
       {
         id: "m1",
+        categoryId: "c1",
         slug: "on-chain-fundamentals",
         title: "On-chain fundamentals",
         subtitle: "",
@@ -79,6 +81,7 @@ function overview({
       },
       {
         id: "m2",
+        categoryId: "c1",
         slug: "reading-a-token",
         title: "Reading a token",
         subtitle: "",

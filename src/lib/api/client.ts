@@ -41,8 +41,23 @@ api.interceptors.response.use(
 /** Formato de erro padronizado do backend (AllExceptionsFilter / ValidationPipe). */
 interface ApiErrorBody {
   message?: string | string[];
-  errors?: string[];
+  /**
+   * O ValidationPipe do backend manda OBJETOS (`{ property, message, … }`),
+   * não strings. Tratar como string fazia o toast receber um objeto e o React
+   * derrubar a página ("Objects are not valid as a React child") — E2E 22/11.
+   */
+  errors?: (string | { message?: unknown })[];
   error?: string;
+}
+
+/** Primeiro texto utilizável de `errors[]`, seja string ou `{ message }`. */
+function firstErrorText(body: ApiErrorBody | undefined): string | null {
+  if (!Array.isArray(body?.errors)) return null;
+  for (const e of body.errors) {
+    const text = typeof e === "string" ? e : e?.message;
+    if (typeof text === "string" && text.trim()) return text;
+  }
+  return null;
 }
 
 /**
@@ -60,6 +75,25 @@ export function isNotFoundError(error: unknown): boolean {
  */
 export function isUnauthorizedError(error: unknown): boolean {
   return error instanceof AxiosError && error.response?.status === 401;
+}
+
+/**
+ * Para telas de ADMIN: em 404/409 o texto do backend é a explicação útil
+ * ("slug already exists", "category still has 3 modules"). `getApiErrorMessage`
+ * trata todo 409 como e-mail duplicado (fluxo de cadastro), o que aqui mentiria.
+ */
+export function getAdminErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    if (status === 404 || status === 409) {
+      const body = error.response?.data as ApiErrorBody | undefined;
+      const message = Array.isArray(body?.message)
+        ? body.message[0]
+        : body?.message;
+      return typeof message === "string" && message.trim() ? message : fallback;
+    }
+  }
+  return getApiErrorMessage(error, fallback);
 }
 
 /**
@@ -84,7 +118,8 @@ export function getApiErrorMessage(
     return "Could not reach the server. Check your connection.";
 
   // Mensagem específica retornada pelo backend, quando houver.
-  if (Array.isArray(body?.errors) && body.errors.length > 0) return body.errors[0];
+  const fromErrors = firstErrorText(body);
+  if (fromErrors) return fromErrors;
   if (Array.isArray(body?.message)) return body.message[0];
   if (typeof body?.message === "string") return body.message;
   if (typeof body?.error === "string") return body.error;

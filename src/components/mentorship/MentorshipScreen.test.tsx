@@ -44,9 +44,18 @@ function lesson(
 
 function overview(over: Partial<MentorshipOverview> = {}): MentorshipOverview {
   return {
+    categories: [
+      {
+        id: "c1",
+        title: "Fundamentals",
+        description: "Start here.",
+        moduleIds: ["m1"],
+      },
+    ],
     modules: [
       {
         id: "m1",
+        categoryId: "c1",
         slug: "on-chain-fundamentals",
         title: "On-chain fundamentals",
         subtitle: "Wallet, RPC, fee, gas, tip and slippage.",
@@ -97,6 +106,52 @@ describe("MentorshipScreen", () => {
 
     // Uma chamada só: o progresso vem junto, não há um request por card.
     expect(getOverview).toHaveBeenCalledTimes(1);
+  });
+
+  it("agrupa os módulos numa seção por categoria, na ordem do servidor", async () => {
+    const data = overview();
+    const second = {
+      ...data.modules[0],
+      id: "m2",
+      categoryId: "c2",
+      slug: "reading-a-token",
+      title: "Reading a token",
+    };
+    data.modules.push(second);
+    data.categories = [
+      { id: "c2", title: "Trading", description: "", moduleIds: ["m2"] },
+      ...data.categories,
+    ];
+    getOverview.mockResolvedValue(data);
+
+    renderWithQuery(<MentorshipScreen />);
+
+    const trading = await screen.findByRole("group", { name: "Trading" });
+    const fundamentals = screen.getByRole("group", { name: "Fundamentals" });
+    expect(trading).toHaveTextContent("Reading a token");
+    expect(trading).not.toHaveTextContent("On-chain fundamentals");
+    expect(fundamentals).toHaveTextContent("On-chain fundamentals");
+    expect(fundamentals).toHaveTextContent("Start here.");
+    // "Trading" vem antes: a ordem das seções é a do servidor.
+    expect(
+      trading.compareDocumentPosition(fundamentals) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("sem categorias na resposta (backend antigo), mostra a grade sem título", async () => {
+    const data = overview();
+    // Simula a resposta anterior à mudança: o campo nem existe.
+    delete (data as Partial<MentorshipOverview>).categories;
+    getOverview.mockResolvedValue(data);
+
+    renderWithQuery(<MentorshipScreen />);
+
+    await screen.findByText("Tracks and modules");
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    expect(screen.getAllByText("On-chain fundamentals").length).toBeGreaterThan(
+      1,
+    );
   });
 
   it("mostra o contador de concluídas vindo do servidor", async () => {

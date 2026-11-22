@@ -1,3 +1,5 @@
+import rawAxios from "axios";
+
 import { api } from "@/lib/api/client";
 
 /**
@@ -44,6 +46,7 @@ export interface MentorshipLesson {
 
 export interface MentorshipModule {
   id: string;
+  categoryId: string;
   slug: string;
   title: string;
   subtitle: string;
@@ -57,7 +60,21 @@ export interface MentorshipModule {
   lessons: MentorshipLesson[];
 }
 
+/**
+ * Seção da tela (Categoria → Módulo → Aula). Traz só os IDS dos módulos, na
+ * ordem; os módulos completos estão em `MentorshipOverview.modules`.
+ */
+export interface MentorshipCategory {
+  id: string;
+  title: string;
+  description: string;
+  moduleIds: string[];
+}
+
 export interface MentorshipOverview {
+  /** Seções na ordem da tela; só categorias com módulo publicado. */
+  categories: MentorshipCategory[];
+  /** Todos os módulos visíveis, na ordem da tela (categoria → posição). */
   modules: MentorshipModule[];
   totals: { lessons: number; completed: number; modules: number };
   /** Aula do card "Continue where you left off". `null` = nada pendente. */
@@ -129,6 +146,7 @@ export interface AdminMaterial {
 /** Trilha na LISTA do admin (sem as aulas, com a contagem delas). */
 export interface AdminModuleSummary {
   id: string;
+  categoryId: string;
   slug: string;
   title: string;
   subtitle: string;
@@ -148,7 +166,25 @@ export interface AdminModuleDetail extends Omit<
   lessons: AdminLesson[];
 }
 
+/** Categoria na árvore do admin, com os módulos dela (inclusive rascunhos). */
+export interface AdminCategory {
+  id: string;
+  title: string;
+  description: string;
+  position: number;
+  published: boolean;
+  modules: AdminModuleSummary[];
+}
+
+export interface CategoryPayload {
+  title: string;
+  description: string;
+  published: boolean;
+}
+
 export interface ModulePayload {
+  /** No PATCH, trocar a categoria MOVE o módulo para o fim da nova. */
+  categoryId: string;
   slug: string;
   title: string;
   subtitle: string;
@@ -168,17 +204,45 @@ export interface LessonPayload {
   published: boolean;
 }
 
-export const ADMIN_MODULES_KEY = ["mentorship-admin-modules"] as const;
+/** Árvore categorias → módulos do admin. */
+export const ADMIN_CATEGORIES_KEY = ["mentorship-admin-categories"] as const;
 
 /** Chave da trilha aberta no editor — chave DIFERENTE da listagem. */
 export const adminModuleKey = (id: string) =>
   ["mentorship-admin-module", id] as const;
 
-export async function listAdminModules(): Promise<AdminModuleSummary[]> {
-  const { data } = await api.get<AdminModuleSummary[]>(
-    "/api/v1/mentorship/admin/modules",
+export async function listAdminCategories(): Promise<AdminCategory[]> {
+  const { data } = await api.get<AdminCategory[]>(
+    "/api/v1/mentorship/admin/categories",
   );
   return data;
+}
+
+export async function createCategory(
+  payload: CategoryPayload,
+): Promise<AdminCategory> {
+  const { data } = await api.post<AdminCategory>(
+    "/api/v1/mentorship/admin/categories",
+    payload,
+  );
+  return data;
+}
+
+export async function updateCategory(
+  id: string,
+  payload: Partial<CategoryPayload>,
+): Promise<void> {
+  await api.patch(`/api/v1/mentorship/admin/categories/${id}`, payload);
+}
+
+/** Só apaga categoria vazia — com módulos o servidor responde 409. */
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete(`/api/v1/mentorship/admin/categories/${id}`);
+}
+
+/** Nova ordem das categorias — a posição de cada id vira o índice. */
+export async function reorderCategories(ids: string[]): Promise<void> {
+  await api.patch("/api/v1/mentorship/admin/categories/reorder", { ids });
 }
 
 export async function getAdminModule(id: string): Promise<AdminModuleDetail> {
@@ -213,9 +277,15 @@ export async function deleteModule(id: string): Promise<void> {
   await api.delete(`/api/v1/mentorship/admin/modules/${id}`);
 }
 
-/** Nova ordem das trilhas — a posição de cada id vira o índice na lista. */
-export async function reorderModules(ids: string[]): Promise<void> {
-  await api.patch("/api/v1/mentorship/admin/modules/reorder", { ids });
+/** Nova ordem das trilhas DE UMA categoria — posição = índice na lista. */
+export async function reorderModules(
+  categoryId: string,
+  ids: string[],
+): Promise<void> {
+  await api.patch(
+    `/api/v1/mentorship/admin/categories/${categoryId}/modules/reorder`,
+    { ids },
+  );
 }
 
 export async function createLesson(
@@ -288,6 +358,70 @@ export async function updateMaterial(
 
 export async function deleteMaterial(id: string): Promise<void> {
   await api.delete(`/api/v1/mentorship/admin/materials/${id}`);
+}
+
+// ── Upload (Cloudflare R2) ───────────────────────────────────────────────────
+
+export type UploadKind = "cover" | "material";
+
+export interface UploadsConfig {
+  /** `false` = R2 não configurado no backend: o admin usa só link colado. */
+  enabled: boolean;
+  limits: Record<UploadKind, number>;
+  accept: Record<UploadKind, string[]>;
+}
+
+export const UPLOADS_CONFIG_KEY = ["mentorship-admin-uploads-config"] as const;
+
+export async function getUploadsConfig(): Promise<UploadsConfig> {
+  const { data } = await api.get<UploadsConfig>(
+    "/api/v1/mentorship/admin/uploads/config",
+  );
+  return data;
+}
+
+interface PresignedUpload {
+  uploadUrl: string;
+  headers: Record<string, string>;
+  publicUrl: string;
+}
+
+export interface UploadedFile {
+  /** URL pública — é ela que vai para `coverUrl` / `url` do material. */
+  url: string;
+  sizeBytes: number;
+  name: string;
+}
+
+/**
+ * Sobe um arquivo em dois passos:
+ *  1. a API (admin) valida tipo/tamanho e devolve uma URL de PUT assinada;
+ *  2. o navegador manda o arquivo DIRETO ao R2 — não passa pelo nosso servidor.
+ *
+ * O PUT usa um axios "cru", não a instância `api`: ela anexa o token de sessão,
+ * e ele não pode vazar para o host do R2. Os headers são EXATAMENTE os que o
+ * backend assinou; mudar qualquer um faz o R2 responder 403.
+ */
+export async function uploadMentorshipFile(
+  file: File,
+  kind: UploadKind,
+  onProgress?: (fraction: number) => void,
+  signal?: AbortSignal,
+): Promise<UploadedFile> {
+  const { data: presigned } = await api.post<PresignedUpload>(
+    "/api/v1/mentorship/admin/uploads",
+    { kind, filename: file.name, size: file.size },
+  );
+  await rawAxios.put(presigned.uploadUrl, file, {
+    headers: presigned.headers,
+    signal,
+    // Sem isso o axios serializaria o File; aqui ele vai como corpo binário.
+    transformRequest: [(body: unknown) => body],
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) onProgress(e.loaded / e.total);
+    },
+  });
+  return { url: presigned.publicUrl, sizeBytes: file.size, name: file.name };
 }
 
 // ── Métricas ─────────────────────────────────────────────────────────────────

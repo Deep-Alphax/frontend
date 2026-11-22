@@ -34,6 +34,7 @@ function lesson(i: number): MentorshipLesson {
 
 const MODULE: MentorshipModule = {
   id: "m1",
+  categoryId: "c1",
   slug: "mod",
   title: "Module",
   subtitle: "",

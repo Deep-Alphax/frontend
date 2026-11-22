@@ -1,218 +1,160 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { MentorshipStats } from "@/components/admin/MentorshipStats";
 import toast from "react-hot-toast";
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, FolderPlus, Pencil, Plus, Trash2 } from "lucide-react";
 
-import { MentorshipLessonsPanel } from "@/components/admin/MentorshipLessonsPanel";
-import { Modal } from "@/components/walletReader/Modal";
-import { getApiErrorMessage } from "@/lib/api/client";
 import {
-  ADMIN_MODULES_KEY,
-  adminModuleKey,
-  createModule,
-  deleteModule,
-  listAdminModules,
-  MENTORSHIP_OVERVIEW_KEY,
-  reorderModules,
-  updateModule,
-  type AdminModuleSummary,
-  type MentorshipAccent,
-  type ModulePayload,
-} from "@/lib/api/mentorship";
-import { useSession } from "@/lib/auth/useSession";
-import { cn } from "@/lib/cn";
+  AdminGate,
+  DragHandle,
+  Field,
+  IconButton,
+  inputCls,
+  primaryBtnCls,
+  secondaryBtnCls,
+  slugify,
+  slugifyLoose,
+  smallBtnCls,
+  StatusBadge,
+  textareaCls,
+  VisibilityBadge,
+} from "@/components/admin/MentorshipAdminUi";
+import { MentorshipStats } from "@/components/admin/MentorshipStats";
+import {
+  useDragReorder,
+  type DragHandleProps,
+  type DragItemProps,
+} from "@/components/admin/useDragReorder";
+import { Modal } from "@/components/walletReader/Modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
+import { getAdminErrorMessage } from "@/lib/api/client";
+import {
+  ADMIN_CATEGORIES_KEY,
+  createCategory,
+  createModule,
+  deleteCategory,
+  listAdminCategories,
+  MENTORSHIP_OVERVIEW_KEY,
+  reorderCategories,
+  reorderModules,
+  updateCategory,
+  type AdminCategory,
+  type AdminModuleSummary,
+  type CategoryPayload,
+} from "@/lib/api/mentorship";
+import { cn } from "@/lib/cn";
 
-/** Acentos oferecidos no formulário — espelha o enum do backend. */
-const ACCENTS: { value: MentorshipAccent; label: string }[] = [
-  { value: "PRINCIPAL", label: "Yellow (brand)" },
-  { value: "GREEN", label: "Green" },
-  { value: "AZUL", label: "Cyan" },
-  { value: "VIOLETA", label: "Violet" },
-];
-
-const inputCls =
-  "h-10 w-full rounded-lg border border-gray-6 bg-gray-1 px-3 text-sm text-gray-12 outline-none placeholder:text-gray-11 focus-visible:border-secundaria-11/60";
-
-/** Campo rotulado — mesmo formato do editor de KOLs. */
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-        {label}
-      </span>
-      {children}
-      {hint ? <span className="text-xs text-gray-11">{hint}</span> : null}
-    </label>
-  );
-}
-
-/**
- * Base do slug: sem acento, minúsculo, com hífen no lugar do resto. Não apara a
- * ponta direita — quem faz isso é `slugify`.
- */
-function slugifyLoose(value: string): string {
-  return (
-    value
-      .normalize("NFD")
-      // Tira os diacríticos que o NFD acabou de separar ("ç" → "c", "ã" → "a").
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+/, "")
-      .slice(0, 80)
-  );
-}
-
-/**
- * `"On-chain fundamentals"` → `"on-chain-fundamentals"`.
- *
- * Aplicada quando o campo perde o foco, NUNCA a cada tecla: aparar o hífen
- * final durante a digitação o apagaria no instante em que é digitado, e ninguém
- * conseguiria escrever "my-url" (sairia "myurl").
- */
-function slugify(value: string): string {
-  return slugifyLoose(value).replace(/-+$/, "");
-}
-
-function emptyModule(): ModulePayload {
-  return {
-    slug: "",
-    title: "",
-    subtitle: "",
-    label: "",
-    coverUrl: "",
-    accent: "PRINCIPAL",
-    published: true,
-  };
-}
+/** Rota da página de um módulo no admin. */
+export const adminModuleHref = (id: string) =>
+  `/admin/mentorship/modules/${id}`;
 
 /*
- * Admin da Mentoria: cria, edita, ordena e publica trilhas e aulas.
+ * Admin da Mentoria — a ÁRVORE (Categoria → Módulos).
  *
- * O que muda aqui muda a tela de TODO usuário — por isso o gate de papel é o
- * mesmo do preset de KOLs, e a autoridade real continua sendo o `AdminGuard` do
- * backend (esta checagem é só para não mostrar formulário que vai levar 403).
+ * Esta tela só organiza: cria e ordena categorias, cria e ordena módulos.
+ * Editar um módulo e as aulas dele acontece na PÁGINA do módulo
+ * (`/admin/mentorship/modules/[id]`), não em modal: lá cabe a lista de aulas
+ * inteira, o painel da aula e o caminho de volta (breadcrumb).
  */
 export function MentorshipAdmin() {
-  const qc = useQueryClient();
-  const { profile, isAuthenticated, isLoading: loadingSession } = useSession();
+  return (
+    <AdminGate>
+      <MentorshipTree />
+    </AdminGate>
+  );
+}
 
-  const [editing, setEditing] = useState<AdminModuleSummary | null>(null);
-  const [creating, setCreating] = useState(false);
+function MentorshipTree() {
+  const qc = useQueryClient();
   // Abas em estado local: o admin entra por "Content" quase sempre, e um
   // parâmetro de URL para isto não paga a complexidade.
   const [tab, setTab] = useState<"content" | "usage">("content");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(
+    null,
+  );
+  /** Categoria em que o módulo novo vai nascer; `null` = modal fechado. */
+  const [newModuleIn, setNewModuleIn] = useState<string | null>(null);
 
-  const { data: modules = [], isLoading } = useQuery({
-    queryKey: ADMIN_MODULES_KEY,
-    queryFn: listAdminModules,
-    enabled: profile?.role === "ADMIN",
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ADMIN_CATEGORIES_KEY,
+    queryFn: listAdminCategories,
   });
 
-  /**
-   * Toda escrita invalida TRÊS caches: a listagem do admin, o detalhe da trilha
-   * aberta e a tela pública. Chaves diferentes não se alcançam por prefixo —
-   * esquecer uma delas é o que faz a edição "sumir" ao reabrir o editor.
-   */
-  const afterWrite = (moduleId?: string) => {
-    qc.invalidateQueries({ queryKey: ADMIN_MODULES_KEY });
+  const moduleCount = categories.reduce((n, c) => n + c.modules.length, 0);
+
+  const afterWrite = () => {
+    qc.invalidateQueries({ queryKey: ADMIN_CATEGORIES_KEY });
     qc.invalidateQueries({ queryKey: MENTORSHIP_OVERVIEW_KEY });
-    if (moduleId) qc.invalidateQueries({ queryKey: adminModuleKey(moduleId) });
   };
+  const fail = (fallback: string) => (e: unknown) =>
+    toast.error(getAdminErrorMessage(e, fallback));
 
-  const createMut = useMutation({
-    mutationFn: createModule,
+  const createCategoryMut = useMutation({
+    mutationFn: createCategory,
     onSuccess: () => {
-      setCreating(false);
+      setCreatingCategory(false);
       afterWrite();
-      toast.success("Track created.");
+      toast.success("Category created.");
     },
-    onError: (e) =>
-      toast.error(getApiErrorMessage(e, "Could not create the track.")),
+    onError: fail("Could not create the category."),
   });
 
-  const updateMut = useMutation({
+  const updateCategoryMut = useMutation({
     mutationFn: ({
       id,
       patch,
     }: {
       id: string;
-      patch: Partial<ModulePayload>;
-    }) => updateModule(id, patch),
-    onSuccess: (_data, vars) => {
-      setEditing(null);
-      afterWrite(vars.id);
-      toast.success("Track saved.");
+      patch: Partial<CategoryPayload>;
+    }) => updateCategory(id, patch),
+    onSuccess: () => {
+      setEditingCategory(null);
+      afterWrite();
+      toast.success("Category saved.");
     },
-    onError: (e) =>
-      toast.error(getApiErrorMessage(e, "Could not save the track.")),
+    onError: fail("Could not save the category."),
   });
 
-  const deleteMut = useMutation({
-    mutationFn: deleteModule,
+  const deleteCategoryMut = useMutation({
+    mutationFn: deleteCategory,
     onSuccess: () => {
       afterWrite();
-      toast.success("Track deleted.");
+      toast.success("Category deleted.");
     },
-    onError: (e) =>
-      toast.error(getApiErrorMessage(e, "Could not delete the track.")),
+    onError: fail("Could not delete the category."),
   });
 
-  const reorderMut = useMutation({
-    mutationFn: reorderModules,
-    onSuccess: () => afterWrite(),
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not reorder.")),
+  const reorderCategoriesMut = useMutation({
+    mutationFn: reorderCategories,
+    onSuccess: afterWrite,
+    onError: fail("Could not reorder."),
   });
-
-  /** Troca a trilha de lugar com a vizinha e manda a lista inteira na nova ordem. */
-  const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= modules.length) return;
-    const ids = modules.map((m) => m.id);
-    [ids[index], ids[target]] = [ids[target], ids[index]];
-    reorderMut.mutate(ids);
-  };
-
-  if (loadingSession) {
-    return (
-      <div className="h-40 animate-pulse rounded-lg bg-gray-2" aria-hidden />
-    );
-  }
-  if (!isAuthenticated) {
-    return <p className="text-gray-11">Sign in to continue.</p>;
-  }
-  if (profile?.role !== "ADMIN") {
-    return (
-      <div className="rounded-lg border border-gray-6 bg-gray-2 p-6">
-        <h1 className="text-lg font-semibold text-gray-12">
-          Restricted access
-        </h1>
-        <p className="text-sm text-gray-11">This area is admins only.</p>
-      </div>
-    );
-  }
+  // `mutateAsync`: se falhar, o hook desfaz a ordem otimista sozinho.
+  const categoryOrder = useDragReorder(categories, (ids) =>
+    reorderCategoriesMut.mutateAsync(ids),
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-gray-12">Mentorship</h1>
         <p className="text-sm text-gray-11">
-          Tracks and lessons shown on{" "}
-          <b className="text-gray-12">/mentorship</b>. Unpublished items stay
-          visible here and nowhere else.
+          Content is organized as{" "}
+          <b className="text-gray-12">Category → Module → Lessons</b>. Each
+          category is a section on{" "}
+          <b className="text-gray-12">/mentorship</b>; open a module to manage
+          its lessons. Drafts stay visible here and nowhere else.
         </p>
       </header>
 
@@ -223,12 +165,12 @@ export function MentorshipAdmin() {
             type="button"
             onClick={() => setTab(t)}
             aria-current={tab === t ? "page" : undefined}
-            className={
-              "-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors " +
-              (tab === t
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors",
+              tab === t
                 ? "border-principal-9 text-gray-12"
-                : "border-transparent text-gray-11 hover:text-gray-12")
-            }
+                : "border-transparent text-gray-11 hover:text-gray-12",
+            )}
           >
             {t === "content" ? "Content" : "Usage"}
           </button>
@@ -239,200 +181,349 @@ export function MentorshipAdmin() {
 
       {tab === "content" ? (
         <>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm text-gray-11">
-              {modules.length} {modules.length === 1 ? "track" : "tracks"}
+              {categories.length}{" "}
+              {categories.length === 1 ? "category" : "categories"} ·{" "}
+              {moduleCount} {moduleCount === 1 ? "module" : "modules"}
             </span>
             <button
               type="button"
-              onClick={() => setCreating(true)}
-              className="flex h-10 items-center gap-2 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10"
+              onClick={() => setCreatingCategory(true)}
+              className={primaryBtnCls}
             >
-              <Plus className="size-4" strokeWidth={2.5} />
-              New track
+              <FolderPlus className="size-4" strokeWidth={2.25} />
+              New category
             </button>
           </div>
 
           {isLoading ? (
-            <SkeletonGroup className="flex flex-col gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-lg bg-gray-2" />
+            <SkeletonGroup className="flex flex-col gap-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-44 rounded-xl bg-gray-2" />
               ))}
             </SkeletonGroup>
           ) : null}
 
-          <ul className="flex flex-col gap-2">
-            {modules.map((m, index) => (
-              <li
-                key={m.id}
-                className="flex items-center gap-4 rounded-lg border border-gray-6 bg-gray-2 p-3"
-              >
-                <div className="size-14 shrink-0 overflow-hidden rounded-md bg-gray-3">
-                  {m.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.coverUrl}
-                      alt=""
-                      className="size-full object-cover"
-                    />
-                  ) : null}
-                </div>
-
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-gray-12">
-                      {m.title}
-                    </span>
-                    {m.label ? (
-                      <span className="shrink-0 text-xs text-gray-11">
-                        {m.label}
-                      </span>
-                    ) : null}
-                    {!m.published ? (
-                      <span className="shrink-0 rounded-full border border-gray-6 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-11">
-                        Draft
-                      </span>
-                    ) : null}
-                  </div>
-                  <span className="truncate text-xs text-gray-11">
-                    /{m.slug} · {m.lessonCount}{" "}
-                    {m.lessonCount === 1 ? "lesson" : "lessons"}
-                  </span>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1">
-                  <IconButton
-                    label={`Move ${m.title} up`}
-                    disabled={index === 0 || reorderMut.isPending}
-                    onClick={() => move(index, -1)}
-                  >
-                    <ArrowUp className="size-4" />
-                  </IconButton>
-                  <IconButton
-                    label={`Move ${m.title} down`}
-                    disabled={
-                      index === modules.length - 1 || reorderMut.isPending
-                    }
-                    onClick={() => move(index, 1)}
-                  >
-                    <ArrowDown className="size-4" />
-                  </IconButton>
-                  <IconButton
-                    label={`Edit ${m.title}`}
-                    onClick={() => setEditing(m)}
-                  >
-                    <Pencil className="size-4" />
-                  </IconButton>
-                  <IconButton
-                    label={`Delete ${m.title}`}
-                    danger
-                    disabled={deleteMut.isPending}
-                    onClick={() => {
-                      // Cascata apaga as aulas e o progresso de todo mundo — por
-                      // isso a confirmação diz exatamente o que vai embora.
-                      const ok = window.confirm(
-                        `Delete "${m.title}"? Its ${m.lessonCount} lesson(s) and everyone's progress on them go with it.`,
-                      );
-                      if (ok) deleteMut.mutate(m.id);
-                    }}
-                  >
-                    <Trash2 className="size-4" />
-                  </IconButton>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          {!isLoading && modules.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-gray-6 p-6 text-center text-sm text-gray-11">
-              No tracks yet. Create the first one to fill the mentorship page.
-            </p>
+          {!isLoading && categories.length === 0 ? (
+            <EmptyTree onCreate={() => setCreatingCategory(true)} />
           ) : null}
+
+          <div className="flex flex-col gap-4">
+            {categoryOrder.ordered.map((c) => (
+              <CategoryCard
+                key={c.id}
+                category={c}
+                dragItemProps={categoryOrder.itemProps(c.id)}
+                dragHandleProps={categoryOrder.handleProps(c.id)}
+                dragging={categoryOrder.draggingId === c.id}
+                reordering={reorderCategoriesMut.isPending}
+                onAddModule={() => setNewModuleIn(c.id)}
+                onEdit={() => setEditingCategory(c)}
+                deleting={deleteCategoryMut.isPending}
+                onDelete={() => {
+                  // O backend recusa (409) — avisar antes poupa a ida e diz o
+                  // que fazer em vez de só "não deu".
+                  if (c.modules.length > 0) {
+                    toast.error(
+                      `"${c.title}" still has ${c.modules.length} module(s). Move or delete them first.`,
+                    );
+                    return;
+                  }
+                  if (window.confirm(`Delete the category "${c.title}"?`)) {
+                    deleteCategoryMut.mutate(c.id);
+                  }
+                }}
+                onReordered={afterWrite}
+              />
+            ))}
+          </div>
         </>
       ) : null}
 
-      {/* Os editores ficam FORA da aba: um modal aberto não deve sumir
-          porque a aba mudou por baixo dele. */}
-      <ModuleEditor
-        open={creating}
-        module={null}
-        saving={createMut.isPending}
-        onClose={() => setCreating(false)}
-        onSubmit={(payload) => createMut.mutate(payload)}
+      <CategoryEditor
+        open={creatingCategory}
+        category={null}
+        saving={createCategoryMut.isPending}
+        onClose={() => setCreatingCategory(false)}
+        onSubmit={(payload) => createCategoryMut.mutate(payload)}
       />
-
-      <ModuleEditor
-        open={editing !== null}
-        module={editing}
-        saving={updateMut.isPending}
-        onClose={() => setEditing(null)}
+      <CategoryEditor
+        open={editingCategory !== null}
+        category={editingCategory}
+        saving={updateCategoryMut.isPending}
+        onClose={() => setEditingCategory(null)}
         onSubmit={(patch) =>
-          editing && updateMut.mutate({ id: editing.id, patch })
+          editingCategory &&
+          updateCategoryMut.mutate({ id: editingCategory.id, patch })
         }
+      />
+      <NewModuleModal
+        categoryId={newModuleIn}
+        categories={categories}
+        onClose={() => setNewModuleIn(null)}
+        onCreated={afterWrite}
       />
     </div>
   );
 }
 
-function IconButton({
-  label,
-  onClick,
-  disabled,
-  danger,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-  children: React.ReactNode;
-}) {
+/** Estado vazio que ENSINA a estrutura, em vez de só dizer "nada aqui". */
+function EmptyTree({ onCreate }: { onCreate: () => void }) {
+  const steps = [
+    ["Create a category", "A section on the page, e.g. “Fundamentals”."],
+    ["Add modules to it", "Each module is a card with its own cover."],
+    ["Add lessons to each module", "A YouTube or Vimeo link per lesson."],
+  ] as const;
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        "flex size-8 items-center justify-center rounded-md border border-gray-6 text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 disabled:cursor-not-allowed disabled:opacity-40",
-        danger && "hover:border-vermelho-8 hover:text-vermelho-11",
-      )}
-    >
-      {children}
-    </button>
+    <div className="flex flex-col items-center gap-5 rounded-xl border border-dashed border-gray-6 p-8 text-center">
+      <ol className="grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">
+        {steps.map(([title, text], i) => (
+          <li
+            key={title}
+            className="flex flex-col gap-1 rounded-lg bg-gray-2 p-3"
+          >
+            <span className="text-xs font-semibold text-principal-11">
+              Step {i + 1}
+            </span>
+            <span className="text-sm font-semibold text-gray-12">{title}</span>
+            <span className="text-xs text-gray-11">{text}</span>
+          </li>
+        ))}
+      </ol>
+      <button type="button" onClick={onCreate} className={primaryBtnCls}>
+        <FolderPlus className="size-4" strokeWidth={2.25} />
+        Create the first category
+      </button>
+    </div>
   );
 }
 
-/**
- * Formulário da trilha. Ao editar, a coluna da direita traz as aulas — evita o
- * modal dentro de modal, que é onde esse tipo de tela costuma travar.
- */
-function ModuleEditor({
-  open,
+function CategoryCard({
+  category: c,
+  dragItemProps,
+  dragHandleProps,
+  dragging,
+  reordering,
+  deleting,
+  onAddModule,
+  onEdit,
+  onDelete,
+  onReordered,
+}: {
+  category: AdminCategory;
+  dragItemProps: DragItemProps;
+  dragHandleProps: DragHandleProps;
+  dragging: boolean;
+  reordering: boolean;
+  deleting: boolean;
+  onAddModule: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onReordered: () => void;
+}) {
+  const reorderModulesMut = useMutation({
+    mutationFn: (ids: string[]) => reorderModules(c.id, ids),
+    onSuccess: onReordered,
+    onError: (e) => toast.error(getAdminErrorMessage(e, "Could not reorder.")),
+  });
+  const moduleOrder = useDragReorder(c.modules, (ids) =>
+    reorderModulesMut.mutateAsync(ids),
+  );
+
+  return (
+    <section
+      aria-label={`Category ${c.title}`}
+      {...dragItemProps}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border border-gray-6 bg-gray-1 p-3 transition-opacity",
+        dragging && "opacity-50",
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <DragHandle
+          label={`category ${c.title}`}
+          disabled={reordering}
+          {...dragHandleProps}
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="truncate text-base font-semibold text-gray-12">
+              {c.title}
+            </h2>
+            {!c.published ? (
+              <StatusBadge title="Users see none of its modules.">
+                Draft
+              </StatusBadge>
+            ) : null}
+          </div>
+          <span className="truncate text-xs text-gray-11">
+            {c.modules.length} {c.modules.length === 1 ? "module" : "modules"}
+            {c.description ? ` · ${c.description}` : ""}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button type="button" onClick={onAddModule} className={smallBtnCls}>
+            <Plus className="size-3.5" strokeWidth={2.5} />
+            Module
+          </button>
+          <IconButton label={`Edit category ${c.title}`} onClick={onEdit}>
+            <Pencil className="size-4" />
+          </IconButton>
+          <IconButton
+            label={`Delete category ${c.title}`}
+            danger
+            disabled={deleting}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-4" />
+          </IconButton>
+        </div>
+      </div>
+
+      {c.modules.length === 0 ? (
+        <button
+          type="button"
+          onClick={onAddModule}
+          className="rounded-lg border border-dashed border-gray-6 p-4 text-center text-xs text-gray-11 transition-colors hover:border-gray-8 hover:text-gray-12"
+        >
+          No modules in this category yet. <b>Add the first module</b>
+        </button>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {moduleOrder.ordered.map((m) => (
+            <ModuleRowItem
+              key={m.id}
+              module={m}
+              categoryPublished={c.published}
+              itemProps={moduleOrder.itemProps(m.id)}
+              handleProps={moduleOrder.handleProps(m.id)}
+              dragging={moduleOrder.draggingId === m.id}
+              listDragging={moduleOrder.draggingId !== null}
+              reordering={reorderModulesMut.isPending}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function ModuleRowItem({
   module: m,
+  categoryPublished,
+  itemProps,
+  handleProps,
+  dragging,
+  listDragging,
+  reordering,
+}: {
+  module: AdminModuleSummary;
+  categoryPublished: boolean;
+  /** Algum módulo DESTA categoria está sendo arrastado. */
+  listDragging: boolean;
+  itemProps: DragItemProps;
+  handleProps: DragHandleProps;
+  dragging: boolean;
+  reordering: boolean;
+}) {
+  return (
+    <li
+      {...itemProps}
+      // Arrastar um módulo não pode "vazar" para a categoria (que também é
+      // arrastável): sem isto o dragstart sobe e a seção inteira começa a mover.
+      onDragStart={(e) => {
+        e.stopPropagation();
+        itemProps.onDragStart(e);
+      }}
+      onDragOver={(e) => {
+        // Só "segura" o evento quando o arrasto é de um MÓDULO desta lista;
+        // arrastando uma categoria por cima, ele tem que chegar à seção.
+        if (!listDragging) return;
+        e.stopPropagation();
+        itemProps.onDragOver(e);
+      }}
+      onDragEnd={(e) => {
+        e.stopPropagation();
+        itemProps.onDragEnd(e);
+      }}
+      className={cn(
+        "flex items-center gap-2 rounded-lg border border-gray-6 bg-gray-2 p-2 transition-opacity",
+        dragging && "opacity-50",
+      )}
+    >
+      <DragHandle label={m.title} disabled={reordering} {...handleProps} />
+      <Link
+        href={adminModuleHref(m.id)}
+        draggable={false}
+        className="group flex min-w-0 flex-1 items-center gap-3 rounded-md p-1 outline-none focus-visible:ring-2 focus-visible:ring-secundaria-11/40"
+      >
+        <div className="size-12 shrink-0 overflow-hidden rounded-md bg-gray-3">
+          {m.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={m.coverUrl}
+              alt=""
+              draggable={false}
+              className="size-full object-cover"
+            />
+          ) : null}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="truncate text-sm font-semibold text-gray-12 group-hover:underline">
+              {m.title}
+            </span>
+            {m.label ? (
+              <span className="shrink-0 text-xs text-gray-11">{m.label}</span>
+            ) : null}
+            <VisibilityBadge
+              modulePublished={m.published}
+              categoryPublished={categoryPublished}
+            />
+            {m.lessonCount === 0 ? (
+              <StatusBadge tone="warning">No lessons</StatusBadge>
+            ) : null}
+          </div>
+          <span className="truncate text-xs text-gray-11">
+            /{m.slug} · {m.lessonCount}{" "}
+            {m.lessonCount === 1 ? "lesson" : "lessons"}
+          </span>
+        </div>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-gray-11 group-hover:text-gray-12">
+          Manage lessons
+          <ChevronRight className="size-4" />
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+// ── Categoria (modal pequeno: são três campos) ────────────────────────────────
+
+function CategoryEditor({
+  open,
+  category: c,
   saving,
   onClose,
   onSubmit,
 }: {
   open: boolean;
-  module: AdminModuleSummary | null;
+  category: AdminCategory | null;
   saving: boolean;
   onClose: () => void;
-  onSubmit: (payload: ModulePayload) => void;
+  onSubmit: (payload: CategoryPayload) => void;
 }) {
-  // `key` remonta o formulário quando a trilha muda: sem isso o rascunho do
-  // `useState` sobreviveria à troca de trilha e salvaria o texto da anterior.
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={m ? `Edit — ${m.title}` : "New track"}
-      className={m ? "max-w-5xl" : "max-w-lg"}
+      title={c ? `Edit category — ${c.title}` : "New category"}
+      className="max-w-lg"
     >
-      <ModuleForm
-        key={m?.id ?? "new"}
-        module={m}
+      <CategoryForm
+        key={c?.id ?? "new"}
+        category={c}
         saving={saving}
         onClose={onClose}
         onSubmit={onSubmit}
@@ -441,163 +532,236 @@ function ModuleEditor({
   );
 }
 
-function ModuleForm({
-  module: m,
+function CategoryForm({
+  category: c,
   saving,
   onClose,
   onSubmit,
 }: {
-  module: AdminModuleSummary | null;
+  category: AdminCategory | null;
   saving: boolean;
   onClose: () => void;
-  onSubmit: (payload: ModulePayload) => void;
+  onSubmit: (payload: CategoryPayload) => void;
 }) {
-  const [draft, setDraft] = useState<ModulePayload>(() =>
-    m
-      ? {
-          slug: m.slug,
-          title: m.title,
-          subtitle: m.subtitle,
-          label: m.label,
-          coverUrl: m.coverUrl,
-          accent: m.accent,
-          published: m.published,
-        }
-      : emptyModule(),
-  );
-  // O slug segue o título só até alguém digitá-lo à mão — depois disso, mexer
-  // no título não pode mais reescrever uma URL possivelmente já compartilhada.
-  const [slugTouched, setSlugTouched] = useState(Boolean(m));
-
-  const set = <K extends keyof ModulePayload>(k: K, v: ModulePayload[K]) =>
-    setDraft((p) => ({ ...p, [k]: v }));
-
-  const canSave = draft.title.trim().length > 0 && draft.slug.trim().length > 0;
+  const [draft, setDraft] = useState<CategoryPayload>(() => ({
+    title: c?.title ?? "",
+    description: c?.description ?? "",
+    published: c?.published ?? true,
+  }));
+  const canSave = draft.title.trim().length > 0;
 
   return (
-    <div className={cn("grid gap-6 p-4", m && "lg:grid-cols-2")}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          // Normaliza o slug também aqui: submeter por Enter não passa pelo blur.
-          if (canSave) {
-            onSubmit({
-              ...draft,
-              title: draft.title.trim(),
-              slug: slugify(draft.slug),
-            });
+    <form
+      className="flex flex-col gap-4 p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (canSave) {
+          onSubmit({
+            ...draft,
+            title: draft.title.trim(),
+            description: draft.description.trim(),
+          });
+        }
+      }}
+    >
+      <Field label="Title" hint="Section title on /mentorship.">
+        <input
+          className={inputCls}
+          value={draft.title}
+          onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))}
+          placeholder="Fundamentals"
+          autoFocus
+        />
+      </Field>
+
+      <Field label="Description" hint="Optional. One line under the title.">
+        <textarea
+          className={textareaCls}
+          value={draft.description}
+          onChange={(e) =>
+            setDraft((p) => ({ ...p, description: e.target.value }))
           }
-        }}
-      >
-        <Field label="Title">
-          <input
-            className={inputCls}
-            value={draft.title}
-            onChange={(e) => {
-              const title = e.target.value;
-              setDraft((p) => ({
-                ...p,
-                title,
-                slug: slugTouched ? p.slug : slugify(title),
-              }));
-            }}
-            placeholder="On-chain fundamentals"
-          />
-        </Field>
+          placeholder="Start here if you are new to on-chain trading."
+        />
+      </Field>
 
-        <Field
-          label="Slug"
-          hint="Used in the URL. Changing it breaks old links."
+      <label className="flex items-start gap-2 text-sm text-gray-12">
+        <input
+          type="checkbox"
+          checked={draft.published}
+          onChange={(e) =>
+            setDraft((p) => ({ ...p, published: e.target.checked }))
+          }
+          className="mt-0.5 size-4 accent-principal-9"
+        />
+        <span>
+          Published
+          <span className="block text-xs text-gray-11">
+            When off, every module in it is hidden from users.
+          </span>
+        </span>
+      </label>
+
+      <div className="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onClick={onClose} className={secondaryBtnCls}>
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!canSave || saving}
+          className={primaryBtnCls}
         >
-          <input
-            className={inputCls}
-            value={draft.slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              set("slug", slugifyLoose(e.target.value));
-            }}
-            onBlur={(e) => set("slug", slugify(e.target.value))}
-            placeholder="on-chain-fundamentals"
-          />
-        </Field>
+          {saving ? "Saving…" : "Save category"}
+        </button>
+      </div>
+    </form>
+  );
+}
 
-        <Field
-          label="Label"
-          hint='Short badge next to the title, e.g. "Module 1".'
-        >
-          <input
-            className={inputCls}
-            value={draft.label}
-            onChange={(e) => set("label", e.target.value)}
-            placeholder="Module 1"
-          />
-        </Field>
+// ── Módulo novo: só o essencial, depois vai para a página dele ───────────────
 
-        <Field label="Subtitle">
-          <textarea
-            className={cn(inputCls, "h-20 resize-none py-2")}
-            value={draft.subtitle}
-            onChange={(e) => set("subtitle", e.target.value)}
-            placeholder="What this track covers, in one sentence."
-          />
-        </Field>
+function NewModuleModal({
+  categoryId,
+  categories,
+  onClose,
+  onCreated,
+}: {
+  categoryId: string | null;
+  categories: AdminCategory[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  return (
+    <Modal
+      open={categoryId !== null}
+      onClose={onClose}
+      title="New module"
+      className="max-w-lg"
+    >
+      {categoryId !== null ? (
+        <NewModuleForm
+          key={categoryId}
+          defaultCategoryId={categoryId}
+          categories={categories}
+          onClose={onClose}
+          onCreated={onCreated}
+        />
+      ) : null}
+    </Modal>
+  );
+}
 
-        <Field
-          label="Cover URL"
-          hint="Full https URL or a path like /mentorship/module-market.webp"
-        >
-          <input
-            className={inputCls}
-            value={draft.coverUrl}
-            onChange={(e) => set("coverUrl", e.target.value)}
-            placeholder="/mentorship/module-market.webp"
-          />
-        </Field>
+function NewModuleForm({
+  defaultCategoryId,
+  categories,
+  onClose,
+  onCreated,
+}: {
+  defaultCategoryId: string;
+  categories: AdminCategory[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const router = useRouter();
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  // O slug segue o título só até alguém digitá-lo à mão.
+  const [slugTouched, setSlugTouched] = useState(false);
 
-        <Field label="Progress colour">
-          <select
-            className={inputCls}
-            value={draft.accent}
-            onChange={(e) => set("accent", e.target.value as MentorshipAccent)}
-          >
-            {ACCENTS.map((a) => (
-              <option key={a.value} value={a.value}>
-                {a.label}
-              </option>
+  const createMut = useMutation({
+    mutationFn: () =>
+      createModule({
+        categoryId,
+        title: title.trim(),
+        slug: slugify(slug),
+        subtitle: "",
+        label: "",
+        coverUrl: "",
+        accent: "PRINCIPAL",
+        // Nasce RASCUNHO: um módulo sem aulas publicado viraria um card vazio
+        // na tela de todo usuário até alguém terminar o cadastro.
+        published: false,
+      }),
+    onSuccess: (created) => {
+      onCreated();
+      toast.success("Module created. Now add its lessons.");
+      onClose();
+      router.push(adminModuleHref(created.id));
+    },
+    onError: (e) =>
+      toast.error(getAdminErrorMessage(e, "Could not create the module.")),
+  });
+
+  const canSave =
+    title.trim().length > 0 && slugify(slug).length > 0 && categoryId !== "";
+
+  return (
+    <form
+      className="flex flex-col gap-4 p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (canSave && !createMut.isPending) createMut.mutate();
+      }}
+    >
+      <Field label="Category">
+        <Select value={categoryId} onValueChange={setCategoryId}>
+          <SelectTrigger aria-label="Category">
+            <SelectValue placeholder="Choose a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.published ? c.title : `${c.title} (draft)`}
+              </SelectItem>
             ))}
-          </select>
-        </Field>
+          </SelectContent>
+        </Select>
+      </Field>
 
-        <label className="flex items-center gap-2 text-sm text-gray-12">
-          <input
-            type="checkbox"
-            checked={draft.published}
-            onChange={(e) => set("published", e.target.checked)}
-            className="size-4 accent-principal-9"
-          />
-          Published (visible to users)
-        </label>
+      <Field label="Title">
+        <input
+          className={inputCls}
+          value={title}
+          autoFocus
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (!slugTouched) setSlug(slugify(e.target.value));
+          }}
+          placeholder="On-chain fundamentals"
+        />
+      </Field>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-10 rounded-lg border border-gray-6 px-4 text-sm font-semibold text-gray-12 transition-colors hover:bg-gray-3"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!canSave || saving}
-            className="h-10 rounded-lg bg-principal-9 px-4 text-sm font-semibold text-gray-1 transition-colors hover:bg-principal-10 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving ? "Saving…" : "Save track"}
-          </button>
-        </div>
-      </form>
+      <Field label="Slug" hint={`URL: /mentorship/${slugify(slug) || "…"}`}>
+        <input
+          className={inputCls}
+          value={slug}
+          onChange={(e) => {
+            setSlugTouched(true);
+            setSlug(slugifyLoose(e.target.value));
+          }}
+          onBlur={(e) => setSlug(slugify(e.target.value))}
+          placeholder="on-chain-fundamentals"
+        />
+      </Field>
 
-      {m ? <MentorshipLessonsPanel moduleId={m.id} /> : null}
-    </div>
+      <p className="rounded-lg bg-gray-2 p-3 text-xs text-gray-11">
+        The module starts as a <b className="text-gray-12">draft</b>. You will
+        add the cover and lessons on the next screen, then publish it.
+      </p>
+
+      <div className="flex items-center justify-end gap-2">
+        <button type="button" onClick={onClose} className={secondaryBtnCls}>
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!canSave || createMut.isPending}
+          className={primaryBtnCls}
+        >
+          {createMut.isPending ? "Creating…" : "Create and add lessons"}
+        </button>
+      </div>
+    </form>
   );
 }

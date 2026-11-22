@@ -45,9 +45,11 @@ function overview(
   over: Partial<api.MentorshipModule> = {},
 ): MentorshipOverview {
   return {
+    categories: [],
     modules: [
       {
         id: "m1",
+        categoryId: "c1",
         slug: "on-chain-fundamentals",
         title: "On-chain fundamentals",
         subtitle: "Wallet, RPC, fee, gas, tip and slippage.",

@@ -79,8 +79,32 @@ function appOrigins(): string {
   }
 }
 
+/**
+ * Origem https de uma variável opcional; vazio se ausente ou inválida. Nunca
+ * devolve `https:` genérico: um valor torto não pode abrir a CSP inteira.
+ */
+function optionalHttpsOrigin(raw: string | undefined): string {
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.origin : "";
+  } catch {
+    return "";
+  }
+}
+
 function buildContentSecurityPolicy(isDev: boolean): string {
   const api = apiOrigin();
+
+  // Arquivos da mentoria no Cloudflare R2 (ver DEPLOY.md do backend):
+  //   - media: domínio PÚBLICO de leitura (capas no <img>);
+  //   - r2Upload: endpoint S3 da conta, para onde o admin faz o PUT assinado.
+  //     Origem da NOSSA conta, não `*.r2.cloudflarestorage.com`: o curinga
+  //     deixaria um script injetado mandar dados para o bucket de qualquer um.
+  const media = optionalHttpsOrigin(process.env.NEXT_PUBLIC_MEDIA_BASE_URL);
+  const r2Upload = optionalHttpsOrigin(
+    process.env.NEXT_PUBLIC_R2_UPLOAD_ORIGIN,
+  );
   // WebSocket (socket.io de tempo real) fala com a MESMA origin da API, no esquema
   // ws/wss. connect-src casa por esquema, então o https da API não cobre o wss —
   // liberamos explicitamente (em dev o `ws: wss:` abaixo já cobre localhost).
@@ -123,10 +147,10 @@ function buildContentSecurityPolicy(isDev: boolean): string {
     // Fontes são self-hosted pelo `next/font` — nada de fonts.gstatic.com.
     `font-src 'self' data:`,
     // Avatar re-hospedado (nossa API) + fallback Google + data/blob (assets inline) + texturas do Spline.
-    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${splineImg} ${tokenImg}`,
+    `img-src 'self' data: blob: ${api} ${app} https://*.googleusercontent.com ${discordMedia} ${splineImg} ${tokenImg} ${media}`,
     // Vídeo/GIF (gifv) dos embeds do Discord — sem media-src cairia no default-src.
     `media-src 'self' data: blob: ${discordMedia}`,
-    `connect-src 'self' ${api} ${apiWs} ${turnstile} ${splineConnect} ${isDev ? "ws: wss:" : ""}`,
+    `connect-src 'self' ${api} ${apiWs} ${turnstile} ${splineConnect} ${r2Upload} ${isDev ? "ws: wss:" : ""}`,
     `frame-src ${turnstile} ${videoFrames}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,
