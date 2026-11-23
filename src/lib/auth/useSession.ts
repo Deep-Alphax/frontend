@@ -38,6 +38,15 @@ export function useSession(): Session {
     gcTime: 10 * 60_000,
   });
 
+  // Até hidratar, devolve EXATAMENTE o que o servidor viu (sem sessão). Só
+  // desligar o `enabled` não basta: um trecho que hidrata DEPOIS (dentro de um
+  // <Suspense>, como /mentorship e /copy-trade) encontra o perfil já no cache,
+  // trazido por outro componente, e renderizaria "logado" contra o HTML
+  // "deslogado" do servidor → hydration error (E2E de 22/11).
+  if (!isClient) {
+    return { profile: undefined, isAuthenticated: false, isLoading: false };
+  }
+
   return {
     profile: query.data,
     isAuthenticated: query.isSuccess && !!query.data,

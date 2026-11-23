@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FlashIcon } from "@/components/icons/hugeicons";
 import { usePlan } from "@/lib/billing/usePlan";
+import { useIsClient } from "@/lib/useIsClient";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 /**
@@ -18,7 +19,15 @@ import { Skeleton } from "@/components/ui/Skeleton";
  */
 export function BecomeProButton() {
   const { isPro, isLoading } = usePlan();
-  if (isLoading) return <Skeleton className="h-9 w-[132px] rounded-lg" />;
+  // No servidor não há sessão (o token vive no navegador): o plano sai "FREE"
+  // e ele renderizaria o link, enquanto o cliente logado começa carregando
+  // (skeleton). HTML diferente = hydration error e a página inteira refeita no
+  // cliente (visto no E2E de 22/11 em /mentorship e /copy-trade). Até hidratar,
+  // os dois lados mostram o MESMO skeleton.
+  const isClient = useIsClient();
+  if (!isClient || isLoading) {
+    return <Skeleton className="h-9 w-[132px] rounded-lg" />;
+  }
   if (isPro) return null;
 
   return (

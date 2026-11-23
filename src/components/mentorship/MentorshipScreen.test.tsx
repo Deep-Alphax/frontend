@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { renderWithQuery } from "@/test/queryWrapper";
 import { MentorshipScreen } from "./MentorshipScreen";
@@ -17,8 +18,11 @@ vi.mock("@/lib/api/mentorship", async (importOriginal) => {
 vi.mock("@/components/home/Topbar", () => ({ Topbar: () => <header /> }));
 vi.mock("@/components/home/Footer", () => ({ Footer: () => <footer /> }));
 
+// A aba de categoria vem de `?category=`. Cada teste define a query inicial.
+let searchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+  useSearchParams: () => searchParams,
 }));
 
 function lesson(
@@ -90,8 +94,37 @@ const getOverview = vi.mocked(api.getMentorshipOverview);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  searchParams = new URLSearchParams();
+  window.history.replaceState(null, "", "/mentorship");
   getOverview.mockResolvedValue(overview());
 });
+
+/** Duas categorias: "Trading" (m2) vem ANTES de "Fundamentals" (m1). */
+function twoCategories(): MentorshipOverview {
+  const data = overview();
+  data.modules.push({
+    ...data.modules[0],
+    id: "m2",
+    categoryId: "c2",
+    slug: "reading-a-token",
+    title: "Reading a token",
+    lessonCount: 4,
+    completedCount: 0,
+    lessons: [
+      lesson({
+        id: "l9",
+        title: "Six numbers in four seconds",
+        moduleId: "m2",
+        moduleTitle: "Reading a token",
+      }),
+    ],
+  });
+  data.categories = [
+    { id: "c2", title: "Trading", description: "", moduleIds: ["m2"] },
+    ...data.categories,
+  ];
+  return data;
+}
 
 describe("MentorshipScreen", () => {
   it("busca a visão geral UMA vez e monta as três seções", async () => {
@@ -108,35 +141,77 @@ describe("MentorshipScreen", () => {
     expect(getOverview).toHaveBeenCalledTimes(1);
   });
 
-  it("agrupa os módulos numa seção por categoria, na ordem do servidor", async () => {
-    const data = overview();
-    const second = {
-      ...data.modules[0],
-      id: "m2",
-      categoryId: "c2",
-      slug: "reading-a-token",
-      title: "Reading a token",
-    };
-    data.modules.push(second);
-    data.categories = [
-      { id: "c2", title: "Trading", description: "", moduleIds: ["m2"] },
-      ...data.categories,
-    ];
-    getOverview.mockResolvedValue(data);
-
+  it("abas: All + uma por categoria, na ordem do servidor, com nº de módulos", async () => {
+    getOverview.mockResolvedValue(twoCategories());
     renderWithQuery(<MentorshipScreen />);
 
-    const trading = await screen.findByRole("group", { name: "Trading" });
-    const fundamentals = screen.getByRole("group", { name: "Fundamentals" });
+    const tabs = await screen.findAllByRole("tab");
+    expect(tabs.map((t) => t.textContent)).toEqual([
+      "All2",
+      "Trading1",
+      "Fundamentals1",
+    ]);
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("All: cada categoria com cabeçalho e grade, SEM as esteiras de aulas", async () => {
+    getOverview.mockResolvedValue(twoCategories());
+    renderWithQuery(<MentorshipScreen />);
+
+    const trading = await screen.findByRole("region", { name: "Trading" });
+    const fundamentals = screen.getByRole("region", { name: "Fundamentals" });
     expect(trading).toHaveTextContent("Reading a token");
     expect(trading).not.toHaveTextContent("On-chain fundamentals");
-    expect(fundamentals).toHaveTextContent("On-chain fundamentals");
     expect(fundamentals).toHaveTextContent("Start here.");
-    // "Trading" vem antes: a ordem das seções é a do servidor.
+    // Progresso da categoria: 1 de 2 aulas = 50%.
     expect(
-      trading.compareDocumentPosition(fundamentals) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+      within(fundamentals).getByRole("progressbar", { name: "Fundamentals progress" }),
+    ).toHaveAttribute("aria-valuenow", "50");
+    // Esteira (lista de aulas) só aparece dentro da aba da categoria.
+    expect(screen.queryByText("Six numbers in four seconds")).not.toBeInTheDocument();
+  });
+
+  it("clicar na aba mostra SÓ aquela categoria, com as esteiras, e grava na URL", async () => {
+    const user = userEvent.setup();
+    getOverview.mockResolvedValue(twoCategories());
+    renderWithQuery(<MentorshipScreen />);
+
+    await user.click(await screen.findByRole("tab", { name: /Trading/ }));
+
+    expect(screen.getByRole("tab", { name: /Trading/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toHaveTextContent("Six numbers in four seconds");
+    expect(panel).not.toHaveTextContent("On-chain fundamentals");
+    expect(window.location.search).toBe("?category=trading");
+  });
+
+  it("abre direto na aba que está na URL; slug desconhecido cai em All", async () => {
+    getOverview.mockResolvedValue(twoCategories());
+    searchParams = new URLSearchParams("category=fundamentals");
+    const { unmount } = renderWithQuery(<MentorshipScreen />);
+    expect(
+      await screen.findByRole("tab", { name: /Fundamentals/ }),
+    ).toHaveAttribute("aria-selected", "true");
+    unmount();
+
+    searchParams = new URLSearchParams("category=renamed-long-ago");
+    renderWithQuery(<MentorshipScreen />);
+    expect(await screen.findByRole("tab", { name: /All/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("uma categoria só: sem abas, categoria direto com as esteiras", async () => {
+    renderWithQuery(<MentorshipScreen />);
+
+    await screen.findByRole("region", { name: "Fundamentals" });
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    // Esteira presente: o título da trilha aparece no card E no cabeçalho dela.
+    expect(screen.getAllByText("On-chain fundamentals").length).toBeGreaterThan(1);
   });
 
   it("sem categorias na resposta (backend antigo), mostra a grade sem título", async () => {
@@ -148,7 +223,7 @@ describe("MentorshipScreen", () => {
     renderWithQuery(<MentorshipScreen />);
 
     await screen.findByText("Tracks and modules");
-    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
     expect(screen.getAllByText("On-chain fundamentals").length).toBeGreaterThan(
       1,
     );
