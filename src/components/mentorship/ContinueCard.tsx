@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PlayIcon } from "@/components/mentorship/icons";
 import { TEXT_TRIM } from "@/components/plans/textTrim";
 import type { MentorshipLesson } from "@/lib/api/mentorship";
@@ -13,16 +15,22 @@ import { cn } from "@/lib/cn";
  */
 export function ContinueCard({
   lesson,
-  onOpen,
+  href,
 }: {
   lesson: MentorshipLesson & { remainingSec: number };
-  onOpen?: (lesson: MentorshipLesson) => void;
+  /**
+   * Página da aula (`/mentorship/<slug-do-módulo>/<id-da-aula>`). Link de
+   * verdade, não botão: antes era um `<button>` com `onOpen` que a tela nunca
+   * passava, e o card não levava a lugar nenhum. Link também abre em nova aba
+   * e faz prefetch.
+   */
+  href: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen?.(lesson)}
-      className="group flex w-full items-stretch overflow-hidden rounded-[18px] border border-gray-6 bg-gray-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-secundaria-11/60"
+    <Link
+      href={href}
+      aria-label={`Continue: ${lesson.title}`}
+      className="group flex w-full items-stretch overflow-hidden rounded-[18px] border border-gray-6 bg-gray-2 text-left outline-none transition-colors hover:border-gray-8 focus-visible:ring-2 focus-visible:ring-secundaria-11/60"
     >
       <div className="relative hidden h-[195px] w-[372px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-6 sm:flex">
         {lesson.coverUrl ? (
@@ -91,6 +99,6 @@ export function ContinueCard({
           </span>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

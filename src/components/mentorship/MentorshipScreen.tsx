@@ -97,7 +97,10 @@ export function MentorshipScreen() {
                   >
                     Continue where you left off
                   </h2>
-                  <ContinueCard lesson={data.continueLesson} />
+                  <ContinueCard
+                    lesson={data.continueLesson}
+                    href={lessonHref(data, data.continueLesson)}
+                  />
                 </section>
               ) : null}
 
@@ -337,6 +340,18 @@ interface Section {
   title: string;
   description: string;
   modules: MentorshipModule[];
+}
+
+/**
+ * URL da página da aula: o slug vem do MÓDULO dono dela (a aula só traz o id
+ * do módulo). Sem o módulo na resposta, cai na lista da mentoria.
+ */
+export function lessonHref(
+  data: MentorshipOverview,
+  lesson: { id: string; moduleId: string },
+): string {
+  const owner = data.modules.find((m) => m.id === lesson.moduleId);
+  return owner ? `/mentorship/${owner.slug}/${lesson.id}` : "/mentorship";
 }
 
 /** `"On-chain & Risk"` → `"on-chain-risk"` (vai para `?category=`). */

@@ -141,6 +141,16 @@ describe("MentorshipScreen", () => {
     expect(getOverview).toHaveBeenCalledTimes(1);
   });
 
+  it("'Continue where you left off' é um link para a página da aula", async () => {
+    renderWithQuery(<MentorshipScreen />);
+
+    const link = await screen.findByRole("link", {
+      name: "Continue: Fee, gas and priority tip",
+    });
+    // Slug do MÓDULO dono da aula + id da aula (mesma rota das esteiras).
+    expect(link).toHaveAttribute("href", "/mentorship/on-chain-fundamentals/l2");
+  });
+
   it("abas: All + uma por categoria, na ordem do servidor, com nº de módulos", async () => {
     getOverview.mockResolvedValue(twoCategories());
     renderWithQuery(<MentorshipScreen />);
