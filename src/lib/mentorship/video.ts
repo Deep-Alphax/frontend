@@ -67,7 +67,22 @@ function vimeoId(url: URL): string | null {
   return id && VIMEO_ID.test(id) ? id : null;
 }
 
-export function toVideoEmbed(videoUrl: string): VideoEmbed | null {
+/**
+ * Opções do embed para o player CONTROLADO (página da aula):
+ * - `startSec`: retoma de onde o aluno parou (inteiro, segundos);
+ * - `origin`: liga a API JS do player. No YouTube vira `enablejsapi=1` +
+ *   `origin` (o player só conversa por postMessage com essa origem); no Vimeo
+ *   a API já vem ligada no embed.
+ */
+export interface EmbedOptions {
+  startSec?: number;
+  origin?: string;
+}
+
+export function toVideoEmbed(
+  videoUrl: string,
+  opts: EmbedOptions = {},
+): VideoEmbed | null {
   const raw = videoUrl?.trim();
   if (!raw) return null;
 
@@ -80,21 +95,34 @@ export function toVideoEmbed(videoUrl: string): VideoEmbed | null {
   // Só https: `http:` num iframe seria mixed content e o browser bloquearia.
   if (url.protocol !== "https:") return null;
 
+  const start =
+    opts.startSec && opts.startSec > 0 ? Math.floor(opts.startSec) : 0;
+
   if (YOUTUBE_HOSTS.has(url.hostname)) {
     const id = youtubeId(url);
     if (!id) return null;
     // `-nocookie` não planta o cookie de rastreio antes do play.
     // `rel=0` evita sugerir vídeo de terceiro no fim da aula.
+    const params = new URLSearchParams({ rel: "0" });
+    if (opts.origin) {
+      params.set("enablejsapi", "1");
+      params.set("origin", opts.origin);
+    }
+    if (start) params.set("start", String(start));
     return {
       provider: "youtube",
-      src: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+      src: `https://www.youtube-nocookie.com/embed/${id}?${params}`,
     };
   }
 
   if (VIMEO_HOSTS.has(url.hostname)) {
     const id = vimeoId(url);
     if (!id) return null;
-    return { provider: "vimeo", src: `https://player.vimeo.com/video/${id}` };
+    // Vimeo retoma pelo fragmento `#t=123s`.
+    return {
+      provider: "vimeo",
+      src: `https://player.vimeo.com/video/${id}${start ? `#t=${start}s` : ""}`,
+    };
   }
 
   return null;

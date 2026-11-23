@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { CircleAlert, CircleCheck, Trash2, X } from "lucide-react";
@@ -25,7 +25,8 @@ import {
   type MaterialPayload,
 } from "@/lib/api/mentorship";
 import { formatClock, parseClock } from "@/lib/mentorship/format";
-import { toVideoEmbed } from "@/lib/mentorship/video";
+import { attachPlayer } from "@/lib/mentorship/player";
+import { toVideoEmbed, type VideoProvider } from "@/lib/mentorship/video";
 
 /*
  * Painel lateral de UMA aula (criar ou editar), aberto a partir da página do
@@ -60,6 +61,62 @@ function initialDraft(lesson: AdminLesson | null): Draft {
 
 const PROVIDER_LABEL = { youtube: "YouTube", vimeo: "Vimeo" } as const;
 
+/**
+ * Prévia do vídeo no painel. Liga a API do player só para LER a duração
+ * (o admin não precisa mais digitar mm:ss). Falha da API = sem auto-duração,
+ * a prévia continua.
+ */
+function VideoPreview({
+  src,
+  provider,
+  onDuration,
+}: {
+  src: string;
+  provider: VideoProvider;
+  onDuration: (sec: number) => void;
+}) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  const onDurationRef = useRef(onDuration);
+  useEffect(() => {
+    onDurationRef.current = onDuration;
+  }, [onDuration]);
+
+  useEffect(() => {
+    const iframe = ref.current;
+    if (!iframe) return;
+    let disposed = false;
+    let handle: { destroy: () => void } | null = null;
+    attachPlayer(iframe, provider, {
+      onReady: (d) => {
+        // Para baixo, como o próprio player mostra (213,6 s → 3:33).
+        if (!disposed && d > 0) onDurationRef.current(Math.floor(d));
+      },
+    })
+      .then((h) => {
+        if (disposed) h.destroy();
+        else handle = h;
+      })
+      .catch(() => {});
+    return () => {
+      disposed = true;
+      handle?.destroy();
+    };
+  }, [provider]);
+
+  return (
+    <div className="aspect-video w-full overflow-hidden rounded-lg border border-gray-6 bg-black">
+      <iframe
+        ref={ref}
+        src={src}
+        title="Video preview"
+        className="size-full"
+        allow="encrypted-media; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 export function LessonDrawer({
   moduleId,
   lesson,
@@ -88,8 +145,15 @@ export function LessonDrawer({
       (k) => initial[k] !== draft[k],
     );
 
+  const [durationFromVideo, setDurationFromVideo] = useState(false);
+
   const video = draft.videoUrl.trim();
-  const embed = video ? toVideoEmbed(video) : null;
+  // `origin` liga a API JS do player na prévia (lê a duração do vídeo).
+  const embed = video
+    ? toVideoEmbed(video, {
+        origin: typeof window !== "undefined" ? window.location.origin : undefined,
+      })
+    : null;
   const videoInvalid = video !== "" && embed === null;
 
   // `0` = sem duração (aceito); `null` = digitou algo que não é duração.
@@ -259,30 +323,39 @@ export function LessonDrawer({
             </Field>
 
             {embed ? (
-              <div className="aspect-video w-full overflow-hidden rounded-lg border border-gray-6 bg-black">
-                <iframe
-                  key={embed.src}
-                  src={embed.src}
-                  title="Video preview"
-                  className="size-full"
-                  allow="encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              </div>
+              <VideoPreview
+                key={embed.src}
+                src={embed.src}
+                provider={embed.provider}
+                onDuration={(sec) => {
+                  // Preenche só o campo VAZIO: não sobrescreve duração já
+                  // salva nem o que o admin digitou.
+                  setDraft((p) =>
+                    p.duration.trim() ? p : { ...p, duration: formatClock(sec) },
+                  );
+                  setDurationFromVideo(true);
+                }}
+              />
             ) : null}
 
             <div className="grid grid-cols-2 gap-3">
               <Field
                 label="Duration"
                 error={durationInvalid ? "Use mm:ss, e.g. 14:20." : null}
-                hint="mm:ss, shown on the card."
+                hint={
+                  durationFromVideo
+                    ? "Read from the video. Edit if needed."
+                    : "mm:ss, shown on the card."
+                }
               >
                 <input
                   className={inputCls}
                   value={draft.duration}
                   aria-invalid={durationInvalid}
-                  onChange={(e) => set("duration", e.target.value)}
+                  onChange={(e) => {
+                    setDurationFromVideo(false);
+                    set("duration", e.target.value);
+                  }}
                   placeholder="14:20"
                 />
               </Field>

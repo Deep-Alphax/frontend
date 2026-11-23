@@ -76,7 +76,8 @@ describe("MaterialsEditor — aula salva", () => {
       <MaterialsEditor lessonId="l1" materials={[]} onChanged={onChanged} />,
     );
 
-    await user.type(link(), "https://cdn.example.com/Risk%20sheet.xlsx");
+    await user.click(link());
+    await user.paste("https://cdn.example.com/Risk%20sheet.xlsx");
     expect(title()).toHaveValue("Risk sheet.xlsx");
 
     await user.type(screen.getByLabelText("Size in MB"), "1.5");
@@ -98,7 +99,8 @@ describe("MaterialsEditor — aula salva", () => {
     );
 
     await user.type(title(), "Checklist");
-    await user.type(link(), "https://cdn.example.com/x.pdf");
+    await user.click(link());
+    await user.paste("https://cdn.example.com/x.pdf");
 
     expect(title()).toHaveValue("Checklist");
   });
@@ -109,7 +111,8 @@ describe("MaterialsEditor — aula salva", () => {
       <MaterialsEditor lessonId="l1" materials={[]} onChanged={vi.fn()} />,
     );
 
-    await user.type(link(), "https://a.b/c.pdf");
+    await user.click(link());
+    await user.paste("https://a.b/c.pdf");
     await user.type(screen.getByLabelText("Size in MB"), "abc");
 
     expect(screen.getByText(/Size must be a number/)).toBeInTheDocument();
@@ -123,7 +126,8 @@ describe("MaterialsEditor — aula salva", () => {
       <MaterialsEditor lessonId="l1" materials={[]} onChanged={vi.fn()} />,
     );
 
-    await user.type(link(), "https://a.b/guide.pdf");
+    await user.click(link());
+    await user.paste("https://a.b/guide.pdf");
     await user.click(addBtn());
 
     expect(createMat.mock.calls[0][1].sizeBytes).toBe(0);
@@ -156,7 +160,8 @@ describe("MaterialsEditor — aula nova (fila)", () => {
       />,
     );
 
-    await user.type(link(), "https://cdn.example.com/guide.pdf");
+    await user.click(link());
+    await user.paste("https://cdn.example.com/guide.pdf");
     await user.click(addBtn());
 
     expect(createMat).not.toHaveBeenCalled();

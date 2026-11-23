@@ -30,6 +30,30 @@ describe("toVideoEmbed", () => {
     );
   });
 
+  it("player controlado: liga a API JS do YouTube e retoma no segundo salvo", () => {
+    const e = toVideoEmbed("https://youtu.be/dQw4w9WgXcQ", {
+      startSec: 125.9,
+      origin: "https://deepalpha.fun",
+    });
+    const src = new URL(e!.src);
+    expect(src.origin).toBe("https://www.youtube-nocookie.com");
+    expect(src.searchParams.get("enablejsapi")).toBe("1");
+    expect(src.searchParams.get("origin")).toBe("https://deepalpha.fun");
+    expect(src.searchParams.get("start")).toBe("125");
+  });
+
+  it("Vimeo retoma pelo fragmento #t=", () => {
+    expect(toVideoEmbed("https://vimeo.com/76979871", { startSec: 90 })?.src).toBe(
+      "https://player.vimeo.com/video/76979871#t=90s",
+    );
+  });
+
+  it("sem posição salva não põe start (0 não é retomar)", () => {
+    expect(
+      toVideoEmbed("https://youtu.be/dQw4w9WgXcQ", { startSec: 0 })?.src,
+    ).not.toContain("start=");
+  });
+
   it("recusa host fora da allowlist — é o que impede embutir página de terceiro", () => {
     expect(toVideoEmbed("https://evil.example.com/embed/abc")).toBeNull();
     // Host que só CONTÉM o nome de um provedor não vale.

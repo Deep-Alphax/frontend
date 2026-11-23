@@ -139,10 +139,14 @@ function buildContentSecurityPolicy(isDev: boolean): string {
   //   - youtube.com: o player faz redirect/fallback para ele em alguns casos.
   const videoFrames =
     "https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com";
+  // APIs JS OFICIAIS dos players (progresso real das aulas, `lib/mentorship/
+  // player.ts`): YouTube carrega `iframe_api` + o widget do mesmo host; Vimeo,
+  // `player.vimeo.com/api/player.js`. Hosts nomeados, nunca `https:` geral.
+  const videoScripts = "https://www.youtube.com https://player.vimeo.com";
 
   const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile}`,
+    `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} 'wasm-unsafe-eval' ${turnstile} ${videoScripts}`,
     `style-src 'self' 'unsafe-inline'`,
     // Fontes são self-hosted pelo `next/font` — nada de fonts.gstatic.com.
     `font-src 'self' data:`,

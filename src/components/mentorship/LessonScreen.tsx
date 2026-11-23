@@ -6,7 +6,10 @@ import Link from "next/link";
 
 import { Footer } from "@/components/home/Footer";
 import { Topbar } from "@/components/home/Topbar";
+import toast from "react-hot-toast";
+
 import { CompletionModal } from "@/components/mentorship/CompletionModal";
+import { LessonPlayer } from "@/components/mentorship/LessonPlayer";
 import { MaterialCard } from "@/components/mentorship/MaterialCard";
 import { ProgressRing } from "@/components/mentorship/ProgressRing";
 import { CheckCircleIcon } from "@/components/mentorship/icons";
@@ -141,8 +144,19 @@ function LessonWorkspace({
   }, [overview, m.id]);
 
   const markCompleted = useMutation({
-    mutationFn: () => saveLessonProgress(lesson.id, { completed: true }),
-    onSuccess: () => {
+    mutationFn: ({ positionSec }: { positionSec?: number; celebrate: boolean }) =>
+      saveLessonProgress(lesson.id, {
+        completed: true,
+        ...(positionSec !== undefined ? { positionSec } : {}),
+      }),
+    onSuccess: (_result, { celebrate }) => {
+      if (!celebrate) {
+        // Conclusão automática (passou de 90%): sem modal por cima do vídeo
+        // que ainda está tocando — só o aviso e o botão virando "Completed".
+        void queryClient.invalidateQueries({ queryKey: MENTORSHIP_OVERVIEW_KEY });
+        toast.success("Lesson completed");
+        return;
+      }
       // Decide o marco ANTES do refetch, com o estado que a tela já tem: esta
       // aula passa a contar como concluída e o resto vem do overview atual.
       const moduleDone = m.lessons.every(
@@ -179,14 +193,16 @@ function LessonWorkspace({
         <div className="flex w-full min-w-0 flex-1 flex-col gap-11">
           <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-gray-6 bg-gray-2">
             {embed ? (
-              <iframe
-                src={embed.src}
+              <LessonPlayer
+                // Remonta (novo iframe, novo rastreio) só ao trocar de aula.
+                key={lesson.id}
+                lesson={lesson}
                 title={lesson.title}
-                // `allow` mínimo: sem `autoplay` (o usuário decide) e sem
-                // `camera`/`microphone`, que um player de vídeo não usa.
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="size-full"
+                onAutoComplete={(positionSec) => {
+                  if (!lesson.completed && !markCompleted.isPending) {
+                    markCompleted.mutate({ positionSec, celebrate: false });
+                  }
+                }}
               />
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-2 px-6 text-center">
@@ -300,7 +316,7 @@ function LessonWorkspace({
             ) : (
               <button
                 type="button"
-                onClick={() => markCompleted.mutate()}
+                onClick={() => markCompleted.mutate({ celebrate: true })}
                 disabled={markCompleted.isPending}
                 className={cn(
                   "flex h-11 w-full items-center justify-center gap-2 rounded-lg px-4",

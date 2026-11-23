@@ -16,6 +16,10 @@ vi.mock("@/lib/api/mentorship", async (importOriginal) => {
   };
 });
 
+// API do player (script externo do YouTube) fica fora: tem teste próprio.
+vi.mock("@/lib/mentorship/player", () => ({
+  attachPlayer: vi.fn(() => new Promise(() => {})),
+}));
 vi.mock("@/components/home/Topbar", () => ({ Topbar: () => <header /> }));
 vi.mock("@/components/home/Footer", () => ({ Footer: () => <footer /> }));
 vi.mock("next/navigation", () => ({
@@ -139,12 +143,14 @@ describe("LessonScreen", () => {
       }),
     ).toBeInTheDocument();
 
-    // O iframe usa o embed -nocookie derivado do `videoUrl`, não a URL crua.
+    // O iframe usa o embed -nocookie derivado do `videoUrl`, não a URL crua,
+    // com a API JS ligada (progresso real — ver LessonPlayer).
     const frame = screen.getByTitle("RPC, latency and why you arrive late");
-    expect(frame).toHaveAttribute(
-      "src",
-      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0",
+    const src = new URL(frame.getAttribute("src")!);
+    expect(`${src.origin}${src.pathname}`).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
     );
+    expect(src.searchParams.get("enablejsapi")).toBe("1");
 
     expect(
       screen.getByText("1 of 2 lessons in this module"),

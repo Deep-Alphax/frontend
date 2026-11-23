@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithQuery } from "@/test/queryWrapper";
 import { MentorshipModuleAdmin } from "./MentorshipModuleAdmin";
 import * as api from "@/lib/api/mentorship";
+import * as player from "@/lib/mentorship/player";
 import { useSession } from "@/lib/auth/useSession";
 import type {
   AdminCategory,
@@ -38,6 +39,9 @@ vi.mock("@/lib/api/mentorship", async (importOriginal) => {
   };
 });
 vi.mock("@/lib/auth/useSession");
+// API JS do player (script externo) fora do jsdom; a auto-duração tem teste
+// próprio logo abaixo, com eventos simulados.
+vi.mock("@/lib/mentorship/player", () => ({ attachPlayer: vi.fn() }));
 vi.mock("react-hot-toast", () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
@@ -158,6 +162,8 @@ function wireApi() {
   }));
   vi.mocked(api.reorderLessons).mockResolvedValue(undefined);
   vi.mocked(api.deleteModule).mockResolvedValue(undefined);
+  // Por padrão o player "nunca fica pronto" (sem auto-duração).
+  vi.mocked(player.attachPlayer).mockImplementation(() => new Promise(() => {}));
 }
 
 beforeEach(() => {
@@ -308,12 +314,14 @@ describe("MentorshipModuleAdmin — painel da aula", () => {
     const panel = await screen.findByRole("dialog");
     const video = within(panel).getByRole("textbox", { name: /video link/i });
 
-    await user.type(video, "https://drive.google.com/file/abc");
+    await user.click(video);
+    await user.paste("https://drive.google.com/file/abc");
     expect(within(panel).getByText(/other links don't play for users/i)).toBeInTheDocument();
     expect(within(panel).getByRole("button", { name: "Save lesson" })).toBeDisabled();
 
     await user.clear(video);
-    await user.type(video, "https://vimeo.com/123456");
+    await user.click(video);
+    await user.paste("https://vimeo.com/123456");
     expect(within(panel).getByText(/Vimeo video found/)).toBeInTheDocument();
     expect(within(panel).getByTitle("Video preview")).toHaveAttribute(
       "src",
@@ -333,10 +341,8 @@ describe("MentorshipModuleAdmin — painel da aula", () => {
     expect(within(panel).getByText("EP 03")).toBeInTheDocument();
 
     await user.type(within(panel).getByRole("textbox", { name: /^title$/i }), "Exits");
-    await user.type(
-      within(panel).getByLabelText("File link"),
-      "https://cdn.example.com/exit-checklist.pdf",
-    );
+    await user.click(within(panel).getByLabelText("File link"));
+      await user.paste("https://cdn.example.com/exit-checklist.pdf");
     await user.click(within(panel).getByRole("button", { name: /add material/i }));
     expect(api.createMaterial).not.toHaveBeenCalled();
 
@@ -353,6 +359,31 @@ describe("MentorshipModuleAdmin — painel da aula", () => {
         sizeBytes: 0,
       },
     ]);
+  });
+
+  it("duração vem do player quando o campo está vazio (e não sobrescreve)", async () => {
+    vi.mocked(player.attachPlayer).mockImplementation(async (_iframe, _p, ev) => {
+      ev.onReady?.(754.6); // 12:34 (para baixo, como o player mostra)
+      return { destroy: vi.fn() };
+    });
+    const user = userEvent.setup();
+    renderWithQuery(<MentorshipModuleAdmin moduleId="m1" />);
+
+    // Aula nova: campo vazio → preenchido pelo vídeo.
+    await user.click((await screen.findAllByRole("button", { name: /add lesson/i }))[0]);
+    let panel = await screen.findByRole("dialog", { name: "New lesson" });
+    await user.click(within(panel).getByRole("textbox", { name: /^video link/i }));
+      await user.paste("https://vimeo.com/123456");
+    const duration = within(panel).getByRole("textbox", { name: /^duration/i });
+    await waitFor(() => expect(duration).toHaveValue("12:34"));
+    expect(within(panel).getByText("Read from the video. Edit if needed.")).toBeInTheDocument();
+
+    // Aula com duração já salva (14:20): o vídeo NÃO sobrescreve.
+    await user.click(within(panel).getByRole("button", { name: "Cancel" }));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await user.click(await lessonRow("How a Solana transaction really happens"));
+    panel = await screen.findByRole("dialog");
+    expect(within(panel).getByRole("textbox", { name: /^duration/i })).toHaveValue("14:20");
   });
 
   it("Esc com alteração não salva pede confirmação", async () => {
