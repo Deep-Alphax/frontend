@@ -27,7 +27,11 @@ export function useSyncEvents(
 ): void {
   const queryClient = useQueryClient();
   const onUpdateRef = useRef(onUpdate);
-  onUpdateRef.current = onUpdate;
+  // Atualizado num efeito (e não durante o render — regra `react-hooks/refs`):
+  // o handler só lê a ref quando o evento chega, depois do commit.
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  });
 
   useEffect(() => {
     if (!enabled) return;

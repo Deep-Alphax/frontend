@@ -76,6 +76,9 @@ function setup({
     plan,
     isPro: plan === "PRO",
     isLoading: false,
+    isError: false,
+    access: undefined,
+    isRestricted: false,
   });
   getOptions.mockResolvedValue(options);
   getPix.mockResolvedValue(pix);

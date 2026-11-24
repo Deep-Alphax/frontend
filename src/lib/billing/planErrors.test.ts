@@ -21,6 +21,17 @@ describe("planErrorCode", () => {
     expect(planErrorCode(httpError(403, { code: "PLAN_REQUIRED" }))).toBe("PLAN_REQUIRED");
   });
 
+  it("reconhece o 403 do acesso restrito (Elixir Alpha no FREE)", () => {
+    expect(
+      planErrorCode(
+        httpError(403, {
+          code: "ACCESS_RESTRICTED",
+          message: "This feature isn't included in your access.",
+        }),
+      ),
+    ).toBe("ACCESS_RESTRICTED");
+  });
+
   it("não confunde com outros 403 nem com outros status", () => {
     expect(planErrorCode(httpError(403, { message: "Forbidden" }))).toBeNull();
     expect(planErrorCode(httpError(400, { code: "PLAN_LIMIT" }))).toBeNull();

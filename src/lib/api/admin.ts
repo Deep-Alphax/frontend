@@ -1,15 +1,9 @@
-import { api } from "@/lib/api/client";
-
-export type UserRole = "USER" | "ADMIN";
-
-/** POST /api/v1/users/set-role — define a role de um usuário pelo email (ADMIN). */
-export async function setUserRole(
-  email: string,
-  role: UserRole,
-): Promise<{ id: string; email: string; role: UserRole }> {
-  const { data } = await api.post<{ id: string; email: string; role: UserRole }>(
-    "/api/v1/users/set-role",
-    { email, role },
-  );
-  return data;
-}
+/*
+ * Cargo do usuário — a fonte é o contrato do Elixir Alpha (`access.ts`).
+ * Re-exportado aqui para quem já importava de `api/admin`.
+ *
+ * A antiga troca de cargo por e-mail (`POST /users/set-role`, aba "Admins" do
+ * Feed) foi substituída pela tela /admin/users (`listAdminUsers` /
+ * `setAdminUserRole` / `bulkSetRole` em `access.ts`).
+ */
+export type { UserRole } from "@/lib/api/access";

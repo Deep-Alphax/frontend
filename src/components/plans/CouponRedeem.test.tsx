@@ -62,6 +62,9 @@ function setup({ plan = "FREE", loading = false }: { plan?: Plan; loading?: bool
     plan,
     isPro: plan === "PRO",
     isLoading: loading,
+    isError: false,
+    access: undefined,
+    isRestricted: false,
   });
 }
 

@@ -1,3 +1,4 @@
+import type { UserRole } from "@/lib/api/access";
 import { api } from "@/lib/api/client";
 import { storedReferral } from "@/lib/referral";
 import { API_URL } from "@/lib/env";
@@ -15,7 +16,8 @@ export interface AuthUser {
   firstName: string | null;
   lastName: string | null;
   avatarUrl: string | null;
-  role: string;
+  /** `UserRole` (ver `access.ts`); `string` para tolerar um cargo novo do back. */
+  role: UserRole | (string & {});
 }
 
 /** Sucesso: tokens já foram setados em cookies httpOnly; recebemos só o usuário. */

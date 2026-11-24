@@ -18,6 +18,8 @@ import { cn } from "@/lib/cn";
 interface AccountMenuProps {
   name: string;
   avatarUrl?: string | null;
+  /** Elixir Alpha no FREE: sem "My profile" (a Home de carteiras é bloqueada). */
+  restricted?: boolean;
 }
 
 /**
@@ -30,7 +32,7 @@ interface AccountMenuProps {
  * mas continuam aqui abaixo de um separador: são a única porta para `/admin/*`
  * e o custo de perdê-los é digitar URL na mão.
  */
-export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
+export function AccountMenu({ name, avatarUrl, restricted = false }: AccountMenuProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { profile } = useSession();
@@ -73,12 +75,14 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
           sideOffset={8}
           className="z-50 min-w-[159px] overflow-hidden rounded-lg border border-gray-6 bg-gray-2"
         >
-          <DropdownMenu.Item asChild className={itemClass}>
-            <Link href="/">
-              <UserIcon className="size-5 shrink-0" />
-              <span>My profile</span>
-            </Link>
-          </DropdownMenu.Item>
+          {!restricted && (
+            <DropdownMenu.Item asChild className={itemClass}>
+              <Link href="/">
+                <UserIcon className="size-5 shrink-0" />
+                <span>My profile</span>
+              </Link>
+            </DropdownMenu.Item>
+          )}
 
           <DropdownMenu.Item
             className={itemClass}
@@ -112,6 +116,12 @@ export function AccountMenu({ name, avatarUrl }: AccountMenuProps) {
                 <Link href="/admin/affiliates">
                   <Shield className="size-5 shrink-0 text-gray-11" />
                   <span>Admin · Affiliates</span>
+                </Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item asChild className={itemClass}>
+                <Link href="/admin/users">
+                  <Shield className="size-5 shrink-0 text-gray-11" />
+                  <span>Admin · Users</span>
                 </Link>
               </DropdownMenu.Item>
             </>

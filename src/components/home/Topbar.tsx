@@ -9,7 +9,9 @@ import { BecomeProButton } from "@/components/home/BecomeProButton";
 import { DepositButton } from "@/components/deposits/DepositButton";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 import { WalletChip } from "@/components/home/WalletChip";
+import { useAccountEvents } from "@/lib/alerts/useAccountEvents";
 import { useSession } from "@/lib/auth/useSession";
+import { usePlan } from "@/lib/billing/usePlan";
 import { cn } from "@/lib/cn";
 
 interface NavItem {
@@ -28,6 +30,25 @@ const NAV_ITEMS: NavItem[] = [
   { label: "My profile", href: "/" },
 ];
 
+/**
+ * Elixir Alpha no FREE (`access.restricted`): só o que o acesso cobre. Planos
+ * seguem no CTA "Become a Pro" e Afiliados no menu da conta; Deep Ranking é
+ * aba dentro de KOLs.
+ */
+const RESTRICTED_NAV_ITEMS: NavItem[] = [
+  { label: "Mentorship", href: "/mentorship" },
+  { label: "KOLs", href: "/wallet-reader" },
+];
+
+/**
+ * Eventos da conta pelo socket para quem NÃO tem o sininho (restrito): sem
+ * isto, um `plan:update` (ex.: assinou o Pro em outra aba) não refaria o acesso.
+ */
+function AccountEvents() {
+  useAccountEvents(true);
+  return null;
+}
+
 /** Nome de exibição a partir do perfil (nome, senão prefixo do e-mail). */
 function displayName(profile?: {
   firstName: string | null;
@@ -41,14 +62,24 @@ function displayName(profile?: {
 export function Topbar() {
   const pathname = usePathname();
   const { profile, isAuthenticated, isLoading } = useSession();
+  const { isRestricted, isLoading: accessLoading } = usePlan();
   const name = displayName(profile);
+  // `isAuthenticated` já é false no servidor e na hidratação (`useSession`),
+  // então os dois lados desenham a navegação completa — sem hydration mismatch.
+  // Enquanto o acesso carrega também: o backend é quem barra.
+  const restricted = isAuthenticated && isRestricted;
+  const navItems = restricted ? RESTRICTED_NAV_ITEMS : NAV_ITEMS;
 
   return (
     <header className="flex h-[60px] w-full  items-center justify-between border-b border-gray-6 bg-gray-2 px-6 md:px-12 lg:px-20">
       {/* Esquerda: logo + navegação */}
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
         <div className="flex h-full items-center gap-8">
-          <Link href="/" aria-label="Deep Alpha — home" className="flex items-center">
+          <Link
+            href={restricted ? "/mentorship" : "/"}
+            aria-label="Deep Alpha — home"
+            className="flex items-center"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/deep-alpha-logomark.svg"
@@ -60,7 +91,7 @@ export function Topbar() {
           </Link>
 
           <nav className="hidden h-full items-center md:flex">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               // Sub-rota mantém o item pai marcado (/wallet-reader/ranking →
               // KOLs). A raiz "/" só por igualdade, senão tudo casaria.
               const isActive =
@@ -90,17 +121,26 @@ export function Topbar() {
           - carregando → skeleton no formato de carteira + sino + conta (nem
             flash de "Sign in" para quem está logado, nem o header pulando);
           - logado → depósito + carteiras + notificações + conta;
+          - logado restrito (Elixir Alpha FREE) → só a conta: depósito,
+            carteiras e sininho chamariam rotas que dão 403 para ele;
           - deslogado → só o CTA "Sign in" (nenhuma conta no header). */}
         <div className="flex items-center gap-4">
           <BecomeProButton />
 
-          {isLoading ? (
+          {/* O skeleton cobre também o acesso carregando: montar carteira e
+              sininho antes de saber se a conta é restrita dispararia 403. */}
+          {isLoading || (isAuthenticated && accessLoading) ? (
             <SkeletonGroup label="Loading account" className="flex items-center gap-4">
               <Skeleton className="h-9 w-9 rounded-lg sm:w-[104px]" />
               <Skeleton className="h-9 w-32 rounded-lg" />
               <Skeleton className="size-9 rounded-full" />
               <Skeleton className="h-9 w-24 rounded-full" />
             </SkeletonGroup>
+          ) : restricted ? (
+            <>
+              <AccountEvents />
+              <AccountMenu name={name} avatarUrl={profile?.avatarUrl} restricted />
+            </>
           ) : isAuthenticated ? (
             <>
               {/* Depósito via Pix — antes do chip de carteira, que também o abre. */}

@@ -1,3 +1,4 @@
+import type { UserRole } from "@/lib/api/access";
 import { api } from "@/lib/api/client";
 
 /** Tipo de evento do log de auditoria — espelha o enum do backend. */
@@ -31,7 +32,7 @@ export interface AuditActor {
   kind: "user" | "system" | "anonymous";
   id: string | null;
   email: string | null;
-  role: "USER" | "ADMIN" | null;
+  role: UserRole | null;
 }
 
 /** Valor antigo e novo de um campo. CREATE: old=null; DELETE: new=null. */

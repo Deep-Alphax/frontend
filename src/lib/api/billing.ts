@@ -1,17 +1,38 @@
+import type { MyAccess } from "@/lib/api/access";
 import { api } from "@/lib/api/client";
 
 /** Planos do produto — espelha o enum `Plan` do backend. */
 export type Plan = "FREE" | "PRO";
 
 /**
- * Plano EFETIVO do usuário logado, decidido no servidor.
+ * Plano EFETIVO + acesso do usuário logado, numa leitura só de `/billing/me`.
  *
- * Isto é só para a UI (marcar o card certo, abrir upsell). O que barra recurso
- * pago é o `PlanGuard` no backend — o front nunca é a autoridade sobre acesso.
+ * `access` é `null` quando o backend ainda não manda o campo (deploy antigo):
+ * quem consome (`usePlan`) deriva um acesso equivalente do plano + cargo da
+ * sessão, então o front pode subir antes do back sem quebrar ninguém.
  */
+export interface MyAccount {
+  plan: Plan;
+  access: MyAccess | null;
+}
+
+/**
+ * Plano e acesso do usuário logado, decididos no servidor.
+ *
+ * Isto é só para a UI (marcar o card certo, abrir upsell, esconder o que daria
+ * 403). O que barra recurso é o `PlanGuard`/`JwtAuthGuard` no backend — o front
+ * nunca é a autoridade sobre acesso.
+ */
+export async function getMyAccount(): Promise<MyAccount> {
+  const { data } = await api.get<{ plan: Plan; access?: MyAccess | null }>(
+    "/api/v1/billing/me",
+  );
+  return { plan: data.plan, access: data.access ?? null };
+}
+
+/** Só o plano (mantido para quem não precisa do acesso). */
 export async function getMyPlan(): Promise<Plan> {
-  const { data } = await api.get<{ plan: Plan }>("/api/v1/billing/me");
-  return data.plan;
+  return (await getMyAccount()).plan;
 }
 
 /** Abre o Checkout de assinatura e devolve a URL para redirecionar. */
@@ -21,10 +42,12 @@ export async function createCheckout(): Promise<string> {
 }
 
 /**
- * Chave do plano efetivo no React Query — invalide após voltar do checkout.
+ * Chave do plano efetivo (+ acesso, `MyAccount`) no React Query — invalide
+ * após voltar do checkout ou mudar o cargo (convite Elixir Alpha).
  *
- * Vive aqui (e não no componente) porque o header e a tela de planos consultam o
- * mesmo dado: chaves separadas dariam duas requisições e dois estados divergentes.
+ * Vive aqui (e não no componente) porque o header, os gates de página e a tela
+ * de planos consultam o mesmo dado: chaves separadas dariam duas requisições e
+ * dois estados divergentes.
  */
 export const PLAN_KEY = ["billing-plan"] as const;
 
@@ -45,8 +68,8 @@ export interface BillingDetails {
 
 /**
  * Detalhe da cobrança vigente (null sem assinatura viva). Só a tela de planos
- * precisa disto, então vive numa chave própria — o `PLAN_KEY` continua sendo só
- * o plano, que é o que o header e o socket (`useAccountEvents`) gravam.
+ * precisa disto, então vive numa chave própria — o `PLAN_KEY` guarda só plano +
+ * acesso, que é o que o header, os gates e o socket (`useAccountEvents`) usam.
  */
 export async function getBillingDetails(): Promise<BillingDetails | null> {
   const { data } = await api.get<{ plan: Plan; billing: BillingDetails | null }>(

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { AccessGate } from "@/components/access/AccessGate";
 import { Footer } from "@/components/home/Footer";
 import { Topbar } from "@/components/home/Topbar";
 import { HeroBanner } from "@/components/mentorship/HeroBanner";
@@ -10,7 +11,9 @@ import {
 } from "@/components/mentorship/MentorshipScreen";
 
 /* Mentoria (node Figma 1011:21678) — categorias, trilhas, aulas e progresso.
- * Rota protegida pelo middleware (`src/proxy.ts`): sem sessão, vai para /login. */
+ * Rota protegida pelo middleware (`src/proxy.ts`): sem sessão, vai para /login.
+ * Só PRO, Elixir Alpha e ADMIN: os demais veem o upsell do `AccessGate` (e
+ * nenhuma query da mentoria dispara). */
 export const metadata: Metadata = { title: "Mentorship" };
 
 /**
@@ -35,8 +38,10 @@ function MentorshipFallback() {
 
 export default function MentorshipPage() {
   return (
-    <Suspense fallback={<MentorshipFallback />}>
-      <MentorshipScreen />
-    </Suspense>
+    <AccessGate requires="mentorship">
+      <Suspense fallback={<MentorshipFallback />}>
+        <MentorshipScreen />
+      </Suspense>
+    </AccessGate>
   );
 }

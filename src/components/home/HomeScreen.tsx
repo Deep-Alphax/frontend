@@ -1,3 +1,4 @@
+import { AccessGate } from "@/components/access/AccessGate";
 import { Topbar } from "@/components/home/Topbar";
 import { ProfileContent } from "@/components/home/ProfileContent";
 import { Footer } from "@/components/home/Footer";
@@ -6,6 +7,10 @@ import { Footer } from "@/components/home/Footer";
  * Home autenticada ("Meu perfil"). O conteúdo é dirigido por dados reais
  * (`ProfileContent`): estado vazio "conecte uma carteira" quando não há trades,
  * ou o dashboard de métricas (node Figma 10:71) quando há.
+ *
+ * Elixir Alpha no FREE não tem perfil de carteiras (custa): o `AccessGate` o
+ * manda para a Mentoria antes de montar qualquer coisa que chamaria a API.
+ * Deslogado passa direto (a Home é pública).
  */
 export function HomeScreen() {
   return (
@@ -14,18 +19,24 @@ export function HomeScreen() {
 
       <main className="flex w-full flex-col px-6 pb-[92px] pt-8 md:px-12 lg:px-20">
         <div className="flex w-full flex-col gap-10 max-w-7xl mx-auto">
-          {/* Cabeçalho da seção */}
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <h1 className="font-display text-display-24 text-gray-12">
-              My profile
-            </h1>
-            <p className="text-base text-gray-11 md:text-right">
-              Every number here comes from your on-chain transactions, already net of
-              fees, gas, tip and slippage.
-            </p>
-          </div>
+          <AccessGate
+            requires="unrestricted"
+            frame="none"
+            redirectRestrictedTo="/mentorship"
+          >
+            {/* Cabeçalho da seção */}
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <h1 className="font-display text-display-24 text-gray-12">
+                My profile
+              </h1>
+              <p className="text-base text-gray-11 md:text-right">
+                Every number here comes from your on-chain transactions, already net of
+                fees, gas, tip and slippage.
+              </p>
+            </div>
 
-          <ProfileContent />
+            <ProfileContent />
+          </AccessGate>
         </div>
       </main>
 

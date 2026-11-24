@@ -9,7 +9,7 @@ import {
   type AppNotification,
   type NotificationsPage,
 } from "@/lib/api/alerts";
-import { PLAN_KEY } from "@/lib/api/billing";
+import { PLAN_KEY, type MyAccount } from "@/lib/api/billing";
 import { getSocket } from "@/lib/realtime/socket";
 
 /**
@@ -17,11 +17,13 @@ import { getSocket } from "@/lib/realtime/socket";
  *
  *  - `notification:new` → entra no topo do sininho e soma no badge;
  *  - `plan:update` → o webhook confirmou (ou derrubou) a assinatura. Tudo que
- *    depende do plano muda — feed, KOLs, limites —, então invalida o cache
- *    inteiro: só as queries ATIVAS refazem, as outras só na próxima vez.
+ *    depende do plano muda — feed, KOLs, limites, o acesso do Elixir Alpha —,
+ *    então invalida o cache inteiro: só as queries ATIVAS refazem (inclusive
+ *    `PLAN_KEY`, que traz o `access` novo), as outras só na próxima vez.
  *
- * Montado uma vez (no sininho do header, que só existe logado). Não desconecta
- * ao desmontar: o socket é singleton da aba e o Radar também o usa.
+ * Montado uma vez (no sininho do header, que só existe logado; para o usuário
+ * restrito, que não tem sininho, pelo `AccountEvents` do header). Não
+ * desconecta ao desmontar: o socket é singleton da aba e o Radar também o usa.
  */
 export function useAccountEvents(enabled: boolean): void {
   const qc = useQueryClient();
@@ -47,7 +49,25 @@ export function useAccountEvents(enabled: boolean): void {
     };
 
     const onPlan = (p: { plan?: string }) => {
-      if (p?.plan === "PRO" || p?.plan === "FREE") qc.setQueryData(PLAN_KEY, p.plan);
+      const plan = p?.plan;
+      if (plan === "PRO" || plan === "FREE") {
+        // Atualiza o plano na hora (o header e os gates reagem sem esperar a
+        // reconsulta). A restrição do Elixir Alpha depende do plano — PRO
+        // libera tudo —, então ela acompanha; o refetch abaixo traz o valor
+        // oficial do servidor logo em seguida.
+        qc.setQueryData<MyAccount>(PLAN_KEY, (prev) =>
+          prev
+            ? {
+                plan,
+                access: prev.access && {
+                  ...prev.access,
+                  restricted: prev.access.role === "ELIXIR_ALPHA" && plan === "FREE",
+                  mentorship: plan === "PRO" || prev.access.role !== "USER",
+                },
+              }
+            : prev,
+        );
+      }
       qc.invalidateQueries();
     };
 

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { AccessGate } from "@/components/access/AccessGate";
 import { CopyTradeScreen } from "@/components/copyTrade/CopyTradeScreen";
 import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
 
@@ -8,7 +9,8 @@ import { Skeleton, SkeletonGroup } from "@/components/ui/Skeleton";
  * Copy Trade (Figma 1578:26210): KOLs do índice com histórico de 30d e o
  * detalhe da carteira numa 3ª coluna; aba Dev Snipe (1633:33457) em
  * `?type=snipe`. Protegida pelo middleware (`src/proxy.ts`): sem sessão, vai
- * para /login.
+ * para /login. Fora do acesso do Elixir Alpha (FREE): o `AccessGate` nem
+ * monta a tela.
  */
 export const metadata: Metadata = {
   title: "Copy Trade",
@@ -41,8 +43,10 @@ function CopyTradeFallback() {
 
 export default function CopyTradePage() {
   return (
-    <Suspense fallback={<CopyTradeFallback />}>
-      <CopyTradeScreen />
-    </Suspense>
+    <AccessGate requires="unrestricted">
+      <Suspense fallback={<CopyTradeFallback />}>
+        <CopyTradeScreen />
+      </Suspense>
+    </AccessGate>
   );
 }

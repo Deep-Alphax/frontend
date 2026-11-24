@@ -8,7 +8,6 @@ import { cn } from "@/lib/cn";
 import { MonitorsManager } from "@/components/admin/MonitorsManager";
 import { BlacklistManager } from "@/components/admin/BlacklistManager";
 import { FeedList } from "@/components/admin/FeedList";
-import { PromoteAdmin } from "@/components/admin/PromoteAdmin";
 
 function Pill({ ok, on, off }: { ok: boolean; on: string; off: string }) {
   return (
@@ -88,13 +87,12 @@ function StatusBar() {
   );
 }
 
-type TabKey = "regras" | "blacklist" | "feed" | "admins";
+type TabKey = "regras" | "blacklist" | "feed";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "regras", label: "Rules" },
   { key: "blacklist", label: "Blacklist" },
   { key: "feed", label: "Feed" },
-  { key: "admins", label: "Admins" },
 ];
 
 /**
@@ -155,7 +153,6 @@ export function FeedAdmin() {
       {tab === "regras" && <MonitorsManager />}
       {tab === "blacklist" && <BlacklistManager />}
       {tab === "feed" && <FeedList />}
-      {tab === "admins" && <PromoteAdmin />}
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 
+import { InviteRedeemer } from "@/components/access/InviteRedeemer";
 import { PageViewTracker } from "@/components/audit/PageViewTracker";
 import { captureCouponFromUrl } from "@/lib/coupon";
+import { captureInviteFromUrl } from "@/lib/invite";
 import { captureReferralFromUrl } from "@/lib/referral";
 
 /**
@@ -35,15 +37,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // cadastra depois tem que continuar atribuído.
   // Mesmo raciocínio para o `?coupon=` do link de PRO grátis — inclusive o que
   // vem dentro do `?next=` do login, para sobreviver a cadastro e verificação.
+  // E para o `?invite=` do Elixir Alpha (`/mentorship?invite=CODE`).
   useEffect(() => {
     captureReferralFromUrl(window.location.search);
     captureCouponFromUrl(window.location.search);
+    captureInviteFromUrl(window.location.search);
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Dentro do provider: o rastreador usa `useSession` (React Query). */}
       <PageViewTracker />
+      {/* Pergunta (logado) se aceita o convite Elixir Alpha guardado. */}
+      <InviteRedeemer />
       {children}
       <Toaster
         position="top-center"

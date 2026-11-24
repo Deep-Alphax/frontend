@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/ScrollArea";
  * caminho de volta para o produto.
  */
 const ADMIN_ITEMS: { href: string; label: string }[] = [
+  { href: "/admin/users", label: "Users" },
   { href: "/admin/mentorship", label: "Mentorship" },
   { href: "/admin/kols", label: "KOLs" },
   { href: "/admin/ranking", label: "Deep Ranking" },

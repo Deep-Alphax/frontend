@@ -20,6 +20,9 @@ function plan(state: "FREE" | "PRO" | "loading") {
     plan: state === "PRO" ? "PRO" : "FREE",
     isPro: state === "PRO",
     isLoading: state === "loading",
+    isError: false,
+    access: undefined,
+    isRestricted: false,
   });
 }
 
